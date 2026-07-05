@@ -30,7 +30,7 @@ function Executar() {
   const timerRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const start = useMutation({ mutationFn: useServerFn(startSession), onSuccess: (r) => setSessionId(r.id), onError:(e)=>toast.error(e.message) });
+  const start = useMutation({ mutationFn: useServerFn(startSession), onSuccess: (r: { id: string }) => setSessionId(r.id), onError:(e)=>toast.error(e.message) });
   const upsert = useMutation({ mutationFn: useServerFn(upsertSessionSet) });
   const end = useMutation({ mutationFn: useServerFn(endSession), onSuccess: () => navigate({ to: "/ficha/$id/historico", params: { id } }) });
 

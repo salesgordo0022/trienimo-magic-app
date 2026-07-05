@@ -33,7 +33,7 @@ function Dashboard() {
 
   const create = useMutation({
     mutationFn: useServerFn(createWorkout),
-    onSuccess: (r) => { qc.invalidateQueries({ queryKey: ["workouts"] }); navigate({ to: "/ficha/$id", params: { id: r.id } }); },
+    onSuccess: (r: { id: string }) => { qc.invalidateQueries({ queryKey: ["workouts"] }); navigate({ to: "/ficha/$id", params: { id: r.id } }); },
     onError: (e) => toast.error(e.message),
   });
   const del = useMutation({
