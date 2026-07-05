@@ -9,38 +9,127 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedFichaIdRouteImport } from './routes/_authenticated/ficha.$id'
+import { Route as AuthenticatedFichaIdHistoricoRouteImport } from './routes/_authenticated/ficha.$id.historico'
+import { Route as AuthenticatedFichaIdExecutarRouteImport } from './routes/_authenticated/ficha.$id.executar'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFichaIdRoute = AuthenticatedFichaIdRouteImport.update({
+  id: '/ficha/$id',
+  path: '/ficha/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFichaIdHistoricoRoute =
+  AuthenticatedFichaIdHistoricoRouteImport.update({
+    id: '/historico',
+    path: '/historico',
+    getParentRoute: () => AuthenticatedFichaIdRoute,
+  } as any)
+const AuthenticatedFichaIdExecutarRoute =
+  AuthenticatedFichaIdExecutarRouteImport.update({
+    id: '/executar',
+    path: '/executar',
+    getParentRoute: () => AuthenticatedFichaIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app': typeof AuthenticatedAppRoute
+  '/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
+  '/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
+  '/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app': typeof AuthenticatedAppRoute
+  '/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
+  '/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
+  '/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
+  '/_authenticated/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
+  '/_authenticated/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/app'
+    | '/ficha/$id'
+    | '/ficha/$id/executar'
+    | '/ficha/$id/historico'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/app'
+    | '/ficha/$id'
+    | '/ficha/$id/executar'
+    | '/ficha/$id/historico'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/app'
+    | '/_authenticated/ficha/$id'
+    | '/_authenticated/ficha/$id/executar'
+    | '/_authenticated/ficha/$id/historico'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +137,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app': {
+      id: '/_authenticated/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ficha/$id': {
+      id: '/_authenticated/ficha/$id'
+      path: '/ficha/$id'
+      fullPath: '/ficha/$id'
+      preLoaderRoute: typeof AuthenticatedFichaIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ficha/$id/historico': {
+      id: '/_authenticated/ficha/$id/historico'
+      path: '/historico'
+      fullPath: '/ficha/$id/historico'
+      preLoaderRoute: typeof AuthenticatedFichaIdHistoricoRouteImport
+      parentRoute: typeof AuthenticatedFichaIdRoute
+    }
+    '/_authenticated/ficha/$id/executar': {
+      id: '/_authenticated/ficha/$id/executar'
+      path: '/executar'
+      fullPath: '/ficha/$id/executar'
+      preLoaderRoute: typeof AuthenticatedFichaIdExecutarRouteImport
+      parentRoute: typeof AuthenticatedFichaIdRoute
+    }
   }
 }
 
+interface AuthenticatedFichaIdRouteChildren {
+  AuthenticatedFichaIdExecutarRoute: typeof AuthenticatedFichaIdExecutarRoute
+  AuthenticatedFichaIdHistoricoRoute: typeof AuthenticatedFichaIdHistoricoRoute
+}
+
+const AuthenticatedFichaIdRouteChildren: AuthenticatedFichaIdRouteChildren = {
+  AuthenticatedFichaIdExecutarRoute: AuthenticatedFichaIdExecutarRoute,
+  AuthenticatedFichaIdHistoricoRoute: AuthenticatedFichaIdHistoricoRoute,
+}
+
+const AuthenticatedFichaIdRouteWithChildren =
+  AuthenticatedFichaIdRoute._addFileChildren(AuthenticatedFichaIdRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedFichaIdRoute: typeof AuthenticatedFichaIdRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedFichaIdRoute: AuthenticatedFichaIdRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
