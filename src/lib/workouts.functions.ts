@@ -163,8 +163,7 @@ export const updateWorkout = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { id, ...rest } = data;
-    const payload: Record<string, unknown> = { ...rest };
-    if (payload.letra) payload.letra = String(payload.letra).toUpperCase();
+    const payload = { ...rest, ...(rest.letra ? { letra: rest.letra.toUpperCase() } : {}) };
     const { error } = await context.supabase.from("workouts").update(payload).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
