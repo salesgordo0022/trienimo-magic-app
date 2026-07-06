@@ -22,7 +22,14 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
+  const [convite, setConvite] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const c = url.searchParams.get("convite");
+    if (c) { setConvite(c.toUpperCase()); setMode("signup"); }
+  }, []);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -30,6 +37,7 @@ function AuthPage() {
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
