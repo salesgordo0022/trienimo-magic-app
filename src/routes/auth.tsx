@@ -69,81 +69,69 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-8 bg-zinc-950 selection:bg-[var(--yellow)] selection:text-black">
-      <div className="w-full max-w-[440px] bg-zinc-900 border-4 border-black shadow-[12px_12px_0px_0px_var(--yellow)] overflow-hidden">
-        <div className="bg-black p-6 border-b-4 border-[var(--yellow)]">
-          <h1 className="text-4xl sm:text-5xl text-[var(--yellow)] text-center italic tracking-tighter uppercase font-bold leading-none" style={{ fontFamily: "'Anton', sans-serif" }}>
-            FICHA DE TREINO
-          </h1>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-8 relative overflow-hidden" style={{ fontFamily: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif", background: "radial-gradient(1200px 600px at 15% 10%, rgba(255,212,0,0.10), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(255,212,0,0.06), transparent 60%), #0b0b0d" }}>
+      <div className="w-full max-w-[420px] rounded-3xl overflow-hidden backdrop-blur-xl border border-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))" }}>
+        <div className="px-8 pt-10 pb-6 text-center">
+          <div className="mx-auto w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)", boxShadow: "0 10px 30px -8px rgba(255,212,0,0.5)" }}>
+            <svg className="w-6 h-6 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M4 9v6"/><path d="M20 9v6"/><path d="M2 11v2"/><path d="M22 11v2"/></svg>
+          </div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Ficha de Treino</h1>
+          <p className="text-sm text-zinc-400 mt-1.5">{mode === "login" ? "Bem-vindo de volta" : "Crie sua conta"}</p>
         </div>
 
-        <div className="p-8 space-y-7">
-          <div className="flex border-4 border-black bg-black">
-            <button type="button" onClick={() => setMode("login")} className={`flex-1 py-3 text-lg font-bold uppercase tracking-widest transition-colors ${mode==="login" ? "bg-[var(--yellow)] text-black" : "text-zinc-500 hover:text-white"}`} style={{ fontFamily: "'Roboto Condensed', sans-serif" }}>
-              Entrar
-            </button>
-            <button type="button" onClick={() => setMode("signup")} className={`flex-1 py-3 text-lg font-bold uppercase tracking-widest transition-colors ${mode==="signup" ? "bg-[var(--yellow)] text-black" : "text-zinc-500 hover:text-white"}`} style={{ fontFamily: "'Roboto Condensed', sans-serif" }}>
-              Criar Conta
-            </button>
+        <div className="px-8 pb-8 space-y-5">
+          <div className="flex p-1 rounded-full bg-white/5 border border-white/10">
+            <button type="button" onClick={() => setMode("login")} className={`flex-1 py-2 text-sm font-semibold rounded-full transition-all ${mode==="login" ? "bg-white text-black shadow-sm" : "text-zinc-400 hover:text-white"}`}>Entrar</button>
+            <button type="button" onClick={() => setMode("signup")} className={`flex-1 py-2 text-sm font-semibold rounded-full transition-all ${mode==="signup" ? "bg-white text-black shadow-sm" : "text-zinc-400 hover:text-white"}`}>Criar conta</button>
           </div>
 
-          <form onSubmit={submit} className="space-y-5">
+          <form onSubmit={submit} className="space-y-3.5">
             {mode === "signup" && (
-              <div className="space-y-2">
-                <label className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">Nome</label>
-                <input value={nome} onChange={e=>setNome(e.target.value)} required maxLength={80}
-                  className="w-full bg-black border-2 border-zinc-800 focus:border-[var(--yellow)] text-white p-4 font-bold outline-none transition-all placeholder:text-zinc-700"
-                  style={{ fontFamily: "'Roboto Condensed', sans-serif" }}/>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-400 pl-1">Nome</label>
+                <input value={nome} onChange={e=>setNome(e.target.value)} required maxLength={80} placeholder="Seu nome"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10"/>
               </div>
             )}
-            <div className="space-y-2">
-              <label className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">E-mail</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-zinc-400 pl-1">E-mail</label>
               <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="seu@email.com"
-                className="w-full bg-black border-2 border-zinc-800 focus:border-[var(--yellow)] text-white p-4 font-bold outline-none transition-all placeholder:text-zinc-700"
-                style={{ fontFamily: "'Roboto Condensed', sans-serif" }}/>
+                className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10"/>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">Senha</label>
-              <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={6} placeholder="********"
-                className="w-full bg-black border-2 border-zinc-800 focus:border-[var(--yellow)] text-white p-4 font-bold outline-none transition-all placeholder:text-zinc-700"
-                style={{ fontFamily: "'Roboto Condensed', sans-serif" }}/>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-zinc-400 pl-1">Senha</label>
+              <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={6} placeholder="••••••••"
+                className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10"/>
             </div>
             {mode === "signup" && (
-              <div className="space-y-2">
-                <label className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">Código de convite <span className="text-zinc-600 normal-case tracking-normal">(opcional)</span></label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-400 pl-1">Código de convite <span className="text-zinc-600">(opcional)</span></label>
                 <input value={convite} onChange={e=>setConvite(e.target.value.toUpperCase())} placeholder="Deixe em branco para entrar como aluno" maxLength={12}
-                  className="w-full bg-black border-2 border-zinc-800 focus:border-[var(--yellow)] text-white p-4 font-bold outline-none transition-all placeholder:text-zinc-700"
-                  style={{ fontFamily: "'Roboto Condensed', sans-serif" }}/>
+                  className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10"/>
               </div>
             )}
 
             <button type="submit" disabled={loading}
-              className="w-full bg-[var(--yellow)] text-black py-5 text-xl font-black uppercase tracking-tighter shadow-[6px_6px_0px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all disabled:opacity-60"
-              style={{ fontFamily: "'Anton', sans-serif" }}>
-              {loading ? "..." : mode === "login" ? "Entrar" : "Criar conta"}
+              className="w-full text-black font-semibold rounded-xl py-3.5 text-sm transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-60 mt-2"
+              style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)", boxShadow: "0 10px 30px -10px rgba(255,212,0,0.55)" }}>
+              {loading ? "Carregando..." : mode === "login" ? "Entrar" : "Criar conta"}
             </button>
           </form>
 
           <div className="relative flex items-center py-1">
-            <div className="flex-grow border-t-2 border-zinc-800"></div>
-            <span className="flex-shrink mx-4 text-zinc-500 font-black text-sm uppercase tracking-widest">OU</span>
-            <div className="flex-grow border-t-2 border-zinc-800"></div>
+            <div className="flex-grow border-t border-white/10"></div>
+            <span className="mx-3 text-zinc-500 text-xs">ou continue com</span>
+            <div className="flex-grow border-t border-white/10"></div>
           </div>
 
           <button onClick={google} disabled={loading}
-            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-4 font-bold flex items-center justify-center gap-3 transition-colors border-2 border-black uppercase tracking-wider disabled:opacity-60"
-            style={{ fontFamily: "'Roboto Condensed', sans-serif" }}>
-            <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-3 transition-all text-sm disabled:opacity-60">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.4-1.7 4.1-5.5 4.1-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 3.3 14.7 2.3 12 2.3 6.6 2.3 2.3 6.6 2.3 12s4.3 9.7 9.7 9.7c5.6 0 9.3-3.9 9.3-9.5 0-.6-.1-1.1-.2-1.6H12z"/>
             </svg>
             Continuar com Google
           </button>
         </div>
-
-        <div className="h-2 w-full bg-[var(--yellow)]"></div>
       </div>
     </div>
   );
