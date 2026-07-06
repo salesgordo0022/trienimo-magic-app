@@ -47,11 +47,20 @@ export const listWorkouts = createServerFn({ method: "GET" })
       .from("workouts")
       .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
       .eq("user_id", context.userId)
-      .is("assigned_to", null)
       .order("ordem", { ascending: true })
       .order("letra", { ascending: true });
     if (error) throw new Error(error.message);
-    return (data ?? []) as WorkoutRow[];
+    const rows = data ?? [];
+    const studentIds = Array.from(new Set(rows.map(w => w.assigned_to).filter((v): v is string => !!v && v !== context.userId)));
+    let nameById = new Map<string, string>();
+    if (studentIds.length) {
+      const { data: profs } = await context.supabase.from("profiles").select("id, nome").in("id", studentIds);
+      nameById = new Map((profs ?? []).map(p => [p.id, p.nome ?? ""]));
+    }
+    return rows.map(w => ({
+      ...w,
+      assigned_nome: w.assigned_to && w.assigned_to !== context.userId ? (nameById.get(w.assigned_to) ?? null) : null,
+    })) as WorkoutRow[];
   });
 
 // --- Fichas prescritas para mim (aluno) ---

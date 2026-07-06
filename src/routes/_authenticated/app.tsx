@@ -3,7 +3,7 @@ import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { useServerFn } from "@tanstack/react-start";
 import { queryOptions } from "@tanstack/react-query";
 import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout, getProfile, updateProfile } from "@/lib/workouts.functions";
-import { getMyRole } from "@/lib/roles.functions";
+import { getMyRole, listMyStudents } from "@/lib/roles.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => l
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
 const profileQO = () => queryOptions({ queryKey: ["profile"], queryFn: () => getProfile() });
 const roleQO = () => queryOptions({ queryKey: ["myRole"], queryFn: () => getMyRole() });
+const studentsQO = () => queryOptions({ queryKey: ["myStudents"], queryFn: () => listMyStudents() });
 
 export const Route = createFileRoute("/_authenticated/app")({
   loader: ({ context }) => {
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/app")({
     context.queryClient.ensureQueryData(assignedQO());
     context.queryClient.ensureQueryData(profileQO());
     context.queryClient.ensureQueryData(roleQO());
+    context.queryClient.ensureQueryData(studentsQO());
   },
   component: Dashboard,
 });
@@ -39,9 +41,12 @@ function Dashboard() {
   const { data: assigned } = useSuspenseQuery(assignedQO());
   const { data: profile } = useSuspenseQuery(profileQO());
   const { data: myRole } = useSuspenseQuery(roleQO());
+  const { data: myStudents } = useSuspenseQuery(studentsQO());
+  const isTeacher = myRole.role === "admin" || myRole.role === "professor";
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [letra, setLetra] = useState("");
+  const [assignTo, setAssignTo] = useState<string>("");
   const [showProfile, setShowProfile] = useState(false);
   const [showInstall, setShowInstall] = useState(false);
 
@@ -94,12 +99,23 @@ function Dashboard() {
             <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(180deg, #FFD400, #FFB800)" }} />
             <h2 className="text-sm font-semibold text-white tracking-wide uppercase">Novo Treino</h2>
           </div>
-          <form onSubmit={(e) => { e.preventDefault(); if (!letra) return; create.mutate({ data: { letra } }); setLetra(""); }} className="flex gap-2">
-            <input placeholder="Letra (A, B, C...)" value={letra} onChange={e=>setLetra(e.target.value.slice(0,3))} className={`${inputCls} uppercase max-w-[180px]`}/>
+          <form onSubmit={(e) => { e.preventDefault(); if (!letra) return; create.mutate({ data: { letra, assigned_to: assignTo || null } }); setLetra(""); }} className="flex flex-wrap gap-2">
+            <input placeholder="Letra (A, B, C...)" value={letra} onChange={e=>setLetra(e.target.value.slice(0,3))} className={`${inputCls} uppercase max-w-[140px]`}/>
+            {isTeacher && (
+              <select value={assignTo} onChange={e=>setAssignTo(e.target.value)} className={`${inputCls} max-w-[260px]`}>
+                <option value="">Para mim (pessoal)</option>
+                {myStudents.map(s => (
+                  <option key={s.id} value={s.id}>Aluno: {s.nome ?? "(sem nome)"}</option>
+                ))}
+              </select>
+            )}
             <button type="submit" disabled={create.isPending} className={goldBtn} style={goldBtnStyle}>
               <Plus className="w-4 h-4"/>Criar
             </button>
           </form>
+          {isTeacher && myStudents.length === 0 && (
+            <div className="text-[11px] text-zinc-500 mt-3">Sem alunos vinculados ainda — peça ao admin para atribuir alunos a você.</div>
+          )}
         </section>
 
         <section>
@@ -120,6 +136,13 @@ function Dashboard() {
                   </Link>
                   <div className="flex-1 p-4">
                     <div className="font-semibold text-white text-sm">Treino {w.letra}</div>
+                    {w.assigned_nome ? (
+                      <div className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-black rounded-full px-2 py-0.5" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)" }}>
+                        <Users className="w-3 h-3"/> {w.assigned_nome}
+                      </div>
+                    ) : isTeacher ? (
+                      <div className="text-[11px] text-zinc-500 mt-0.5">Pessoal</div>
+                    ) : null}
                     {w.nome && <div className="text-xs text-zinc-500 mt-0.5">{w.nome}</div>}
                     {w.data_inicio && <div className="text-[11px] text-zinc-600 mt-1">Início: {new Date(w.data_inicio).toLocaleDateString("pt-BR")}</div>}
                     <div className="flex gap-1.5 mt-3 flex-wrap items-center">
