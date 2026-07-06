@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-ro
 import { queryOptions, useSuspenseQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { listMyStudents, getMyRole } from "@/lib/roles.functions";
+import { listMyStudents, getMyRole, createStudent } from "@/lib/roles.functions";
 import { listWorkoutsForStudent, createWorkout, deleteWorkout } from "@/lib/workouts.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
