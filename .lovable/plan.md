@@ -1,72 +1,63 @@
+## O que vai mudar
 
-# App de Treino — Ficha do Personal (PWA)
+Hoje qualquer pessoa que se cadastra vira "usuário" e pode criar fichas. Vou dividir em 3 papéis:
 
-App web instalável no iPhone e no PC, com login, criação de fichas (Treino A, B, C…), execução com timer de descanso e histórico de cargas. Visual fiel à planilha da imagem: amarelo, preto e cinza, cabeçalhos em bloco preto, linhas de exercícios em tabela.
+- **Aluno** (padrão de qualquer novo cadastro): cria as próprias fichas e vê as fichas do professor a que está vinculado.
+- **Professor**: cria fichas (pessoais e/ou para seus alunos) e vê seus alunos.
+- **Admin**: convida professores, atribui alunos a professores, vê quem está online.
 
-## O que será construído
+## Fluxos
 
-### 1. Autenticação (Lovable Cloud)
-- Login por e-mail/senha + Google.
-- Cada aluno acessa apenas as próprias fichas.
-- Perfil simples do usuário (nome, objetivo, dias da semana, observação — como no cabeçalho da planilha).
+### 1) Primeiro admin
+O primeiro e-mail que se cadastrar recebe o papel `admin` automaticamente. A partir daí, o cadastro público continua criando **alunos**.
 
-### 2. Fichas de treino
-- Criar várias fichas por usuário (Treino A, B, C…) com letra grande no bloco amarelo/preto, igual à imagem.
-- Cabeçalho da ficha: Aluno, Data de início, Objetivo, Dias da semana, Observação.
-- Grupos musculares por bloco: Peito, Tríceps, Ombro, Abdômen/Vertebrais, etc. (grupos livres — o usuário adiciona os que quiser).
-- Cada exercício tem: nº de séries (3x), nome, até 4 colunas de "Repets/Kg", descanso e observação (ex: "Pirâmide").
-- Bloco extra "Regeneração" e campo "Observações" no rodapé.
-- Editar e duplicar fichas (útil para clonar Treino A → B).
+### 2) Convite de professor
+- Admin abre `/admin` → aba **Professores** → botão "Convidar professor".
+- Gera um **código de convite** (link `/auth?convite=XYZ`).
+- Quem se cadastrar com esse código já entra como `professor` (o convite é marcado como usado).
+- Admin também pode **promover um aluno existente** a professor pela lista.
 
-### 3. Modo Executar Treino
-- Abrir uma ficha e ir marcando série por série concluída.
-- Timer de descanso automático inicia ao terminar uma série (usa o valor "Desc" do exercício, ex: 45s, 1min).
-- Aviso sonoro/vibração quando o descanso acaba.
-- Ao final, salva a sessão no histórico com data e cargas efetivamente usadas.
+### 3) Atribuição de alunos
+- Em `/admin` → aba **Alunos**, admin escolhe o professor de cada aluno.
+- Em `/professor` (nova rota), o professor vê os próprios alunos e pode criar/editar fichas **para** cada aluno.
 
-### 4. Histórico e progressão
-- Lista das sessões passadas por ficha.
-- Para cada exercício, gráfico simples de evolução da carga máxima ao longo do tempo.
-- Comparativo rápido "última carga usada" ao executar novamente.
+### 4) Visão do aluno
+- Continua vendo as fichas próprias em `/app`.
+- Ganha uma seção "Treino do seu professor" listando as fichas que o professor criou pra ele.
+- Pode executar qualquer uma das duas (própria ou do professor).
 
-### 5. PWA (instalável no iPhone e PC)
-- Manifest + ícones, `display: standalone`, cores tema amarelo/preto.
-- No iPhone: Safari → Compartilhar → "Adicionar à Tela de Início".
-- No PC (Chrome/Edge): ícone de instalar na barra de endereço.
-- Sem service worker offline nesta versão (foco em instalabilidade); dá pra adicionar offline depois se quiser.
-
-### 6. Visual (fiel à planilha)
-- Paleta: amarelo `#FFD400`, preto `#0A0A0A`, cinza claro `#E5E5E5`, branco.
-- Cabeçalho com logo "SuaLogo" (placeholder editável) + "SEU NOME - PERSONAL TRAINER / FICHA DE TREINO".
-- Bloco grande preto à direita mostrando a letra do treino (A/B/C…).
-- Tabelas com cabeçalhos amarelos, linhas alternadas cinza claro, tipografia condensada.
-- Mobile-first: em telas pequenas, as 4 colunas de séries viram cards empilhados; em telas grandes, tabela igual à imagem.
+### 5) "Professores online"
+- Painel do admin mostra bolinha verde nos professores ativos agora (via Realtime Presence do canal `presence:professores`).
 
 ## Detalhes técnicos
 
-- **Stack**: TanStack Start + React + Tailwind (já configurado).
-- **Backend**: Lovable Cloud (Supabase) — precisa ser ativado.
-- **Tabelas**:
-  - `profiles` (user_id, nome, objetivo, dias_semana, observacao)
-  - `workouts` (id, user_id, letra, nome, data_inicio, observacao)
-  - `workout_groups` (id, workout_id, nome, ordem)
-  - `exercises` (id, group_id, nome, series, desc_segundos, obs, ordem, sets_config jsonb — repets/kg planejados)
-  - `sessions` (id, workout_id, user_id, started_at, ended_at)
-  - `session_sets` (id, session_id, exercise_id, set_index, reps, kg, done)
-  - RLS: cada usuário só lê/escreve as próprias linhas. Grants padrão para `authenticated`.
-- **Server functions** com `requireSupabaseAuth` para todas as leituras/escritas.
-- **PWA**: `public/manifest.webmanifest` + ícones + `<link rel="manifest">` e `theme-color` no `__root.tsx`.
-- **Rotas**:
-  - `/auth` (login/cadastro público)
-  - `/_authenticated/` — dashboard com lista de fichas
-  - `/_authenticated/ficha/$id` — editar ficha
-  - `/_authenticated/ficha/$id/executar` — modo treino com timer
-  - `/_authenticated/ficha/$id/historico` — sessões + progressão
+**Banco (migration nova):**
+- `enum app_role` com `admin | professor | aluno`.
+- Tabela `user_roles(user_id, role)` + função `has_role(uid, role)` `SECURITY DEFINER` (padrão anti-recursão).
+- Tabela `invites(code, role, created_by, used_by, expires_at)`.
+- Tabela `teacher_students(teacher_id, student_id)`.
+- Coluna `workouts.owner_id` (dono da ficha — professor quando prescrita) e `workouts.assigned_to` (aluno alvo, `null` = ficha pessoal do próprio dono). Migração preenche `owner_id = user_id`, `assigned_to = null` nas fichas existentes.
+- RLS reescrita: aluno vê fichas onde `assigned_to = auth.uid()` OU `user_id = auth.uid()`; professor vê as próprias e as que criou para seus alunos; admin vê tudo.
+- Trigger em `auth.users` (INSERT): se não existe nenhum admin → grava admin; senão, se `raw_user_meta_data->>'invite_code'` bate com um `invites` válido → grava esse papel e marca o convite como usado; senão → `aluno`.
+- GRANTs em todas as tabelas novas.
 
-## Fora do escopo desta versão
-- Modo offline completo com service worker (só instalabilidade agora).
-- App nativo na App Store / Play Store (isso exigiria Capacitor).
-- Personal com múltiplos alunos gerenciando várias contas (todos criam a própria conta e a própria ficha).
-- Vídeos demonstrativos dos exercícios.
+**Server functions (`src/lib/roles.functions.ts` + extensões em `workouts.functions.ts`):**
+- `getMyRole`, `listUsers` (admin), `listProfessors`, `listAlunos`, `createInvite`, `listInvites`, `promoteToProfessor`, `assignStudent`, `listMyStudents` (professor), `listMyTeacherWorkouts` (aluno).
+- `createWorkout` passa a aceitar `assigned_to` opcional; valida que o autor é admin/professor quando prescreve para outro.
 
-Se aprovar, ativo a Lovable Cloud e começo pelo login + estrutura da ficha, depois execução com timer, depois histórico e PWA.
+**Rotas novas:**
+- `/_authenticated/admin.tsx` — abas Professores / Alunos / Convites, presence online.
+- `/_authenticated/professor.tsx` — meus alunos + botão "criar ficha para aluno".
+- `/app` (existente) — passa a mostrar duas seções para o aluno: "Minhas fichas" e "Fichas do meu professor".
+- `/auth` — lê `?convite=XYZ`, envia no `signUp` como `data.invite_code`.
+
+**Presence:**
+- No `__root` (ou em `/admin`), professor/admin entram no canal Realtime `presence:professores` com `{ user_id, nome }`. Admin lê o estado do canal pra pintar o "online".
+
+## Fora do escopo
+
+- Notificação por e-mail do convite (por enquanto o admin copia/cola o link).
+- Chat aluno↔professor.
+- Múltiplos professores por aluno (1 professor por aluno agora).
+
+Se ok, sigo com a migration + código.
