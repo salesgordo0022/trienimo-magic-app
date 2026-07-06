@@ -32,8 +32,11 @@ const chipBtn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs
 function FichaEditor() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(fichaQO(id));
+  const { data: role } = useQuery(roleQO());
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const isTeacher = role?.role === "admin" || role?.role === "professor";
+  const [tab, setTab] = useState<"ficha" | "aluno">("ficha");
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["ficha", id] });
 
