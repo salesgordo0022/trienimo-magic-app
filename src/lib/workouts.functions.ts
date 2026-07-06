@@ -39,18 +39,55 @@ export type FichaFull = {
   groups: GroupWithExercises[];
 };
 
-// --- List workouts ---
+// --- List workouts owned by me ---
 export const listWorkouts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .eq("user_id", context.userId)
+      .is("assigned_to", null)
       .order("ordem", { ascending: true })
       .order("letra", { ascending: true });
     if (error) throw new Error(error.message);
     return (data ?? []) as WorkoutRow[];
   });
+
+// --- Fichas prescritas para mim (aluno) ---
+export const listAssignedToMe = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("workouts")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .eq("assigned_to", context.userId)
+      .order("ordem", { ascending: true });
+    if (error) throw new Error(error.message);
+    if (!data?.length) return [] as WorkoutRow[];
+    const teacherIds = Array.from(new Set(data.map(w => w.user_id)));
+    const { data: profs } = await context.supabase.from("profiles").select("id, nome").in("id", teacherIds);
+    return data.map(w => ({
+      ...w,
+      assigned_nome: profs?.find(p => p.id === w.user_id)?.nome ?? null,
+    })) as WorkoutRow[];
+  });
+
+// --- Fichas que criei para um aluno específico (professor) ---
+export const listWorkoutsForStudent = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { student_id: string }) => z.object({ student_id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: rows, error } = await context.supabase
+      .from("workouts")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .eq("user_id", context.userId)
+      .eq("assigned_to", data.student_id)
+      .order("ordem", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as WorkoutRow[];
+  });
+
 
 // --- Get profile ---
 export const getProfile = createServerFn({ method: "GET" })
