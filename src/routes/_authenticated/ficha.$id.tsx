@@ -271,20 +271,49 @@ function useExerciseState(ex: ExerciseRow) {
   return { series, setSeries, desc, setDesc, obs, setObs, nome, setNome, sets, setSets };
 }
 
+function useSaveStatus() {
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  useEffect(() => {
+    if (status !== "saved") return;
+    const t = setTimeout(() => setStatus("idle"), 900);
+    return () => clearTimeout(t);
+  }, [status]);
+  return [status, setStatus] as const;
+}
+
 function ExerciseRowEditor({ ex, rowIndex, onSaved, onDelete }: { ex: ExerciseRow; rowIndex: number; onSaved: () => void; onDelete: () => void }) {
-  const upd = useMutation({ mutationFn: useServerFn(updateExercise), onSuccess: onSaved, onError: (e)=>toast.error(e.message) });
+  const [status, setStatus] = useSaveStatus();
+  const upd = useMutation({
+    mutationFn: useServerFn(updateExercise),
+    onMutate: () => setStatus("saving"),
+    onSuccess: () => { onSaved(); setStatus("saved"); },
+    onError: (e)=>{ setStatus("idle"); toast.error(e.message); },
+  });
   const s = useExerciseState(ex);
   const save = () => upd.mutate({ data: {
     id: ex.id, nome: s.nome, series: parseInt(s.series)||1, desc_segundos: parseInt(s.desc)||0,
     obs: s.obs || null, sets_config: s.sets,
   }});
+  const stepSeries = (delta: number) => { const n = Math.max(1, Math.min(20, (parseInt(s.series)||1) + delta)); s.setSeries(String(n)); setTimeout(save, 0); };
   const bg = rowIndex % 2 === 0 ? "bg-white/[0.015]" : "bg-white/[0.04]";
   const td = "px-2 py-2 border-b border-white/5 text-white";
   const inp = "bg-transparent outline-none focus:bg-[var(--yellow)]/5 rounded px-1 py-0.5";
   return (
-    <tr className={bg}>
-      <td className={`${td} w-12`}><input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className={`${inp} w-8`}/><span className="text-zinc-500">x</span></td>
-      <td className={td}><input value={s.nome} onChange={e=>s.setNome(e.target.value)} onBlur={save} className={`${inp} w-full`}/></td>
+    <tr className={`${bg} transition-colors ${status==="saved" ? "bg-[var(--yellow)]/10" : ""}`}>
+      <td className={`${td} w-16`}>
+        <div className="inline-flex items-center gap-0.5">
+          <button onClick={()=>stepSeries(-1)} className="text-zinc-500 hover:text-[var(--yellow)] p-0.5"><Minus className="w-3 h-3"/></button>
+          <input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className={`${inp} w-6 text-center`}/>
+          <button onClick={()=>stepSeries(1)} className="text-zinc-500 hover:text-[var(--yellow)] p-0.5"><Plus className="w-3 h-3"/></button>
+        </div>
+      </td>
+      <td className={td}>
+        <div className="flex items-center gap-1">
+          <input value={s.nome} onChange={e=>s.setNome(e.target.value)} onBlur={save} className={`${inp} w-full`}/>
+          {status==="saving" && <Loader2 className="w-3 h-3 text-zinc-500 animate-spin shrink-0"/>}
+          {status==="saved" && <Check className="w-3 h-3 text-[var(--yellow)] shrink-0"/>}
+        </div>
+      </td>
       {s.sets.map((set, i) => (
         <>
           <td key={"r"+i} className={td}><input value={set.reps} onChange={e=>{const c=[...s.sets];c[i]={...c[i],reps:e.target.value};s.setSets(c);}} onBlur={save} placeholder="10" className={`${inp} w-14 placeholder:text-zinc-700`}/></td>
@@ -299,20 +328,34 @@ function ExerciseRowEditor({ ex, rowIndex, onSaved, onDelete }: { ex: ExerciseRo
 }
 
 function ExerciseCardMobile({ ex, onSaved, onDelete }: { ex: ExerciseRow; onSaved: () => void; onDelete: () => void }) {
-  const upd = useMutation({ mutationFn: useServerFn(updateExercise), onSuccess: onSaved });
+  const [status, setStatus] = useSaveStatus();
+  const upd = useMutation({
+    mutationFn: useServerFn(updateExercise),
+    onMutate: () => setStatus("saving"),
+    onSuccess: () => { onSaved(); setStatus("saved"); },
+    onError: () => setStatus("idle"),
+  });
   const s = useExerciseState(ex);
   const save = () => upd.mutate({ data: {
     id: ex.id, nome: s.nome, series: parseInt(s.series)||1, desc_segundos: parseInt(s.desc)||0,
     obs: s.obs || null, sets_config: s.sets,
   }});
+  const stepSeries = (delta: number) => { const n = Math.max(1, Math.min(20, (parseInt(s.series)||1) + delta)); s.setSeries(String(n)); setTimeout(save, 0); };
   return (
-    <div className="p-3 space-y-2">
-      <div className="flex gap-2">
+    <div className={`p-3 space-y-2 transition-colors ${status==="saved" ? "bg-[var(--yellow)]/10" : ""}`}>
+      <div className="flex gap-2 items-center">
         <input value={s.nome} onChange={e=>s.setNome(e.target.value)} onBlur={save} className="flex-1 font-semibold text-sm bg-transparent border-b border-white/10 focus:border-[var(--yellow)]/60 outline-none text-white pb-1"/>
+        {status==="saving" && <Loader2 className="w-4 h-4 text-zinc-500 animate-spin"/>}
+        {status==="saved" && <Check className="w-4 h-4 text-[var(--yellow)]"/>}
         <button onClick={onDelete} className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 className="w-4 h-4"/></button>
       </div>
-      <div className="flex gap-3 text-xs text-zinc-400">
-        <label className="flex items-center gap-1.5">Séries <input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className="w-10 border-b border-white/10 bg-transparent text-white text-center outline-none focus:border-[var(--yellow)]/60"/></label>
+      <div className="flex gap-3 text-xs text-zinc-400 items-center">
+        <div className="flex items-center gap-1">
+          <span>Séries</span>
+          <button onClick={()=>stepSeries(-1)} className="w-6 h-6 rounded-md border border-white/10 text-white hover:bg-white/10 flex items-center justify-center"><Minus className="w-3 h-3"/></button>
+          <input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className="w-8 border-b border-white/10 bg-transparent text-white text-center outline-none focus:border-[var(--yellow)]/60"/>
+          <button onClick={()=>stepSeries(1)} className="w-6 h-6 rounded-md border border-white/10 text-white hover:bg-white/10 flex items-center justify-center"><Plus className="w-3 h-3"/></button>
+        </div>
         <label className="flex items-center gap-1.5">Desc <input value={s.desc} onChange={e=>s.setDesc(e.target.value)} onBlur={save} className="w-10 border-b border-white/10 bg-transparent text-white text-center outline-none focus:border-[var(--yellow)]/60"/>s</label>
       </div>
       <div className="grid grid-cols-4 gap-1.5">
