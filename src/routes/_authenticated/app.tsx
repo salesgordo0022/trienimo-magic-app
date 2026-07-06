@@ -116,7 +116,32 @@ function Dashboard() {
             ))}
           </div>
         )}
+
+        {assigned.length > 0 && (
+          <div className="mt-6">
+            <div className="bg-black text-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Fichas do seu Professor</div>
+            <div className="grid gap-3 sm:grid-cols-2 mt-3">
+              {assigned.map(w => (
+                <div key={w.id} className="bg-white border-2 border-[var(--yellow)] flex overflow-hidden">
+                  <Link to="/ficha/$id" params={{ id: w.id }} className="bg-[var(--yellow)] text-black flex items-center justify-center w-24 font-display font-black text-5xl">
+                    {w.letra}
+                  </Link>
+                  <div className="flex-1 p-3">
+                    <div className="font-bold uppercase text-sm">Treino {w.letra}</div>
+                    {w.nome && <div className="text-xs text-gray-500">{w.nome}</div>}
+                    {w.assigned_nome && <div className="text-xs text-gray-400 mt-1">Prof: {w.assigned_nome}</div>}
+                    <div className="flex gap-1 mt-2 flex-wrap">
+                      <Link to="/ficha/$id/executar" params={{ id: w.id }} className="inline-flex items-center gap-1 bg-black text-[var(--yellow)] px-2 py-1 text-xs font-bold uppercase"><Play className="w-3 h-3"/>Executar</Link>
+                      <Link to="/ficha/$id/historico" params={{ id: w.id }} className="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 text-xs font-bold uppercase"><History className="w-3 h-3"/>Histórico</Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
+
 
       {showProfile && <ProfileDialog profile={profile} onClose={() => setShowProfile(false)}/>}
       {showInstall && <InstallDialog onClose={() => setShowInstall(false)}/>}
