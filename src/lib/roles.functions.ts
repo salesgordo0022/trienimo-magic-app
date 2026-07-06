@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 export type AppRole = "admin" | "professor" | "aluno";
 
@@ -12,11 +14,12 @@ export type UserRow = {
   teacher_nome: string | null;
 };
 
-async function requireRole(supabase: { rpc: (n: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }> }, userId: string, role: AppRole) {
+async function requireRole(supabase: SupabaseClient<Database>, userId: string, role: AppRole) {
   const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: role });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("forbidden");
 }
+
 
 // --- Get my role ---
 export const getMyRole = createServerFn({ method: "GET" })
