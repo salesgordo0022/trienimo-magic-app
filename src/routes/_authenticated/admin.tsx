@@ -191,3 +191,36 @@ function Badge({ role }: { role: AppRole }) {
   const map: Record<AppRole, string> = { admin: "bg-red-600 text-white", professor: "bg-black text-[var(--yellow)]", aluno: "bg-gray-200 text-black" };
   return <span className={`px-2 py-0.5 text-[10px] font-bold uppercase ${map[role]}`}>{role}</span>;
 }
+
+function AdminNewStudent() {
+  const qc = useQueryClient();
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [open, setOpen] = useState(false);
+  const create = useMutation({
+    mutationFn: useServerFn(createStudent),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allUsers"] });
+      setNome(""); setEmail(""); setPassword(""); setOpen(false);
+      toast.success("Aluno cadastrado");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <div className="bg-white border border-black/10">
+      <button onClick={()=>setOpen(o=>!o)} className="w-full bg-black text-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm text-left flex items-center gap-2">
+        <Plus className="w-4 h-4"/>{open ? "Fechar" : "Cadastrar novo aluno"}
+      </button>
+      {open && (
+        <form onSubmit={(e)=>{e.preventDefault(); if(!nome||!email||password.length<6) return; create.mutate({ data: { nome, email, password } });}} className="p-3 grid gap-2 md:grid-cols-4">
+          <Input placeholder="Nome" value={nome} onChange={e=>setNome(e.target.value)} maxLength={120}/>
+          <Input placeholder="E-mail" type="email" value={email} onChange={e=>setEmail(e.target.value)} maxLength={255}/>
+          <Input placeholder="Senha (mín. 6)" type="text" value={password} onChange={e=>setPassword(e.target.value)} maxLength={128}/>
+          <Button type="submit" disabled={create.isPending} className="bg-[var(--yellow)] text-black font-bold uppercase">Cadastrar</Button>
+          <p className="md:col-span-4 text-[10px] text-gray-500">O aluno usará esse e-mail e senha. Depois atribua a um professor abaixo.</p>
+        </form>
+      )}
+    </div>
+  );
+}
