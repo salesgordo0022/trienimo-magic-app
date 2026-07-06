@@ -19,6 +19,13 @@ export const Route = createFileRoute("/_authenticated/ficha/$id")({
   component: FichaEditor,
 });
 
+const pageBg = "radial-gradient(1200px 600px at 15% 10%, rgba(255,212,0,0.08), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(255,212,0,0.05), transparent 60%), #0b0b0d";
+const glassCard = "rounded-2xl border border-white/10 backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/[0.02] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]";
+const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10";
+const goldBtn = "inline-flex items-center justify-center gap-2 text-black font-semibold rounded-xl px-4 py-2.5 text-sm transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-60";
+const goldBtnStyle = { background: "linear-gradient(135deg, #FFD400, #FFB800)", boxShadow: "0 10px 30px -12px rgba(255,212,0,0.55)" } as const;
+const chipBtn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all";
+
 function FichaEditor() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(fichaQO(id));
@@ -36,38 +43,41 @@ function FichaEditor() {
   const [newGroupName, setNewGroupName] = useState("");
 
   return (
-    <div className="min-h-screen bg-[var(--row-alt)] pb-24">
-      <header className="bg-black text-white sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-3 py-2 flex items-center gap-2">
-          <Link to="/app" className="text-white p-1"><ArrowLeft className="w-4 h-4"/></Link>
-          <div className="text-[var(--yellow)] font-display font-black uppercase text-sm">Treino {data.workout.letra}</div>
-          <div className="ml-auto flex gap-2">
-            <Link to="/ficha/$id/executar" params={{ id }} className="inline-flex items-center gap-1 bg-[var(--yellow)] text-black px-2 py-1 text-xs font-bold uppercase"><Play className="w-3 h-3"/>Executar</Link>
-            <Link to="/ficha/$id/historico" params={{ id }} className="inline-flex items-center gap-1 bg-white/10 px-2 py-1 text-xs font-bold uppercase"><History className="w-3 h-3"/>Histórico</Link>
+    <div className="min-h-screen text-white pb-24" style={{ fontFamily: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif", background: pageBg }}>
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-black/50 border-b border-white/5">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
+          <Link to="/app" className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"><ArrowLeft className="w-4 h-4"/></Link>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-black font-bold text-sm" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)" }}>{data.workout.letra}</div>
+            <div className="text-sm font-semibold text-white tracking-tight">Treino {data.workout.letra}</div>
+          </div>
+          <div className="ml-auto flex gap-1.5">
+            <Link to="/ficha/$id/executar" params={{ id }} className={chipBtn} style={goldBtnStyle}><Play className="w-3 h-3"/>Executar</Link>
+            <Link to="/ficha/$id/historico" params={{ id }} className={`${chipBtn} bg-white/5 hover:bg-white/10 border border-white/10 text-white`}><History className="w-3 h-3"/>Histórico</Link>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto p-3 space-y-4">
+      <main className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
         {/* Cabeçalho estilo ficha */}
-        <div className="bg-white border border-black/10">
-          <div className="grid grid-cols-[1fr_auto] gap-2 p-3 items-stretch">
-            <div className="flex items-center gap-3">
-              <div className="font-display text-3xl md:text-4xl font-black">
-                <span className="text-black">{(data.profile.logo_texto ?? "Sua").replace(/logo/i, "")}</span>
+        <div className={`${glassCard} overflow-hidden`}>
+          <div className="grid grid-cols-[1fr_auto] gap-3 p-5 items-stretch">
+            <div className="flex items-center gap-4">
+              <div className="text-3xl md:text-4xl font-bold tracking-tight">
+                <span className="text-white">{(data.profile.logo_texto ?? "Sua").replace(/logo/i, "")}</span>
                 <span className="text-[var(--yellow)]">{/logo/i.test(data.profile.logo_texto ?? "SuaLogo") ? "Logo" : "Logo"}</span>
               </div>
-              <div className="hidden md:block border-l pl-3">
-                <div className="font-bold text-sm">{data.profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}</div>
-                <div className="text-xs text-gray-500">FICHA DE TREINO</div>
+              <div className="hidden md:block border-l border-white/10 pl-4">
+                <div className="font-semibold text-sm text-white">{data.profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}</div>
+                <div className="text-xs text-zinc-500 mt-0.5">FICHA DE TREINO</div>
               </div>
             </div>
-            <div className="bg-black text-[var(--yellow)] px-4 py-2 text-center min-w-[80px]">
-              <div className="text-[10px] font-bold text-white uppercase">Treino:</div>
-              <div className="font-display font-black text-4xl leading-none">{data.workout.letra}</div>
+            <div className="rounded-xl px-5 py-3 text-center min-w-[90px] text-black" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)" }}>
+              <div className="text-[10px] font-bold uppercase opacity-70">Treino</div>
+              <div className="font-bold text-4xl leading-none">{data.workout.letra}</div>
             </div>
           </div>
-          <div className="border-t divide-y text-sm">
+          <div className="border-t border-white/5 divide-y divide-white/5 text-sm">
             <HeaderField label="Aluno" value={data.profile.nome ?? ""} readOnly/>
             <HeaderField label="Data do Início" value={data.workout.data_inicio ?? ""} onSave={v=>updW.mutate({data:{id, data_inicio: v}})} type="date"/>
             <HeaderField label="Objetivo" value={data.profile.objetivo ?? ""} readOnly/>
@@ -84,9 +94,9 @@ function FichaEditor() {
             onExerciseSaved={invalidate}/>
         ))}
 
-        <form className="bg-white border border-black/10 p-3 flex gap-2" onSubmit={(e)=>{e.preventDefault(); if(!newGroupName) return; addG.mutate({data:{workout_id:id, nome:newGroupName}}); setNewGroupName("");}}>
-          <Input placeholder="Novo grupo (ex: COSTAS, PERNAS...)" value={newGroupName} onChange={e=>setNewGroupName(e.target.value)}/>
-          <Button type="submit" className="bg-black text-white"><Plus className="w-4 h-4 mr-1"/>Grupo</Button>
+        <form className={`${glassCard} p-4 flex gap-2`} onSubmit={(e)=>{e.preventDefault(); if(!newGroupName) return; addG.mutate({data:{workout_id:id, nome:newGroupName}}); setNewGroupName("");}}>
+          <input placeholder="Novo grupo (ex: COSTAS, PERNAS...)" value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} className={inputCls}/>
+          <button type="submit" className={goldBtn} style={goldBtnStyle}><Plus className="w-4 h-4"/>Grupo</button>
         </form>
       </main>
     </div>
@@ -96,17 +106,17 @@ function FichaEditor() {
 function HeaderField({ label, value, onSave, readOnly, type }: { label: string; value: string; onSave?: (v: string) => void; readOnly?: boolean; type?: string }) {
   const [v, setV] = useState(value);
   return (
-    <div className="grid grid-cols-[130px_1fr] items-center">
-      <div className="bg-[var(--row-alt)] px-2 py-1.5 text-xs font-bold uppercase">{label}</div>
+    <div className="grid grid-cols-[140px_1fr] items-center">
+      <div className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-400 bg-white/[0.02]">{label}</div>
       {readOnly ? (
-        <div className="px-2 py-1.5 text-sm">{value || <span className="text-gray-400 text-xs">defina em Perfil</span>}</div>
+        <div className="px-4 py-2.5 text-sm text-white">{value || <span className="text-zinc-600 text-xs">defina em Perfil</span>}</div>
       ) : (
         <input
           type={type ?? "text"}
           value={v}
           onChange={e=>setV(e.target.value)}
           onBlur={()=> v !== value && onSave?.(v)}
-          className="px-2 py-1.5 text-sm bg-white outline-none focus:bg-yellow-50"
+          className="px-4 py-2.5 text-sm bg-transparent text-white outline-none focus:bg-[var(--yellow)]/5"
         />
       )}
     </div>
@@ -122,23 +132,24 @@ function GroupBlock({ group, onDelete, onAddExercise, onDeleteExercise, onExerci
 }) {
   const [newEx, setNewEx] = useState("");
   return (
-    <div className="bg-white border border-black/10">
-      <div className="bg-black text-[var(--yellow)] px-3 py-1.5 flex items-center gap-2">
-        <div className="font-display font-black uppercase text-sm flex-1">{group.nome}</div>
-        <button onClick={()=>{if(confirm("Excluir grupo e exercícios?")) onDelete();}} className="text-white/60 hover:text-white"><Trash2 className="w-3 h-3"/></button>
+    <div className={`${glassCard} overflow-hidden`}>
+      <div className="px-4 py-3 flex items-center gap-2 border-b border-white/5 bg-black/30">
+        <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(180deg, #FFD400, #FFB800)" }} />
+        <div className="font-semibold uppercase tracking-wide text-sm text-white flex-1">{group.nome}</div>
+        <button onClick={()=>{if(confirm("Excluir grupo e exercícios?")) onDelete();}} className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"><Trash2 className="w-3.5 h-3.5"/></button>
       </div>
 
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr>
-              <th className="ficha-th w-12">Nº</th>
-              <th className="ficha-th">Exercício</th>
-              {[0,1,2,3].map(i => (<><th key={"r"+i} className="ficha-th w-16">Repets</th><th key={"k"+i} className="ficha-th w-16">Kg</th></>))}
-              <th className="ficha-th w-16">Desc</th>
-              <th className="ficha-th w-24">Obs</th>
-              <th className="ficha-th w-8"></th>
+            <tr className="text-[10px] uppercase tracking-wider text-black" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)" }}>
+              <th className="px-2 py-2 w-12 text-left font-bold">Nº</th>
+              <th className="px-2 py-2 text-left font-bold">Exercício</th>
+              {[0,1,2,3].map(i => (<><th key={"r"+i} className="px-2 py-2 w-16 text-left font-bold">Repets</th><th key={"k"+i} className="px-2 py-2 w-16 text-left font-bold">Kg</th></>))}
+              <th className="px-2 py-2 w-16 text-left font-bold">Desc</th>
+              <th className="px-2 py-2 w-24 text-left font-bold">Obs</th>
+              <th className="px-2 py-2 w-8"></th>
             </tr>
           </thead>
           <tbody>
@@ -150,15 +161,15 @@ function GroupBlock({ group, onDelete, onAddExercise, onDeleteExercise, onExerci
       </div>
 
       {/* Mobile cards */}
-      <div className="md:hidden divide-y">
+      <div className="md:hidden divide-y divide-white/5">
         {group.exercises.map(ex => (
           <ExerciseCardMobile key={ex.id} ex={ex} onSaved={onExerciseSaved} onDelete={() => onDeleteExercise(ex.id)}/>
         ))}
       </div>
 
-      <form className="p-2 flex gap-2 border-t" onSubmit={(e)=>{e.preventDefault(); if(!newEx)return; onAddExercise(newEx); setNewEx("");}}>
-        <Input placeholder="Novo exercício" value={newEx} onChange={e=>setNewEx(e.target.value)} className="h-8"/>
-        <Button size="sm" type="submit" className="bg-black text-white"><Plus className="w-3 h-3 mr-1"/>Add</Button>
+      <form className="p-3 flex gap-2 border-t border-white/5" onSubmit={(e)=>{e.preventDefault(); if(!newEx)return; onAddExercise(newEx); setNewEx("");}}>
+        <input placeholder="Novo exercício" value={newEx} onChange={e=>setNewEx(e.target.value)} className={`${inputCls} py-2`}/>
+        <button type="submit" className={`${chipBtn} text-black`} style={goldBtnStyle}><Plus className="w-3 h-3"/>Add</button>
       </form>
     </div>
   );
@@ -183,20 +194,22 @@ function ExerciseRowEditor({ ex, rowIndex, onSaved, onDelete }: { ex: ExerciseRo
     id: ex.id, nome: s.nome, series: parseInt(s.series)||1, desc_segundos: parseInt(s.desc)||0,
     obs: s.obs || null, sets_config: s.sets,
   }});
-  const bg = rowIndex % 2 === 0 ? "bg-white" : "bg-[var(--row-alt)]";
+  const bg = rowIndex % 2 === 0 ? "bg-white/[0.015]" : "bg-white/[0.04]";
+  const td = "px-2 py-2 border-b border-white/5 text-white";
+  const inp = "bg-transparent outline-none focus:bg-[var(--yellow)]/5 rounded px-1 py-0.5";
   return (
     <tr className={bg}>
-      <td className="ficha-td w-12"><input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className="w-8 bg-transparent"/>x</td>
-      <td className="ficha-td"><input value={s.nome} onChange={e=>s.setNome(e.target.value)} onBlur={save} className="w-full bg-transparent"/></td>
+      <td className={`${td} w-12`}><input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className={`${inp} w-8`}/><span className="text-zinc-500">x</span></td>
+      <td className={td}><input value={s.nome} onChange={e=>s.setNome(e.target.value)} onBlur={save} className={`${inp} w-full`}/></td>
       {s.sets.map((set, i) => (
         <>
-          <td key={"r"+i} className="ficha-td"><input value={set.reps} onChange={e=>{const c=[...s.sets];c[i]={...c[i],reps:e.target.value};s.setSets(c);}} onBlur={save} placeholder="10" className="w-14 bg-transparent"/></td>
-          <td key={"k"+i} className="ficha-td"><input value={set.kg} onChange={e=>{const c=[...s.sets];c[i]={...c[i],kg:e.target.value};s.setSets(c);}} onBlur={save} placeholder="kg" className="w-14 bg-transparent"/></td>
+          <td key={"r"+i} className={td}><input value={set.reps} onChange={e=>{const c=[...s.sets];c[i]={...c[i],reps:e.target.value};s.setSets(c);}} onBlur={save} placeholder="10" className={`${inp} w-14 placeholder:text-zinc-700`}/></td>
+          <td key={"k"+i} className={td}><input value={set.kg} onChange={e=>{const c=[...s.sets];c[i]={...c[i],kg:e.target.value};s.setSets(c);}} onBlur={save} placeholder="kg" className={`${inp} w-14 placeholder:text-zinc-700`}/></td>
         </>
       ))}
-      <td className="ficha-td"><input value={s.desc} onChange={e=>s.setDesc(e.target.value)} onBlur={save} className="w-12 bg-transparent"/>s</td>
-      <td className="ficha-td"><input value={s.obs} onChange={e=>s.setObs(e.target.value)} onBlur={save} className="w-full bg-transparent" placeholder="—"/></td>
-      <td className="ficha-td"><button onClick={onDelete} className="text-red-500"><Trash2 className="w-3 h-3"/></button></td>
+      <td className={td}><input value={s.desc} onChange={e=>s.setDesc(e.target.value)} onBlur={save} className={`${inp} w-12`}/><span className="text-zinc-500">s</span></td>
+      <td className={td}><input value={s.obs} onChange={e=>s.setObs(e.target.value)} onBlur={save} className={`${inp} w-full placeholder:text-zinc-700`} placeholder="—"/></td>
+      <td className={td}><button onClick={onDelete} className="p-1 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"><Trash2 className="w-3 h-3"/></button></td>
     </tr>
   );
 }
@@ -211,23 +224,23 @@ function ExerciseCardMobile({ ex, onSaved, onDelete }: { ex: ExerciseRow; onSave
   return (
     <div className="p-3 space-y-2">
       <div className="flex gap-2">
-        <input value={s.nome} onChange={e=>s.setNome(e.target.value)} onBlur={save} className="flex-1 font-bold text-sm bg-transparent border-b border-transparent focus:border-black outline-none"/>
-        <button onClick={onDelete} className="text-red-500"><Trash2 className="w-4 h-4"/></button>
+        <input value={s.nome} onChange={e=>s.setNome(e.target.value)} onBlur={save} className="flex-1 font-semibold text-sm bg-transparent border-b border-white/10 focus:border-[var(--yellow)]/60 outline-none text-white pb-1"/>
+        <button onClick={onDelete} className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 className="w-4 h-4"/></button>
       </div>
-      <div className="flex gap-2 text-xs">
-        <label className="flex items-center gap-1">Séries <input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className="w-10 border-b bg-transparent"/></label>
-        <label className="flex items-center gap-1">Desc <input value={s.desc} onChange={e=>s.setDesc(e.target.value)} onBlur={save} className="w-10 border-b bg-transparent"/>s</label>
+      <div className="flex gap-3 text-xs text-zinc-400">
+        <label className="flex items-center gap-1.5">Séries <input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className="w-10 border-b border-white/10 bg-transparent text-white text-center outline-none focus:border-[var(--yellow)]/60"/></label>
+        <label className="flex items-center gap-1.5">Desc <input value={s.desc} onChange={e=>s.setDesc(e.target.value)} onBlur={save} className="w-10 border-b border-white/10 bg-transparent text-white text-center outline-none focus:border-[var(--yellow)]/60"/>s</label>
       </div>
-      <div className="grid grid-cols-4 gap-1">
+      <div className="grid grid-cols-4 gap-1.5">
         {s.sets.map((set,i)=>(
-          <div key={i} className="border p-1 text-xs">
-            <div className="text-[10px] text-gray-500">Série {i+1}</div>
-            <input value={set.reps} onChange={e=>{const c=[...s.sets];c[i]={...c[i],reps:e.target.value};s.setSets(c);}} onBlur={save} placeholder="reps" className="w-full bg-transparent"/>
-            <input value={set.kg} onChange={e=>{const c=[...s.sets];c[i]={...c[i],kg:e.target.value};s.setSets(c);}} onBlur={save} placeholder="kg" className="w-full bg-transparent"/>
+          <div key={i} className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-xs">
+            <div className="text-[10px] text-zinc-500 mb-1">Série {i+1}</div>
+            <input value={set.reps} onChange={e=>{const c=[...s.sets];c[i]={...c[i],reps:e.target.value};s.setSets(c);}} onBlur={save} placeholder="reps" className="w-full bg-transparent text-white outline-none placeholder:text-zinc-700"/>
+            <input value={set.kg} onChange={e=>{const c=[...s.sets];c[i]={...c[i],kg:e.target.value};s.setSets(c);}} onBlur={save} placeholder="kg" className="w-full bg-transparent text-white outline-none placeholder:text-zinc-700"/>
           </div>
         ))}
       </div>
-      <input value={s.obs} onChange={e=>s.setObs(e.target.value)} onBlur={save} placeholder="Observação" className="w-full text-xs border-b bg-transparent"/>
+      <input value={s.obs} onChange={e=>s.setObs(e.target.value)} onBlur={save} placeholder="Observação" className="w-full text-xs border-b border-white/10 bg-transparent text-white outline-none focus:border-[var(--yellow)]/60 pb-1 placeholder:text-zinc-600"/>
     </div>
   );
 }
