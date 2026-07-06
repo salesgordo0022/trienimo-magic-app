@@ -123,15 +123,35 @@ export const updateProfile = createServerFn({ method: "POST" })
 // --- Create workout ---
 export const createWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { letra: string; nome?: string }) =>
-    z.object({ letra: z.string().min(1).max(3), nome: z.string().max(80).optional() }).parse(d)
+  .inputValidator((d: { letra: string; nome?: string; assigned_to?: string | null }) =>
+    z.object({
+      letra: z.string().min(1).max(3),
+      nome: z.string().max(80).optional(),
+      assigned_to: z.string().uuid().nullable().optional(),
+    }).parse(d)
   )
   .handler(async ({ context, data }) => {
-    const { data: countRows } = await context.supabase.from("workouts").select("id").eq("user_id", context.userId);
+    // If prescribing to another user, require professor/admin
+    if (data.assigned_to && data.assigned_to !== context.userId) {
+      const { data: isProf } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "professor" });
+      const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+      if (!isProf && !isAdmin) throw new Error("Somente professores podem prescrever fichas.");
+    }
+    const target = data.assigned_to ?? null;
+    const { data: countRows } = await context.supabase.from("workouts").select("id")
+      .eq("user_id", context.userId)
+      .eq("assigned_to", target as string);
     const ordem = countRows?.length ?? 0;
     const { data: w, error } = await context.supabase
       .from("workouts")
-      .insert({ user_id: context.userId, letra: data.letra.toUpperCase(), nome: data.nome ?? null, ordem, data_inicio: new Date().toISOString().slice(0, 10) })
+      .insert({
+        user_id: context.userId,
+        assigned_to: target,
+        letra: data.letra.toUpperCase(),
+        nome: data.nome ?? null,
+        ordem,
+        data_inicio: new Date().toISOString().slice(0, 10),
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -141,6 +161,7 @@ export const createWorkout = createServerFn({ method: "POST" })
     await context.supabase.from("workout_groups").insert(groupRows);
     return { id: w.id };
   });
+
 
 export const deleteWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
