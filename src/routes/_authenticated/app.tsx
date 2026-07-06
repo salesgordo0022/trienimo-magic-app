@@ -64,11 +64,18 @@ function Dashboard() {
             <div className="text-[var(--yellow)] font-display text-2xl font-black leading-none">FICHA DE TREINO</div>
             <div className="text-xs text-gray-300 mt-0.5">{profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}</div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap justify-end">
+            {myRole.role === "admin" && (
+              <Link to="/admin" className="inline-flex items-center gap-1 bg-[var(--yellow)] text-black px-2 py-1 text-xs font-bold uppercase"><Shield className="w-3 h-3"/>Admin</Link>
+            )}
+            {(myRole.role === "admin" || myRole.role === "professor") && (
+              <Link to="/professor" className="inline-flex items-center gap-1 bg-[var(--yellow)] text-black px-2 py-1 text-xs font-bold uppercase"><Users className="w-3 h-3"/>Meus Alunos</Link>
+            )}
             <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={() => setShowInstall(true)}><Download className="w-4 h-4"/></Button>
             <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={() => setShowProfile(true)}>Perfil</Button>
             <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={logout}><LogOut className="w-4 h-4"/></Button>
           </div>
+
         </div>
       </header>
 
