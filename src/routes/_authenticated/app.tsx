@@ -41,9 +41,12 @@ function Dashboard() {
   const { data: assigned } = useSuspenseQuery(assignedQO());
   const { data: profile } = useSuspenseQuery(profileQO());
   const { data: myRole } = useSuspenseQuery(roleQO());
+  const { data: myStudents } = useSuspenseQuery(studentsQO());
+  const isTeacher = myRole.role === "admin" || myRole.role === "professor";
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [letra, setLetra] = useState("");
+  const [assignTo, setAssignTo] = useState<string>("");
   const [showProfile, setShowProfile] = useState(false);
   const [showInstall, setShowInstall] = useState(false);
 
