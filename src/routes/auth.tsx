@@ -85,6 +85,13 @@ function AuthPage() {
             )}
             <div><Label>E-mail</Label><Input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/></div>
             <div><Label>Senha</Label><Input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={6}/></div>
+            {mode === "signup" && (
+              <div>
+                <Label>Código de convite <span className="text-gray-400">(opcional)</span></Label>
+                <Input value={convite} onChange={e=>setConvite(e.target.value.toUpperCase())} placeholder="Deixe em branco para entrar como aluno" maxLength={12}/>
+              </div>
+            )}
+
             <Button type="submit" disabled={loading} className="w-full bg-black hover:bg-black/90 text-white font-bold uppercase">
               {loading ? "..." : mode === "login" ? "Entrar" : "Criar conta"}
             </Button>
