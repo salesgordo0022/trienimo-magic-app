@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, LogOut, Trash2, Play, Pencil, History, Download, Shield, Users } from "lucide-react";
+import { Plus, LogOut, Trash2, Play, Pencil, History, Download, Shield, Users, User } from "lucide-react";
 
 const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => listWorkouts() });
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
@@ -68,30 +68,31 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen text-white" style={{ fontFamily: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif", background: pageBg }}>
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-black/40 border-b border-white/5">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)", boxShadow: "0 10px 30px -8px rgba(255,212,0,0.5)" }}>
-              <svg className="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M4 9v6"/><path d="M20 9v6"/><path d="M2 11v2"/><path d="M22 11v2"/></svg>
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-black/40 border-b border-white/5 safe-top safe-x">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)", boxShadow: "0 10px 30px -8px rgba(255,212,0,0.5)" }}>
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M4 9v6"/><path d="M20 9v6"/><path d="M2 11v2"/><path d="M22 11v2"/></svg>
             </div>
-            <div>
-              <div className="text-white font-bold text-base tracking-tight leading-none">Ficha de Treino</div>
-              <div className="text-[11px] text-zinc-500 mt-1">{profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}</div>
+            <div className="min-w-0">
+              <div className="text-white font-bold text-sm sm:text-base tracking-tight leading-none truncate">Ficha de Treino</div>
+              <div className="text-[10px] sm:text-[11px] text-zinc-500 mt-1 truncate">{profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}</div>
             </div>
           </div>
-          <div className="flex gap-1.5 flex-wrap justify-end items-center">
+          <div className="flex gap-1 items-center shrink-0">
             {myRole.role === "admin" && (
-              <Link to="/admin" className={`${chipBtn} bg-white/5 hover:bg-white/10 border border-white/10 text-white`}><Shield className="w-3.5 h-3.5"/>Admin</Link>
+              <Link to="/admin" aria-label="Admin" className="p-2 rounded-lg text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"><Shield className="w-4 h-4"/></Link>
             )}
             {(myRole.role === "admin" || myRole.role === "professor") && (
-              <Link to="/professor" className={`${chipBtn} bg-white/5 hover:bg-white/10 border border-white/10 text-white`}><Users className="w-3.5 h-3.5"/>Alunos</Link>
+              <Link to="/professor" aria-label="Alunos" className="p-2 rounded-lg text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"><Users className="w-4 h-4"/></Link>
             )}
-            <button onClick={() => setShowInstall(true)} className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"><Download className="w-4 h-4"/></button>
-            <button onClick={() => setShowProfile(true)} className="px-3 py-1.5 rounded-lg text-sm text-zinc-300 hover:text-white hover:bg-white/5 transition-colors">Perfil</button>
-            <button onClick={logout} className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"><LogOut className="w-4 h-4"/></button>
+            <button onClick={() => setShowInstall(true)} aria-label="Instalar" className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"><Download className="w-4 h-4"/></button>
+            <button onClick={() => setShowProfile(true)} aria-label="Perfil" className="p-2 rounded-lg text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"><User className="w-4 h-4"/></button>
+            <button onClick={logout} aria-label="Sair" className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"><LogOut className="w-4 h-4"/></button>
           </div>
         </div>
       </header>
+
 
       <main className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
         <section className={`${glassCard} p-5`}>
