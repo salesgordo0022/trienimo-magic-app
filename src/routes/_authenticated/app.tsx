@@ -30,7 +30,9 @@ export const Route = createFileRoute("/_authenticated/app")({
 
 function Dashboard() {
   const { data: workouts } = useSuspenseQuery(workoutsQO());
+  const { data: assigned } = useSuspenseQuery(assignedQO());
   const { data: profile } = useSuspenseQuery(profileQO());
+  const { data: myRole } = useSuspenseQuery(roleQO());
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [letra, setLetra] = useState("");
@@ -52,6 +54,7 @@ function Dashboard() {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   };
+
 
   return (
     <div className="min-h-screen bg-[var(--row-alt)]">
