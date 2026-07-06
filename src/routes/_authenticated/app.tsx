@@ -16,6 +16,7 @@ const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => l
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
 const profileQO = () => queryOptions({ queryKey: ["profile"], queryFn: () => getProfile() });
 const roleQO = () => queryOptions({ queryKey: ["myRole"], queryFn: () => getMyRole() });
+const studentsQO = () => queryOptions({ queryKey: ["myStudents"], queryFn: () => listMyStudents() });
 
 export const Route = createFileRoute("/_authenticated/app")({
   loader: ({ context }) => {
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/app")({
     context.queryClient.ensureQueryData(assignedQO());
     context.queryClient.ensureQueryData(profileQO());
     context.queryClient.ensureQueryData(roleQO());
+    context.queryClient.ensureQueryData(studentsQO());
   },
   component: Dashboard,
 });
