@@ -99,12 +99,23 @@ function Dashboard() {
             <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(180deg, #FFD400, #FFB800)" }} />
             <h2 className="text-sm font-semibold text-white tracking-wide uppercase">Novo Treino</h2>
           </div>
-          <form onSubmit={(e) => { e.preventDefault(); if (!letra) return; create.mutate({ data: { letra } }); setLetra(""); }} className="flex gap-2">
-            <input placeholder="Letra (A, B, C...)" value={letra} onChange={e=>setLetra(e.target.value.slice(0,3))} className={`${inputCls} uppercase max-w-[180px]`}/>
+          <form onSubmit={(e) => { e.preventDefault(); if (!letra) return; create.mutate({ data: { letra, assigned_to: assignTo || null } }); setLetra(""); }} className="flex flex-wrap gap-2">
+            <input placeholder="Letra (A, B, C...)" value={letra} onChange={e=>setLetra(e.target.value.slice(0,3))} className={`${inputCls} uppercase max-w-[140px]`}/>
+            {isTeacher && (
+              <select value={assignTo} onChange={e=>setAssignTo(e.target.value)} className={`${inputCls} max-w-[260px]`}>
+                <option value="">Para mim (pessoal)</option>
+                {myStudents.map(s => (
+                  <option key={s.id} value={s.id}>Aluno: {s.nome ?? "(sem nome)"}</option>
+                ))}
+              </select>
+            )}
             <button type="submit" disabled={create.isPending} className={goldBtn} style={goldBtnStyle}>
               <Plus className="w-4 h-4"/>Criar
             </button>
           </form>
+          {isTeacher && myStudents.length === 0 && (
+            <div className="text-[11px] text-zinc-500 mt-3">Sem alunos vinculados ainda — peça ao admin para atribuir alunos a você.</div>
+          )}
         </section>
 
         <section>
