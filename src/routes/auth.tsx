@@ -22,7 +22,14 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
+  const [convite, setConvite] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const c = url.searchParams.get("convite");
+    if (c) { setConvite(c.toUpperCase()); setMode("signup"); }
+  }, []);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -31,6 +38,7 @@ function AuthPage() {
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -38,11 +46,12 @@ function AuthPage() {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email, password,
-          options: { emailRedirectTo: window.location.origin, data: { name: nome } },
+          options: { emailRedirectTo: window.location.origin, data: { name: nome, invite_code: convite || undefined } },
         });
         if (error) throw error;
         toast.success("Conta criada! Confirme o e-mail se solicitado.");
       } else {
+
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
@@ -76,6 +85,13 @@ function AuthPage() {
             )}
             <div><Label>E-mail</Label><Input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/></div>
             <div><Label>Senha</Label><Input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={6}/></div>
+            {mode === "signup" && (
+              <div>
+                <Label>Código de convite <span className="text-gray-400">(opcional)</span></Label>
+                <Input value={convite} onChange={e=>setConvite(e.target.value.toUpperCase())} placeholder="Deixe em branco para entrar como aluno" maxLength={12}/>
+              </div>
+            )}
+
             <Button type="submit" disabled={loading} className="w-full bg-black hover:bg-black/90 text-white font-bold uppercase">
               {loading ? "..." : mode === "login" ? "Entrar" : "Criar conta"}
             </Button>

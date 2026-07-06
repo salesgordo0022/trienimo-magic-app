@@ -9,7 +9,11 @@ export type WorkoutRow = {
   data_inicio: string | null;
   observacao: string | null;
   ordem: number;
+  user_id?: string;
+  assigned_to?: string | null;
+  assigned_nome?: string | null;
 };
+
 
 export type ExerciseRow = {
   id: string;
@@ -35,18 +39,55 @@ export type FichaFull = {
   groups: GroupWithExercises[];
 };
 
-// --- List workouts ---
+// --- List workouts owned by me ---
 export const listWorkouts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .eq("user_id", context.userId)
+      .is("assigned_to", null)
       .order("ordem", { ascending: true })
       .order("letra", { ascending: true });
     if (error) throw new Error(error.message);
     return (data ?? []) as WorkoutRow[];
   });
+
+// --- Fichas prescritas para mim (aluno) ---
+export const listAssignedToMe = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("workouts")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .eq("assigned_to", context.userId)
+      .order("ordem", { ascending: true });
+    if (error) throw new Error(error.message);
+    if (!data?.length) return [] as WorkoutRow[];
+    const teacherIds = Array.from(new Set(data.map(w => w.user_id)));
+    const { data: profs } = await context.supabase.from("profiles").select("id, nome").in("id", teacherIds);
+    return data.map(w => ({
+      ...w,
+      assigned_nome: profs?.find(p => p.id === w.user_id)?.nome ?? null,
+    })) as WorkoutRow[];
+  });
+
+// --- Fichas que criei para um aluno específico (professor) ---
+export const listWorkoutsForStudent = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { student_id: string }) => z.object({ student_id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: rows, error } = await context.supabase
+      .from("workouts")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .eq("user_id", context.userId)
+      .eq("assigned_to", data.student_id)
+      .order("ordem", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as WorkoutRow[];
+  });
+
 
 // --- Get profile ---
 export const getProfile = createServerFn({ method: "GET" })
@@ -82,15 +123,35 @@ export const updateProfile = createServerFn({ method: "POST" })
 // --- Create workout ---
 export const createWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { letra: string; nome?: string }) =>
-    z.object({ letra: z.string().min(1).max(3), nome: z.string().max(80).optional() }).parse(d)
+  .inputValidator((d: { letra: string; nome?: string; assigned_to?: string | null }) =>
+    z.object({
+      letra: z.string().min(1).max(3),
+      nome: z.string().max(80).optional(),
+      assigned_to: z.string().uuid().nullable().optional(),
+    }).parse(d)
   )
   .handler(async ({ context, data }) => {
-    const { data: countRows } = await context.supabase.from("workouts").select("id").eq("user_id", context.userId);
+    // If prescribing to another user, require professor/admin
+    if (data.assigned_to && data.assigned_to !== context.userId) {
+      const { data: isProf } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "professor" });
+      const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+      if (!isProf && !isAdmin) throw new Error("Somente professores podem prescrever fichas.");
+    }
+    const target = data.assigned_to ?? null;
+    const { data: countRows } = await context.supabase.from("workouts").select("id")
+      .eq("user_id", context.userId)
+      .eq("assigned_to", target as string);
     const ordem = countRows?.length ?? 0;
     const { data: w, error } = await context.supabase
       .from("workouts")
-      .insert({ user_id: context.userId, letra: data.letra.toUpperCase(), nome: data.nome ?? null, ordem, data_inicio: new Date().toISOString().slice(0, 10) })
+      .insert({
+        user_id: context.userId,
+        assigned_to: target,
+        letra: data.letra.toUpperCase(),
+        nome: data.nome ?? null,
+        ordem,
+        data_inicio: new Date().toISOString().slice(0, 10),
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -100,6 +161,7 @@ export const createWorkout = createServerFn({ method: "POST" })
     await context.supabase.from("workout_groups").insert(groupRows);
     return { id: w.id };
   });
+
 
 export const deleteWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

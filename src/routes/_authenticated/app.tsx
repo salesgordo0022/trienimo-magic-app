@@ -2,29 +2,37 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { queryOptions } from "@tanstack/react-query";
-import { listWorkouts, createWorkout, deleteWorkout, getProfile, updateProfile } from "@/lib/workouts.functions";
+import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout, getProfile, updateProfile } from "@/lib/workouts.functions";
+import { getMyRole } from "@/lib/roles.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, LogOut, Trash2, Play, Pencil, History, Download } from "lucide-react";
+import { Plus, LogOut, Trash2, Play, Pencil, History, Download, Shield, Users } from "lucide-react";
 
 const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => listWorkouts() });
+const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
 const profileQO = () => queryOptions({ queryKey: ["profile"], queryFn: () => getProfile() });
+const roleQO = () => queryOptions({ queryKey: ["myRole"], queryFn: () => getMyRole() });
 
 export const Route = createFileRoute("/_authenticated/app")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(workoutsQO());
+    context.queryClient.ensureQueryData(assignedQO());
     context.queryClient.ensureQueryData(profileQO());
+    context.queryClient.ensureQueryData(roleQO());
   },
   component: Dashboard,
 });
 
+
 function Dashboard() {
   const { data: workouts } = useSuspenseQuery(workoutsQO());
+  const { data: assigned } = useSuspenseQuery(assignedQO());
   const { data: profile } = useSuspenseQuery(profileQO());
+  const { data: myRole } = useSuspenseQuery(roleQO());
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [letra, setLetra] = useState("");
@@ -47,6 +55,7 @@ function Dashboard() {
     navigate({ to: "/auth", replace: true });
   };
 
+
   return (
     <div className="min-h-screen bg-[var(--row-alt)]">
       <header className="bg-black text-white">
@@ -55,11 +64,18 @@ function Dashboard() {
             <div className="text-[var(--yellow)] font-display text-2xl font-black leading-none">FICHA DE TREINO</div>
             <div className="text-xs text-gray-300 mt-0.5">{profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}</div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap justify-end">
+            {myRole.role === "admin" && (
+              <Link to="/admin" className="inline-flex items-center gap-1 bg-[var(--yellow)] text-black px-2 py-1 text-xs font-bold uppercase"><Shield className="w-3 h-3"/>Admin</Link>
+            )}
+            {(myRole.role === "admin" || myRole.role === "professor") && (
+              <Link to="/professor" className="inline-flex items-center gap-1 bg-[var(--yellow)] text-black px-2 py-1 text-xs font-bold uppercase"><Users className="w-3 h-3"/>Meus Alunos</Link>
+            )}
             <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={() => setShowInstall(true)}><Download className="w-4 h-4"/></Button>
             <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={() => setShowProfile(true)}>Perfil</Button>
             <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={logout}><LogOut className="w-4 h-4"/></Button>
           </div>
+
         </div>
       </header>
 
@@ -100,7 +116,32 @@ function Dashboard() {
             ))}
           </div>
         )}
+
+        {assigned.length > 0 && (
+          <div className="mt-6">
+            <div className="bg-black text-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Fichas do seu Professor</div>
+            <div className="grid gap-3 sm:grid-cols-2 mt-3">
+              {assigned.map(w => (
+                <div key={w.id} className="bg-white border-2 border-[var(--yellow)] flex overflow-hidden">
+                  <Link to="/ficha/$id" params={{ id: w.id }} className="bg-[var(--yellow)] text-black flex items-center justify-center w-24 font-display font-black text-5xl">
+                    {w.letra}
+                  </Link>
+                  <div className="flex-1 p-3">
+                    <div className="font-bold uppercase text-sm">Treino {w.letra}</div>
+                    {w.nome && <div className="text-xs text-gray-500">{w.nome}</div>}
+                    {w.assigned_nome && <div className="text-xs text-gray-400 mt-1">Prof: {w.assigned_nome}</div>}
+                    <div className="flex gap-1 mt-2 flex-wrap">
+                      <Link to="/ficha/$id/executar" params={{ id: w.id }} className="inline-flex items-center gap-1 bg-black text-[var(--yellow)] px-2 py-1 text-xs font-bold uppercase"><Play className="w-3 h-3"/>Executar</Link>
+                      <Link to="/ficha/$id/historico" params={{ id: w.id }} className="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 text-xs font-bold uppercase"><History className="w-3 h-3"/>Histórico</Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
+
 
       {showProfile && <ProfileDialog profile={profile} onClose={() => setShowProfile(false)}/>}
       {showInstall && <InstallDialog onClose={() => setShowInstall(false)}/>}
