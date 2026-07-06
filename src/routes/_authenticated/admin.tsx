@@ -121,8 +121,10 @@ function AdminPage() {
         )}
 
         {tab === "alunos" && (
-          <div className="bg-white border border-black/10">
-            <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Alunos</div>
+          <div className="space-y-3">
+            <AdminNewStudent />
+            <div className="bg-white border border-black/10">
+              <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Alunos</div>
             <table className="w-full text-sm">
               <thead className="bg-gray-100 text-left"><tr><th className="p-2">Nome</th><th className="p-2">Professor</th><th className="p-2">Ações</th></tr></thead>
               <tbody>
