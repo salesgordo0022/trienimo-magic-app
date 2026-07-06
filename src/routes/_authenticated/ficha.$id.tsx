@@ -34,7 +34,7 @@ function FichaEditor() {
   const { data: role } = useQuery(roleQO());
   const qc = useQueryClient();
   const isTeacher = role?.role === "admin" || role?.role === "professor";
-  const [tab, setTab] = useState<"ficha" | "aluno">("ficha");
+  const [tab, setTab] = useState<"ficha" | "aluno" | "executar">("ficha");
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["ficha", id] });
 
