@@ -9,7 +9,11 @@ export type WorkoutRow = {
   data_inicio: string | null;
   observacao: string | null;
   ordem: number;
+  user_id?: string;
+  assigned_to?: string | null;
+  assigned_nome?: string | null;
 };
+
 
 export type ExerciseRow = {
   id: string;
