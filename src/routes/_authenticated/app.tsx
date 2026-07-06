@@ -2,25 +2,31 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { queryOptions } from "@tanstack/react-query";
-import { listWorkouts, createWorkout, deleteWorkout, getProfile, updateProfile } from "@/lib/workouts.functions";
+import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout, getProfile, updateProfile } from "@/lib/workouts.functions";
+import { getMyRole } from "@/lib/roles.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, LogOut, Trash2, Play, Pencil, History, Download } from "lucide-react";
+import { Plus, LogOut, Trash2, Play, Pencil, History, Download, Shield, Users } from "lucide-react";
 
 const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => listWorkouts() });
+const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
 const profileQO = () => queryOptions({ queryKey: ["profile"], queryFn: () => getProfile() });
+const roleQO = () => queryOptions({ queryKey: ["myRole"], queryFn: () => getMyRole() });
 
 export const Route = createFileRoute("/_authenticated/app")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(workoutsQO());
+    context.queryClient.ensureQueryData(assignedQO());
     context.queryClient.ensureQueryData(profileQO());
+    context.queryClient.ensureQueryData(roleQO());
   },
   component: Dashboard,
 });
+
 
 function Dashboard() {
   const { data: workouts } = useSuspenseQuery(workoutsQO());
