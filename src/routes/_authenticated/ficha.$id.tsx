@@ -1,18 +1,19 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSuspenseQuery, useMutation, useQueryClient, useQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   getFicha, updateWorkout, addGroup, deleteGroup,
   addExercise, updateExercise, deleteExercise,
   type ExerciseRow,
 } from "@/lib/workouts.functions";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Play, History, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { getMyRole, listMyStudents } from "@/lib/roles.functions";
+import { Plus, Minus, Trash2, Play, History, ArrowLeft, User, FileText, Check, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const fichaQO = (id: string) => queryOptions({ queryKey: ["ficha", id], queryFn: () => getFicha({ data: { id } }) });
+const roleQO = () => queryOptions({ queryKey: ["myRole"], queryFn: () => getMyRole() });
+const studentsQO = () => queryOptions({ queryKey: ["myStudents"], queryFn: () => listMyStudents() });
 
 export const Route = createFileRoute("/_authenticated/ficha/$id")({
   loader: ({ context, params }) => context.queryClient.ensureQueryData(fichaQO(params.id)),
@@ -29,8 +30,10 @@ const chipBtn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs
 function FichaEditor() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(fichaQO(id));
+  const { data: role } = useQuery(roleQO());
   const qc = useQueryClient();
-  const navigate = useNavigate();
+  const isTeacher = role?.role === "admin" || role?.role === "professor";
+  const [tab, setTab] = useState<"ficha" | "aluno">("ficha");
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["ficha", id] });
 
@@ -59,46 +62,124 @@ function FichaEditor() {
       </header>
 
       <main className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
-        {/* Cabeçalho estilo ficha */}
-        <div className={`${glassCard} overflow-hidden`}>
-          <div className="grid grid-cols-[1fr_auto] gap-3 p-5 items-stretch">
-            <div className="flex items-center gap-4">
-              <div className="text-3xl md:text-4xl font-bold tracking-tight">
-                <span className="text-white">{(data.profile.logo_texto ?? "Sua").replace(/logo/i, "")}</span>
-                <span className="text-[var(--yellow)]">{/logo/i.test(data.profile.logo_texto ?? "SuaLogo") ? "Logo" : "Logo"}</span>
-              </div>
-              <div className="hidden md:block border-l border-white/10 pl-4">
-                <div className="font-semibold text-sm text-white">{data.profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}</div>
-                <div className="text-xs text-zinc-500 mt-0.5">FICHA DE TREINO</div>
-              </div>
-            </div>
-            <div className="rounded-xl px-5 py-3 text-center min-w-[90px] text-black" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)" }}>
-              <div className="text-[10px] font-bold uppercase opacity-70">Treino</div>
-              <div className="font-bold text-4xl leading-none">{data.workout.letra}</div>
-            </div>
-          </div>
-          <div className="border-t border-white/5 divide-y divide-white/5 text-sm">
-            <HeaderField label="Aluno" value={data.profile.nome ?? ""} readOnly/>
-            <HeaderField label="Data do Início" value={data.workout.data_inicio ?? ""} onSave={v=>updW.mutate({data:{id, data_inicio: v}})} type="date"/>
-            <HeaderField label="Objetivo" value={data.profile.objetivo ?? ""} readOnly/>
-            <HeaderField label="Dias da Semana" value={data.profile.dias_semana ?? ""} readOnly/>
-            <HeaderField label="Observação" value={data.workout.observacao ?? ""} onSave={v=>updW.mutate({data:{id, observacao: v}})}/>
-          </div>
+        {/* Tabs */}
+        <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/10 w-fit">
+          <button onClick={()=>setTab("ficha")} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${tab==="ficha" ? "text-black shadow" : "text-zinc-400 hover:text-white"}`} style={tab==="ficha"?goldBtnStyle:undefined}>
+            <FileText className="w-3.5 h-3.5"/>Ficha
+          </button>
+          {isTeacher && (
+            <button onClick={()=>setTab("aluno")} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${tab==="aluno" ? "text-black shadow" : "text-zinc-400 hover:text-white"}`} style={tab==="aluno"?goldBtnStyle:undefined}>
+              <User className="w-3.5 h-3.5"/>Aluno
+            </button>
+          )}
         </div>
 
-        {/* Grupos */}
-        {data.groups.map(g => (
-          <GroupBlock key={g.id} group={g} onDelete={() => delG.mutate({data:{id:g.id}})}
-            onAddExercise={(nome) => addE.mutate({data:{group_id:g.id, nome}})}
-            onDeleteExercise={(eid) => delE.mutate({data:{id:eid}})}
-            onExerciseSaved={invalidate}/>
-        ))}
+        {tab === "aluno" && isTeacher && (
+          <AlunoTab workoutId={id} currentAssigned={data.workout.assigned_to ?? null} onChanged={invalidate}/>
+        )}
 
-        <form className={`${glassCard} p-4 flex gap-2`} onSubmit={(e)=>{e.preventDefault(); if(!newGroupName) return; addG.mutate({data:{workout_id:id, nome:newGroupName}}); setNewGroupName("");}}>
-          <input placeholder="Novo grupo (ex: COSTAS, PERNAS...)" value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} className={inputCls}/>
-          <button type="submit" className={goldBtn} style={goldBtnStyle}><Plus className="w-4 h-4"/>Grupo</button>
-        </form>
+        {tab === "ficha" && (<>
+          {/* Cabeçalho estilo ficha */}
+          <div className={`${glassCard} overflow-hidden`}>
+            <div className="grid grid-cols-[1fr_auto] gap-3 p-5 items-stretch">
+              <div className="flex items-center gap-4">
+                <div className="text-3xl md:text-4xl font-bold tracking-tight">
+                  <span className="text-white">{(data.profile.logo_texto ?? "Sua").replace(/logo/i, "")}</span>
+                  <span className="text-[var(--yellow)]">{/logo/i.test(data.profile.logo_texto ?? "SuaLogo") ? "Logo" : "Logo"}</span>
+                </div>
+                <div className="hidden md:block border-l border-white/10 pl-4">
+                  <div className="font-semibold text-sm text-white">{data.profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">FICHA DE TREINO</div>
+                </div>
+              </div>
+              <div className="rounded-xl px-5 py-3 text-center min-w-[90px] text-black" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)" }}>
+                <div className="text-[10px] font-bold uppercase opacity-70">Treino</div>
+                <div className="font-bold text-4xl leading-none">{data.workout.letra}</div>
+              </div>
+            </div>
+            <div className="border-t border-white/5 divide-y divide-white/5 text-sm">
+              <HeaderField label="Aluno" value={data.profile.nome ?? ""} readOnly/>
+              <HeaderField label="Data do Início" value={data.workout.data_inicio ?? ""} onSave={v=>updW.mutate({data:{id, data_inicio: v}})} type="date"/>
+              <HeaderField label="Objetivo" value={data.profile.objetivo ?? ""} readOnly/>
+              <HeaderField label="Dias da Semana" value={data.profile.dias_semana ?? ""} readOnly/>
+              <HeaderField label="Observação" value={data.workout.observacao ?? ""} onSave={v=>updW.mutate({data:{id, observacao: v}})}/>
+            </div>
+          </div>
+
+          {/* Grupos */}
+          {data.groups.map(g => (
+            <GroupBlock key={g.id} group={g} onDelete={() => delG.mutate({data:{id:g.id}})}
+              onAddExercise={(nome) => addE.mutate({data:{group_id:g.id, nome}})}
+              onDeleteExercise={(eid) => delE.mutate({data:{id:eid}})}
+              onExerciseSaved={invalidate}/>
+          ))}
+
+          <form className={`${glassCard} p-4 flex gap-2`} onSubmit={(e)=>{e.preventDefault(); if(!newGroupName) return; addG.mutate({data:{workout_id:id, nome:newGroupName}}); setNewGroupName("");}}>
+            <input placeholder="Novo grupo (ex: COSTAS, PERNAS...)" value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} className={inputCls}/>
+            <button type="submit" className={goldBtn} style={goldBtnStyle}><Plus className="w-4 h-4"/>Grupo</button>
+          </form>
+        </>)}
       </main>
+    </div>
+  );
+}
+
+function AlunoTab({ workoutId, currentAssigned, onChanged }: { workoutId: string; currentAssigned: string | null; onChanged: () => void }) {
+  const { data: students = [] } = useQuery(studentsQO());
+  const [sel, setSel] = useState<string>(currentAssigned ?? "");
+  useEffect(()=>{ setSel(currentAssigned ?? ""); }, [currentAssigned]);
+  const upd = useMutation({
+    mutationFn: useServerFn(updateWorkout),
+    onSuccess: () => { onChanged(); toast.success("Aluno vinculado à ficha"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const currentName = students.find(s => s.id === currentAssigned)?.nome ?? null;
+  return (
+    <div className={`${glassCard} p-5 space-y-4`}>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-black" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)" }}>
+          <User className="w-5 h-5"/>
+        </div>
+        <div>
+          <div className="text-white font-semibold text-sm">Vincular aluno a esta ficha</div>
+          <div className="text-xs text-zinc-500">Atualmente: {currentAssigned ? (currentName ?? "aluno selecionado") : <span className="italic">nenhum (ficha pessoal)</span>}</div>
+        </div>
+      </div>
+
+      {students.length === 0 ? (
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-zinc-400">
+          Você ainda não tem alunos. Cadastre um na página <Link to="/professor" className="text-[var(--yellow)] underline">Meus alunos</Link>.
+        </div>
+      ) : (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <button
+            onClick={()=>{ setSel(""); upd.mutate({ data: { id: workoutId, assigned_to: null } }); }}
+            className={`text-left rounded-xl p-3 border transition-all ${!sel ? "border-[var(--yellow)]/60 bg-[var(--yellow)]/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}
+          >
+            <div className="text-sm font-semibold text-white">Pessoal (sem aluno)</div>
+            <div className="text-[11px] text-zinc-500">Ficha fica na sua conta</div>
+          </button>
+          {students.map(s => {
+            const active = sel === s.id;
+            return (
+              <button key={s.id}
+                onClick={()=>{ setSel(s.id); upd.mutate({ data: { id: workoutId, assigned_to: s.id } }); }}
+                className={`text-left rounded-xl p-3 border transition-all flex items-center gap-3 ${active ? "border-[var(--yellow)]/60 bg-[var(--yellow)]/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${active ? "bg-[var(--yellow)] text-black" : "bg-white/10 text-white"}`}>
+                  {(s.nome ?? "?").slice(0,1).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-white truncate">{s.nome ?? "(sem nome)"}</div>
+                  <div className="text-[11px] text-zinc-500 truncate">{s.id.slice(0,8)}</div>
+                </div>
+                {active && <Check className="w-4 h-4 text-[var(--yellow)]"/>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {upd.isPending && <div className="text-xs text-zinc-500 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin"/> Salvando...</div>}
     </div>
   );
 }
@@ -187,20 +268,49 @@ function useExerciseState(ex: ExerciseRow) {
   return { series, setSeries, desc, setDesc, obs, setObs, nome, setNome, sets, setSets };
 }
 
+function useSaveStatus() {
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  useEffect(() => {
+    if (status !== "saved") return;
+    const t = setTimeout(() => setStatus("idle"), 900);
+    return () => clearTimeout(t);
+  }, [status]);
+  return [status, setStatus] as const;
+}
+
 function ExerciseRowEditor({ ex, rowIndex, onSaved, onDelete }: { ex: ExerciseRow; rowIndex: number; onSaved: () => void; onDelete: () => void }) {
-  const upd = useMutation({ mutationFn: useServerFn(updateExercise), onSuccess: onSaved, onError: (e)=>toast.error(e.message) });
+  const [status, setStatus] = useSaveStatus();
+  const upd = useMutation({
+    mutationFn: useServerFn(updateExercise),
+    onMutate: () => setStatus("saving"),
+    onSuccess: () => { onSaved(); setStatus("saved"); },
+    onError: (e)=>{ setStatus("idle"); toast.error(e.message); },
+  });
   const s = useExerciseState(ex);
   const save = () => upd.mutate({ data: {
     id: ex.id, nome: s.nome, series: parseInt(s.series)||1, desc_segundos: parseInt(s.desc)||0,
     obs: s.obs || null, sets_config: s.sets,
   }});
+  const stepSeries = (delta: number) => { const n = Math.max(1, Math.min(20, (parseInt(s.series)||1) + delta)); s.setSeries(String(n)); setTimeout(save, 0); };
   const bg = rowIndex % 2 === 0 ? "bg-white/[0.015]" : "bg-white/[0.04]";
   const td = "px-2 py-2 border-b border-white/5 text-white";
   const inp = "bg-transparent outline-none focus:bg-[var(--yellow)]/5 rounded px-1 py-0.5";
   return (
-    <tr className={bg}>
-      <td className={`${td} w-12`}><input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className={`${inp} w-8`}/><span className="text-zinc-500">x</span></td>
-      <td className={td}><input value={s.nome} onChange={e=>s.setNome(e.target.value)} onBlur={save} className={`${inp} w-full`}/></td>
+    <tr className={`${bg} transition-colors ${status==="saved" ? "bg-[var(--yellow)]/10" : ""}`}>
+      <td className={`${td} w-16`}>
+        <div className="inline-flex items-center gap-0.5">
+          <button onClick={()=>stepSeries(-1)} className="text-zinc-500 hover:text-[var(--yellow)] p-0.5"><Minus className="w-3 h-3"/></button>
+          <input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className={`${inp} w-6 text-center`}/>
+          <button onClick={()=>stepSeries(1)} className="text-zinc-500 hover:text-[var(--yellow)] p-0.5"><Plus className="w-3 h-3"/></button>
+        </div>
+      </td>
+      <td className={td}>
+        <div className="flex items-center gap-1">
+          <input value={s.nome} onChange={e=>s.setNome(e.target.value)} onBlur={save} className={`${inp} w-full`}/>
+          {status==="saving" && <Loader2 className="w-3 h-3 text-zinc-500 animate-spin shrink-0"/>}
+          {status==="saved" && <Check className="w-3 h-3 text-[var(--yellow)] shrink-0"/>}
+        </div>
+      </td>
       {s.sets.map((set, i) => (
         <>
           <td key={"r"+i} className={td}><input value={set.reps} onChange={e=>{const c=[...s.sets];c[i]={...c[i],reps:e.target.value};s.setSets(c);}} onBlur={save} placeholder="10" className={`${inp} w-14 placeholder:text-zinc-700`}/></td>
@@ -215,20 +325,34 @@ function ExerciseRowEditor({ ex, rowIndex, onSaved, onDelete }: { ex: ExerciseRo
 }
 
 function ExerciseCardMobile({ ex, onSaved, onDelete }: { ex: ExerciseRow; onSaved: () => void; onDelete: () => void }) {
-  const upd = useMutation({ mutationFn: useServerFn(updateExercise), onSuccess: onSaved });
+  const [status, setStatus] = useSaveStatus();
+  const upd = useMutation({
+    mutationFn: useServerFn(updateExercise),
+    onMutate: () => setStatus("saving"),
+    onSuccess: () => { onSaved(); setStatus("saved"); },
+    onError: () => setStatus("idle"),
+  });
   const s = useExerciseState(ex);
   const save = () => upd.mutate({ data: {
     id: ex.id, nome: s.nome, series: parseInt(s.series)||1, desc_segundos: parseInt(s.desc)||0,
     obs: s.obs || null, sets_config: s.sets,
   }});
+  const stepSeries = (delta: number) => { const n = Math.max(1, Math.min(20, (parseInt(s.series)||1) + delta)); s.setSeries(String(n)); setTimeout(save, 0); };
   return (
-    <div className="p-3 space-y-2">
-      <div className="flex gap-2">
+    <div className={`p-3 space-y-2 transition-colors ${status==="saved" ? "bg-[var(--yellow)]/10" : ""}`}>
+      <div className="flex gap-2 items-center">
         <input value={s.nome} onChange={e=>s.setNome(e.target.value)} onBlur={save} className="flex-1 font-semibold text-sm bg-transparent border-b border-white/10 focus:border-[var(--yellow)]/60 outline-none text-white pb-1"/>
+        {status==="saving" && <Loader2 className="w-4 h-4 text-zinc-500 animate-spin"/>}
+        {status==="saved" && <Check className="w-4 h-4 text-[var(--yellow)]"/>}
         <button onClick={onDelete} className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 className="w-4 h-4"/></button>
       </div>
-      <div className="flex gap-3 text-xs text-zinc-400">
-        <label className="flex items-center gap-1.5">Séries <input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className="w-10 border-b border-white/10 bg-transparent text-white text-center outline-none focus:border-[var(--yellow)]/60"/></label>
+      <div className="flex gap-3 text-xs text-zinc-400 items-center">
+        <div className="flex items-center gap-1">
+          <span>Séries</span>
+          <button onClick={()=>stepSeries(-1)} className="w-6 h-6 rounded-md border border-white/10 text-white hover:bg-white/10 flex items-center justify-center"><Minus className="w-3 h-3"/></button>
+          <input value={s.series} onChange={e=>s.setSeries(e.target.value)} onBlur={save} className="w-8 border-b border-white/10 bg-transparent text-white text-center outline-none focus:border-[var(--yellow)]/60"/>
+          <button onClick={()=>stepSeries(1)} className="w-6 h-6 rounded-md border border-white/10 text-white hover:bg-white/10 flex items-center justify-center"><Plus className="w-3 h-3"/></button>
+        </div>
         <label className="flex items-center gap-1.5">Desc <input value={s.desc} onChange={e=>s.setDesc(e.target.value)} onBlur={save} className="w-10 border-b border-white/10 bg-transparent text-white text-center outline-none focus:border-[var(--yellow)]/60"/>s</label>
       </div>
       <div className="grid grid-cols-4 gap-1.5">

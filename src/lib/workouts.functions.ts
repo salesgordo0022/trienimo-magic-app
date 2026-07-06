@@ -187,7 +187,7 @@ export const getFicha = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const { data: workout, error: e1 } = await context.supabase
-      .from("workouts").select("id, letra, nome, data_inicio, observacao, ordem")
+      .from("workouts").select("id, letra, nome, data_inicio, observacao, ordem, assigned_to, user_id")
       .eq("id", data.id).single();
     if (e1) throw new Error(e1.message);
 
@@ -223,13 +223,14 @@ export const getFicha = createServerFn({ method: "GET" })
 // --- Update workout header ---
 export const updateWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; letra?: string; nome?: string; data_inicio?: string; observacao?: string }) =>
+  .inputValidator((d: { id: string; letra?: string; nome?: string; data_inicio?: string; observacao?: string; assigned_to?: string | null }) =>
     z.object({
       id: z.string().uuid(),
       letra: z.string().min(1).max(3).optional(),
       nome: z.string().max(80).nullable().optional(),
       data_inicio: z.string().nullable().optional(),
       observacao: z.string().max(500).nullable().optional(),
+      assigned_to: z.string().uuid().nullable().optional(),
     }).parse(d)
   )
   .handler(async ({ context, data }) => {

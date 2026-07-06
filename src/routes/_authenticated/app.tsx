@@ -175,7 +175,7 @@ function Dashboard() {
                     {w.nome && <div className="text-xs text-zinc-500 mt-0.5">{w.nome}</div>}
                     {w.assigned_nome && <div className="text-[11px] text-zinc-600 mt-1">Prof: {w.assigned_nome}</div>}
                     <div className="flex gap-1.5 mt-3 flex-wrap">
-                      <Link to="/ficha/$id/executar" params={{ id: w.id }} className={chipBtn} style={goldBtnStyle}><Play className="w-3 h-3"/>Executar</Link>
+                      <Link to="/ficha/$id" params={{ id: w.id }} className={chipBtn} style={goldBtnStyle}><Pencil className="w-3 h-3"/>Abrir ficha</Link>
                       <Link to="/ficha/$id/historico" params={{ id: w.id }} className={`${chipBtn} bg-white/5 hover:bg-white/10 border border-white/10 text-white`}><History className="w-3 h-3"/>Histórico</Link>
                     </div>
                   </div>
