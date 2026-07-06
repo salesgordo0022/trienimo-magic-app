@@ -32,7 +32,6 @@ function FichaEditor() {
   const { data } = useSuspenseQuery(fichaQO(id));
   const { data: role } = useQuery(roleQO());
   const qc = useQueryClient();
-  const navigate = useNavigate();
   const isTeacher = role?.role === "admin" || role?.role === "professor";
   const [tab, setTab] = useState<"ficha" | "aluno">("ficha");
 
