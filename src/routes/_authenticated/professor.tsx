@@ -71,6 +71,40 @@ function ProfessorPage() {
   );
 }
 
+function NewStudentForm() {
+  const qc = useQueryClient();
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [open, setOpen] = useState(false);
+  const create = useMutation({
+    mutationFn: useServerFn(createStudent),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["myStudents"] });
+      qc.invalidateQueries({ queryKey: ["allUsers"] });
+      setNome(""); setEmail(""); setPassword(""); setOpen(false);
+      toast.success("Aluno cadastrado");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <div className="bg-white border border-black/10">
+      <button onClick={()=>setOpen(o=>!o)} className="w-full bg-black text-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm text-left flex items-center gap-2">
+        <Plus className="w-4 h-4"/>{open ? "Fechar" : "Novo aluno"}
+      </button>
+      {open && (
+        <form onSubmit={(e)=>{e.preventDefault(); if(!nome||!email||password.length<6) return; create.mutate({ data: { nome, email, password } });}} className="p-3 space-y-2">
+          <Input placeholder="Nome" value={nome} onChange={e=>setNome(e.target.value)} maxLength={120}/>
+          <Input placeholder="E-mail" type="email" value={email} onChange={e=>setEmail(e.target.value)} maxLength={255}/>
+          <Input placeholder="Senha (mín. 6)" type="text" value={password} onChange={e=>setPassword(e.target.value)} maxLength={128}/>
+          <Button type="submit" disabled={create.isPending} className="w-full bg-[var(--yellow)] text-black font-bold uppercase">Cadastrar aluno</Button>
+          <p className="text-[10px] text-gray-500">O aluno usará esse e-mail e senha para entrar. Já ficará vinculado a você.</p>
+        </form>
+      )}
+    </div>
+  );
+}
+
 function StudentWorkouts({ studentId, studentName }: { studentId: string; studentName: string }) {
   const qc = useQueryClient();
   const { data: workouts = [] } = useQuery({ queryKey: ["studentWorkouts", studentId], queryFn: () => listWorkoutsForStudent({ data: { student_id: studentId } }) });
