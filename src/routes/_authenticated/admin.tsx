@@ -145,6 +145,7 @@ function AdminPage() {
                 {alunos.length === 0 && <tr><td colSpan={3} className="p-4 text-center text-gray-500">Nenhum aluno.</td></tr>}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
