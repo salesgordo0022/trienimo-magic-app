@@ -1,18 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQueryClient, useQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   getFicha, updateWorkout, addGroup, deleteGroup,
   addExercise, updateExercise, deleteExercise,
   type ExerciseRow,
 } from "@/lib/workouts.functions";
+import { getMyRole, listMyStudents } from "@/lib/roles.functions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Play, History, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { Plus, Minus, Trash2, Play, History, ArrowLeft, User, FileText, Check, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const fichaQO = (id: string) => queryOptions({ queryKey: ["ficha", id], queryFn: () => getFicha({ data: { id } }) });
+const roleQO = () => queryOptions({ queryKey: ["myRole"], queryFn: () => getMyRole() });
+const studentsQO = () => queryOptions({ queryKey: ["myStudents"], queryFn: () => listMyStudents() });
 
 export const Route = createFileRoute("/_authenticated/ficha/$id")({
   loader: ({ context, params }) => context.queryClient.ensureQueryData(fichaQO(params.id)),
