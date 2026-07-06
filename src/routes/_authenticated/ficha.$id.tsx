@@ -4,11 +4,12 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   getFicha, updateWorkout, addGroup, deleteGroup,
   addExercise, updateExercise, deleteExercise,
+  startSession, upsertSessionSet, endSession,
   type ExerciseRow,
 } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents } from "@/lib/roles.functions";
-import { Plus, Minus, Trash2, Play, History, ArrowLeft, User, FileText, Check, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Plus, Minus, Trash2, Play, Pause, SkipForward, History, ArrowLeft, User, FileText, Check, Loader2, Flag, Dumbbell } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const fichaQO = (id: string) => queryOptions({ queryKey: ["ficha", id], queryFn: () => getFicha({ data: { id } }) });
