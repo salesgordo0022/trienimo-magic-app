@@ -81,21 +81,22 @@ function Executar() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--row-alt)] pb-24">
+    <div className="min-h-screen bg-[var(--row-alt)] pb-[calc(env(safe-area-inset-bottom)+96px)]">
       <audio ref={audioRef} src="data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAgICAgICAgIA=" preload="auto"/>
-      <header className="bg-black text-white sticky top-0 z-40">
+      <header className="bg-black text-white sticky top-0 z-40 safe-top safe-x">
         <div className="max-w-3xl mx-auto px-3 py-2 flex items-center gap-2">
           <Link to="/ficha/$id" params={{ id }} className="text-white p-1"><ArrowLeft className="w-4 h-4"/></Link>
-          <div className="text-[var(--yellow)] font-display font-black uppercase text-sm">Executando Treino {data.workout.letra}</div>
-          <div className="ml-auto text-xs text-white/80">{doneSets}/{totalSets} séries</div>
+          <div className="text-[var(--yellow)] font-display font-black uppercase text-sm truncate">Executando Treino {data.workout.letra}</div>
+          <div className="ml-auto text-xs text-white/80 shrink-0">{doneSets}/{totalSets} séries</div>
         </div>
       </header>
 
       {/* Timer flutuante */}
-      <div className="sticky top-[42px] z-30 bg-[var(--yellow)] border-b-4 border-black">
+      <div className="sticky top-[calc(env(safe-area-inset-top)+42px)] z-30 bg-[var(--yellow)] border-b-4 border-black safe-x">
         <div className="max-w-3xl mx-auto px-3 py-2 flex items-center gap-3">
           <div className="font-display font-black text-4xl leading-none text-black tabular-nums">{Math.floor(timer/60)}:{String(timer%60).padStart(2,"0")}</div>
           <div className="text-xs font-bold uppercase">Descanso</div>
+
           <div className="ml-auto flex gap-2">
             <Button size="sm" onClick={()=>setRunning(r=>!r)} className="bg-black text-white">{running ? <Pause className="w-4 h-4"/> : <Play className="w-4 h-4"/>}</Button>
             <Button size="sm" onClick={()=>{setTimer(0);setRunning(false);}} className="bg-white text-black border border-black"><SkipForward className="w-4 h-4"/></Button>
