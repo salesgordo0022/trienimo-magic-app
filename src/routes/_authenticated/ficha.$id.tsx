@@ -4,11 +4,12 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   getFicha, updateWorkout, addGroup, deleteGroup,
   addExercise, updateExercise, deleteExercise,
+  startSession, upsertSessionSet, endSession,
   type ExerciseRow,
 } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents } from "@/lib/roles.functions";
-import { Plus, Minus, Trash2, Play, History, ArrowLeft, User, FileText, Check, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Plus, Minus, Trash2, Play, Pause, SkipForward, History, ArrowLeft, User, FileText, Check, Loader2, Flag, Dumbbell } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const fichaQO = (id: string) => queryOptions({ queryKey: ["ficha", id], queryFn: () => getFicha({ data: { id } }) });
@@ -33,7 +34,7 @@ function FichaEditor() {
   const { data: role } = useQuery(roleQO());
   const qc = useQueryClient();
   const isTeacher = role?.role === "admin" || role?.role === "professor";
-  const [tab, setTab] = useState<"ficha" | "aluno">("ficha");
+  const [tab, setTab] = useState<"ficha" | "aluno" | "executar">("ficha");
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["ficha", id] });
 
@@ -67,6 +68,9 @@ function FichaEditor() {
           <button onClick={()=>setTab("ficha")} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${tab==="ficha" ? "text-black shadow" : "text-zinc-400 hover:text-white"}`} style={tab==="ficha"?goldBtnStyle:undefined}>
             <FileText className="w-3.5 h-3.5"/>Ficha
           </button>
+          <button onClick={()=>setTab("executar")} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${tab==="executar" ? "text-black shadow" : "text-zinc-400 hover:text-white"}`} style={tab==="executar"?goldBtnStyle:undefined}>
+            <Dumbbell className="w-3.5 h-3.5"/>Executar
+          </button>
           {isTeacher && (
             <button onClick={()=>setTab("aluno")} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${tab==="aluno" ? "text-black shadow" : "text-zinc-400 hover:text-white"}`} style={tab==="aluno"?goldBtnStyle:undefined}>
               <User className="w-3.5 h-3.5"/>Aluno
@@ -76,6 +80,10 @@ function FichaEditor() {
 
         {tab === "aluno" && isTeacher && (
           <AlunoTab workoutId={id} currentAssigned={data.workout.assigned_to ?? null} onChanged={invalidate}/>
+        )}
+
+        {tab === "executar" && (
+          <ExecutarTab workoutId={id} groups={data.groups} letra={data.workout.letra}/>
         )}
 
         {tab === "ficha" && (<>
@@ -365,6 +373,186 @@ function ExerciseCardMobile({ ex, onSaved, onDelete }: { ex: ExerciseRow; onSave
         ))}
       </div>
       <input value={s.obs} onChange={e=>s.setObs(e.target.value)} onBlur={save} placeholder="Observação" className="w-full text-xs border-b border-white/10 bg-transparent text-white outline-none focus:border-[var(--yellow)]/60 pb-1 placeholder:text-zinc-600"/>
+    </div>
+  );
+}
+
+type SetVal = { reps: string; kg: string; done: boolean };
+
+function ExecutarTab({ workoutId, groups, letra }: { workoutId: string; groups: Array<{ id: string; nome: string; exercises: ExerciseRow[] }>; letra: string }) {
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [activeEx, setActiveEx] = useState<string | null>(groups[0]?.exercises[0]?.id ?? null);
+  const [state, setState] = useState<Record<string, SetVal>>({});
+  const [timer, setTimer] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const startedAt = useRef<number | null>(null);
+  const [, force] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const start = useMutation({
+    mutationFn: useServerFn(startSession),
+    onSuccess: (r: { id: string }) => { setSessionId(r.id); startedAt.current = Date.now(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const upsert = useMutation({ mutationFn: useServerFn(upsertSessionSet) });
+  const end = useMutation({
+    mutationFn: useServerFn(endSession),
+    onSuccess: () => { setFinished(true); toast.success("Treino finalizado!"); },
+  });
+
+  useEffect(() => { if (!sessionId) start.mutate({ data: { workout_id: workoutId } }); /* eslint-disable-next-line */ }, []);
+
+  // Rest timer countdown
+  useEffect(() => {
+    if (!running) return;
+    const t = window.setInterval(() => {
+      setTimer(v => {
+        if (v <= 1) {
+          setRunning(false);
+          try { audioRef.current?.play(); } catch { /* ignore */ }
+          if (navigator.vibrate) navigator.vibrate([180, 90, 180]);
+          return 0;
+        }
+        return v - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [running]);
+
+  // Elapsed session ticker
+  useEffect(() => {
+    const t = window.setInterval(() => force(x => x + 1), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  const totalSets = useMemo(() => groups.reduce((n,g)=>n+g.exercises.reduce((m,e)=>m+e.series,0),0), [groups]);
+  const doneSets = Object.values(state).filter(v => v.done).length;
+  const progress = totalSets ? Math.round((doneSets/totalSets)*100) : 0;
+
+  const toggle = (ex: ExerciseRow, i: number) => {
+    const key = `${ex.id}::${i}`;
+    const cfg = ex.sets_config?.[i] ?? { reps: "", kg: "" };
+    const cur = state[key] ?? { reps: cfg.reps ?? "", kg: cfg.kg ?? "", done: false };
+    const next: SetVal = { ...cur, done: !cur.done };
+    setState(s => ({ ...s, [key]: next }));
+    if (sessionId) {
+      upsert.mutate({ data: {
+        session_id: sessionId, exercise_id: ex.id, set_index: i,
+        reps: next.reps ? parseInt(next.reps) : null,
+        kg: next.kg ? parseFloat(next.kg) : null,
+        done: next.done,
+      }});
+    }
+    if (next.done) { setTimer(ex.desc_segundos || 45); setRunning(true); }
+  };
+
+  const updateVal = (ex: ExerciseRow, i: number, patch: Partial<SetVal>) => {
+    const key = `${ex.id}::${i}`;
+    const cfg = ex.sets_config?.[i] ?? { reps: "", kg: "" };
+    const cur = state[key] ?? { reps: cfg.reps ?? "", kg: cfg.kg ?? "", done: false };
+    setState(s => ({ ...s, [key]: { ...cur, ...patch } }));
+  };
+
+  const elapsed = startedAt.current ? Math.floor((Date.now() - startedAt.current) / 1000) : 0;
+  const mmss = (n: number) => `${Math.floor(n/60)}:${String(n%60).padStart(2,"0")}`;
+
+  if (finished) {
+    return (
+      <div className={`${glassCard} p-8 text-center space-y-4`}>
+        <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center" style={{ background: "linear-gradient(135deg, #FFD400, #FFB800)" }}>
+          <Flag className="w-8 h-8 text-black"/>
+        </div>
+        <div className="text-white text-lg font-bold">Treino {letra} finalizado</div>
+        <div className="text-sm text-zinc-400">{doneSets} de {totalSets} séries · {mmss(elapsed)}</div>
+        <Link to="/ficha/$id/historico" params={{ id: workoutId }} className={goldBtn} style={goldBtnStyle}><History className="w-4 h-4"/>Ver histórico</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <audio ref={audioRef} src="data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAgICAgICAgIA=" preload="auto"/>
+
+      {/* Painel de progresso e cronômetro */}
+      <div className={`${glassCard} p-4 space-y-3`}>
+        <div className="flex items-center gap-3">
+          <div>
+            <div className="text-[11px] text-zinc-500 uppercase tracking-wide">Tempo</div>
+            <div className="text-white font-bold tabular-nums text-lg">{mmss(elapsed)}</div>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-[11px] text-zinc-500 uppercase tracking-wide">Progresso</div>
+              <div className="text-xs text-zinc-400 font-semibold">{doneSets}/{totalSets} · {progress}%</div>
+            </div>
+            <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+              <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #FFD400, #FFB800)" }}/>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+          <div className={`px-3 py-1.5 rounded-lg text-xs font-bold tabular-nums transition-all ${timer > 0 ? "bg-[var(--yellow)] text-black animate-pulse" : "bg-white/5 text-zinc-500"}`}>
+            Descanso {mmss(timer)}
+          </div>
+          <button onClick={()=>setRunning(r=>!r)} disabled={timer===0} className="p-2 rounded-lg bg-white/5 text-white hover:bg-white/10 disabled:opacity-40">{running ? <Pause className="w-3.5 h-3.5"/> : <Play className="w-3.5 h-3.5"/>}</button>
+          <button onClick={()=>{ setTimer(0); setRunning(false); }} className="p-2 rounded-lg bg-white/5 text-white hover:bg-white/10"><SkipForward className="w-3.5 h-3.5"/></button>
+          <button onClick={()=>{ if(sessionId) end.mutate({ data: { id: sessionId } }); }} className={`ml-auto ${goldBtn} h-9 px-3`} style={goldBtnStyle}><Flag className="w-3.5 h-3.5"/>Finalizar</button>
+        </div>
+      </div>
+
+      {/* Lista de exercícios (clique para expandir/ativar) */}
+      {groups.map(g => (
+        <div key={g.id} className={`${glassCard} overflow-hidden`}>
+          <div className="px-4 py-2.5 flex items-center gap-2 border-b border-white/5 bg-black/30">
+            <div className="w-1 h-4 rounded-full" style={{ background: "linear-gradient(180deg, #FFD400, #FFB800)" }}/>
+            <div className="font-semibold uppercase tracking-wide text-xs text-white">{g.nome}</div>
+          </div>
+          <div className="divide-y divide-white/5">
+            {g.exercises.map(ex => {
+              const total = ex.series;
+              const done = Array.from({length: total}).filter((_, i) => state[`${ex.id}::${i}`]?.done).length;
+              const isActive = activeEx === ex.id;
+              const allDone = done === total && total > 0;
+              return (
+                <div key={ex.id}>
+                  <button
+                    onClick={()=>setActiveEx(isActive ? null : ex.id)}
+                    className={`w-full text-left p-3 flex items-center gap-3 transition-colors ${isActive ? "bg-[var(--yellow)]/5" : "hover:bg-white/[0.03]"}`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${allDone ? "text-black" : isActive ? "bg-white/10 text-[var(--yellow)]" : "bg-white/5 text-zinc-400"}`} style={allDone ? { background: "linear-gradient(135deg, #FFD400, #FFB800)" } : undefined}>
+                      {allDone ? <Check className="w-4 h-4"/> : `${done}/${total}`}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-sm font-semibold truncate ${allDone ? "text-zinc-500 line-through" : "text-white"}`}>{ex.nome}</div>
+                      <div className="text-[11px] text-zinc-500">{ex.series} séries · desc {ex.desc_segundos}s</div>
+                    </div>
+                  </button>
+
+                  {isActive && (
+                    <div className="p-3 pt-0 grid gap-2 sm:grid-cols-2">
+                      {Array.from({length: ex.series}).map((_, i) => {
+                        const cfg = ex.sets_config?.[i] ?? { reps: "", kg: "" };
+                        const cur = state[`${ex.id}::${i}`] ?? { reps: cfg.reps ?? "", kg: cfg.kg ?? "", done: false };
+                        return (
+                          <div key={i} className={`flex items-center gap-2 rounded-xl p-2.5 border transition-all ${cur.done ? "border-[var(--yellow)]/60 bg-[var(--yellow)]/10" : "border-white/10 bg-white/[0.03]"}`}>
+                            <div className="w-8 text-[11px] font-bold text-center text-zinc-400">S{i+1}</div>
+                            <input value={cur.reps} onChange={e=>updateVal(ex, i, {reps:e.target.value})} placeholder="reps" className="w-14 bg-transparent text-white text-sm outline-none border-b border-white/10 focus:border-[var(--yellow)]/60 placeholder:text-zinc-600"/>
+                            <input value={cur.kg} onChange={e=>updateVal(ex, i, {kg:e.target.value})} placeholder="kg" className="w-14 bg-transparent text-white text-sm outline-none border-b border-white/10 focus:border-[var(--yellow)]/60 placeholder:text-zinc-600"/>
+                            <button onClick={()=>toggle(ex, i)} className={`ml-auto w-10 h-9 rounded-lg flex items-center justify-center transition-all ${cur.done ? "text-black" : "bg-white/5 text-zinc-400 hover:bg-white/10"}`} style={cur.done ? { background: "linear-gradient(135deg, #FFD400, #FFB800)" } : undefined}>
+                              <Check className="w-4 h-4"/>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
