@@ -47,15 +47,18 @@ function ProfessorPage() {
           <div className="text-[var(--yellow)] font-display text-xl font-black">MEUS ALUNOS</div>
         </div>
       </header>
-      <main className="max-w-5xl mx-auto p-4 grid gap-4 md:grid-cols-[240px_1fr]">
-        <aside className="bg-white border border-black/10">
-          <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Alunos</div>
-          {students.length === 0 && <div className="p-3 text-xs text-gray-500">Nenhum aluno atribuído. Peça ao admin para atribuir.</div>}
-          {students.map(s => (
-            <button key={s.id} onClick={()=>setSelected(s.id)} className={`w-full text-left px-3 py-2 text-sm border-t ${selected===s.id?"bg-black text-[var(--yellow)]":"hover:bg-gray-50"}`}>
-              {s.nome ?? "(sem nome)"}
-            </button>
-          ))}
+      <main className="max-w-5xl mx-auto p-4 grid gap-4 md:grid-cols-[280px_1fr]">
+        <aside className="space-y-3">
+          <NewStudentForm />
+          <div className="bg-white border border-black/10">
+            <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Alunos</div>
+            {students.length === 0 && <div className="p-3 text-xs text-gray-500">Nenhum aluno ainda. Cadastre acima.</div>}
+            {students.map(s => (
+              <button key={s.id} onClick={()=>setSelected(s.id)} className={`w-full text-left px-3 py-2 text-sm border-t ${selected===s.id?"bg-black text-[var(--yellow)]":"hover:bg-gray-50"}`}>
+                {s.nome ?? "(sem nome)"}
+              </button>
+            ))}
+          </div>
         </aside>
         <section>
           {selected ? <StudentWorkouts studentId={selected} studentName={students.find(s=>s.id===selected)?.nome ?? ""}/> : <div className="bg-white border p-8 text-center text-sm text-gray-500">Selecione um aluno.</div>}
