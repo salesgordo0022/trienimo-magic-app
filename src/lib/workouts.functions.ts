@@ -187,7 +187,7 @@ export const getFicha = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const { data: workout, error: e1 } = await context.supabase
-      .from("workouts").select("id, letra, nome, data_inicio, observacao, ordem")
+      .from("workouts").select("id, letra, nome, data_inicio, observacao, ordem, assigned_to, user_id")
       .eq("id", data.id).single();
     if (e1) throw new Error(e1.message);
 
