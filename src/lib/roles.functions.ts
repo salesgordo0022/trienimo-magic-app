@@ -135,6 +135,46 @@ export const deleteInvite = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// --- Create student account (admin or professor) ---
+export const createStudent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { nome: string; email: string; password: string; assign_to_me?: boolean }) =>
+    z.object({
+      nome: z.string().trim().min(1).max(120),
+      email: z.string().trim().email().max(255),
+      password: z.string().min(6).max(128),
+      assign_to_me: z.boolean().optional(),
+    }).parse(d))
+  .handler(async ({ context, data }) => {
+    const isAdmin = (await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" })).data;
+    const isProf = (await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "professor" })).data;
+    if (!isAdmin && !isProf) throw new Error("forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { name: data.nome },
+    });
+    if (error) throw new Error(error.message);
+    const newId = created.user?.id;
+    if (!newId) throw new Error("Falha ao criar usuário");
+
+    // Ensure profile name (trigger creates it, but force nome)
+    await supabaseAdmin.from("profiles").update({ nome: data.nome }).eq("id", newId);
+    // Ensure role = aluno
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", newId);
+    await supabaseAdmin.from("user_roles").insert({ user_id: newId, role: "aluno" });
+
+    // Link: professor auto-links; admin only if requested (assign_to_me true and admin acts as teacher — rare)
+    if (isProf || (isAdmin && data.assign_to_me)) {
+      await supabaseAdmin.from("teacher_students").delete().eq("student_id", newId);
+      await supabaseAdmin.from("teacher_students").insert({ student_id: newId, teacher_id: context.userId });
+    }
+    return { id: newId };
+  });
+
 // --- Teacher: list my students ---
 export const listMyStudents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
