@@ -68,6 +68,9 @@ function FichaEditor() {
           <button onClick={()=>setTab("ficha")} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${tab==="ficha" ? "text-black shadow" : "text-zinc-400 hover:text-white"}`} style={tab==="ficha"?goldBtnStyle:undefined}>
             <FileText className="w-3.5 h-3.5"/>Ficha
           </button>
+          <button onClick={()=>setTab("executar")} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${tab==="executar" ? "text-black shadow" : "text-zinc-400 hover:text-white"}`} style={tab==="executar"?goldBtnStyle:undefined}>
+            <Dumbbell className="w-3.5 h-3.5"/>Executar
+          </button>
           {isTeacher && (
             <button onClick={()=>setTab("aluno")} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${tab==="aluno" ? "text-black shadow" : "text-zinc-400 hover:text-white"}`} style={tab==="aluno"?goldBtnStyle:undefined}>
               <User className="w-3.5 h-3.5"/>Aluno
@@ -77,6 +80,10 @@ function FichaEditor() {
 
         {tab === "aluno" && isTeacher && (
           <AlunoTab workoutId={id} currentAssigned={data.workout.assigned_to ?? null} onChanged={invalidate}/>
+        )}
+
+        {tab === "executar" && (
+          <ExecutarTab workoutId={id} groups={data.groups} letra={data.workout.letra}/>
         )}
 
         {tab === "ficha" && (<>
