@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, LogOut, Trash2, Play, Pencil, History, Download, Shield, Users, User } from "lucide-react";
+import { Plus, LogOut, Trash2, Play, Pencil, History, Download, Shield, Users, User, Dumbbell, ChevronRight, TrendingUp, Calendar, Flame } from "lucide-react";
 
 const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => listWorkouts() });
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
