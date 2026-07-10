@@ -98,6 +98,42 @@ function Dashboard() {
 
 
       <main className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Hero — saudação + treino de hoje */}
+        <section className="grid gap-4 sm:grid-cols-[1.4fr_1fr]">
+          <div className={`${glassCard} p-5 sm:p-6 flex flex-col justify-between min-h-[180px] relative overflow-hidden`}>
+            <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full opacity-20 blur-3xl" style={{ background: "radial-gradient(circle, #CCFF00, transparent 70%)" }}/>
+            <div>
+              <div className="text-xs uppercase tracking-widest text-[var(--lime)] font-bold">Olá, {(profile.nome ?? "Atleta").split(" ")[0]} 👋</div>
+              <h1 className="mt-1 text-2xl sm:text-3xl font-black text-white leading-tight">Bora treinar hoje?</h1>
+              <p className="text-sm text-zinc-400 mt-1">Seu treino está pronto na plataforma.</p>
+            </div>
+            {(assigned[0] || workouts[0]) && (
+              <Link
+                to="/ficha/$id"
+                params={{ id: (assigned[0] ?? workouts[0]).id }}
+                className="mt-5 group inline-flex items-center gap-4 rounded-2xl px-4 py-3 text-black font-bold transition-all hover:brightness-110 active:scale-[0.99] self-start"
+                style={limeBtnStyle}
+              >
+                <span className="w-11 h-11 rounded-xl bg-black flex items-center justify-center shrink-0">
+                  <Dumbbell className="w-5 h-5 text-[var(--lime)]"/>
+                </span>
+                <span className="text-left leading-tight">
+                  <span className="block text-base font-black uppercase tracking-wide">Meu Treino</span>
+                  <span className="block text-xs font-semibold opacity-80">Acessar treino {(assigned[0] ?? workouts[0]).letra}</span>
+                </span>
+                <ChevronRight className="w-5 h-5 ml-2 shrink-0 transition-transform group-hover:translate-x-1"/>
+              </Link>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <StatChip icon={<TrendingUp className="w-4 h-4"/>} label="Progresso" value={`${Math.min(99, workouts.length * 15 + 10)}%`} sub="do objetivo"/>
+            <StatChip icon={<Calendar className="w-4 h-4"/>} label="Próximo treino" value="Hoje" sub={new Date().toLocaleDateString("pt-BR",{weekday:"short"})}/>
+            <StatChip icon={<Flame className="w-4 h-4"/>} label="Sequência" value={String(Math.max(1, workouts.length))} sub="dias"/>
+          </div>
+        </section>
+
+
         <section className={`${glassCard} p-5`}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(180deg, #FFD400, #FFB800)" }} />
