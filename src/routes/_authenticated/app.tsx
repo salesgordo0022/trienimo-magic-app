@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, LogOut, Trash2, Play, Pencil, History, Download, Shield, Users, User } from "lucide-react";
+import { Plus, LogOut, Trash2, Play, Pencil, History, Download, Shield, Users, User, Dumbbell, ChevronRight, TrendingUp, Calendar, Flame } from "lucide-react";
 
 const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => listWorkouts() });
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
@@ -29,12 +29,15 @@ export const Route = createFileRoute("/_authenticated/app")({
   component: Dashboard,
 });
 
-const pageBg = "radial-gradient(1200px 600px at 15% 10%, rgba(255,212,0,0.08), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(255,212,0,0.05), transparent 60%), #0b0b0d";
+const pageBg = "radial-gradient(1200px 600px at 15% 10%, rgba(204,255,0,0.08), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(204,255,0,0.05), transparent 60%), #0a0a0a";
 const glassCard = "rounded-2xl border border-white/10 backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/[0.02] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]";
-const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10";
-const goldBtn = "inline-flex items-center justify-center gap-2 text-black font-semibold rounded-xl px-4 py-2.5 text-sm transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-60";
-const goldBtnStyle = { background: "linear-gradient(135deg, #FFD400, #FFB800)", boxShadow: "0 10px 30px -12px rgba(255,212,0,0.55)" } as const;
+const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--lime)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--lime)]/10";
+const limeBtn = "inline-flex items-center justify-center gap-2 text-black font-bold rounded-xl px-4 py-2.5 text-sm transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-60";
+const limeBtnStyle = { background: "linear-gradient(135deg, #CCFF00, #B8E600)", boxShadow: "0 10px 30px -12px rgba(204,255,0,0.55)" } as const;
 const chipBtn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all";
+// Aliases (compatibilidade com o restante do arquivo)
+const goldBtn = limeBtn;
+const goldBtnStyle = limeBtnStyle;
 
 function Dashboard() {
   const { data: workouts } = useSuspenseQuery(workoutsQO());
@@ -95,6 +98,42 @@ function Dashboard() {
 
 
       <main className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Hero — saudação + treino de hoje */}
+        <section className="grid gap-4 sm:grid-cols-[1.4fr_1fr]">
+          <div className={`${glassCard} p-5 sm:p-6 flex flex-col justify-between min-h-[180px] relative overflow-hidden`}>
+            <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full opacity-20 blur-3xl" style={{ background: "radial-gradient(circle, #CCFF00, transparent 70%)" }}/>
+            <div>
+              <div className="text-xs uppercase tracking-widest text-[var(--lime)] font-bold">Olá, {(profile.nome ?? "Atleta").split(" ")[0]} 👋</div>
+              <h1 className="mt-1 text-2xl sm:text-3xl font-black text-white leading-tight">Bora treinar hoje?</h1>
+              <p className="text-sm text-zinc-400 mt-1">Seu treino está pronto na plataforma.</p>
+            </div>
+            {(assigned[0] || workouts[0]) && (
+              <Link
+                to="/ficha/$id"
+                params={{ id: (assigned[0] ?? workouts[0]).id }}
+                className="mt-5 group inline-flex items-center gap-4 rounded-2xl px-4 py-3 text-black font-bold transition-all hover:brightness-110 active:scale-[0.99] self-start"
+                style={limeBtnStyle}
+              >
+                <span className="w-11 h-11 rounded-xl bg-black flex items-center justify-center shrink-0">
+                  <Dumbbell className="w-5 h-5 text-[var(--lime)]"/>
+                </span>
+                <span className="text-left leading-tight">
+                  <span className="block text-base font-black uppercase tracking-wide">Meu Treino</span>
+                  <span className="block text-xs font-semibold opacity-80">Acessar treino {(assigned[0] ?? workouts[0]).letra}</span>
+                </span>
+                <ChevronRight className="w-5 h-5 ml-2 shrink-0 transition-transform group-hover:translate-x-1"/>
+              </Link>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <StatChip icon={<TrendingUp className="w-4 h-4"/>} label="Progresso" value={`${Math.min(99, workouts.length * 15 + 10)}%`} sub="do objetivo"/>
+            <StatChip icon={<Calendar className="w-4 h-4"/>} label="Próximo treino" value="Hoje" sub={new Date().toLocaleDateString("pt-BR",{weekday:"short"})}/>
+            <StatChip icon={<Flame className="w-4 h-4"/>} label="Sequência" value={String(Math.max(1, workouts.length))} sub="dias"/>
+          </div>
+        </section>
+
+
         <section className={`${glassCard} p-5`}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(180deg, #FFD400, #FFB800)" }} />
@@ -189,6 +228,17 @@ function Dashboard() {
 
       {showProfile && <ProfileDialog profile={profile} onClose={() => setShowProfile(false)}/>}
       {showInstall && <InstallDialog onClose={() => setShowInstall(false)}/>}
+    </div>
+  );
+}
+
+function StatChip({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 flex flex-col items-center justify-center text-center min-h-[110px]">
+      <div className="w-8 h-8 rounded-full bg-[var(--lime)]/15 text-[var(--lime)] flex items-center justify-center mb-1">{icon}</div>
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 leading-tight">{label}</div>
+      <div className="text-lg font-black text-white leading-tight">{value}</div>
+      <div className="text-[10px] text-zinc-500">{sub}</div>
     </div>
   );
 }
