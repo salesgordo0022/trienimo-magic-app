@@ -29,12 +29,15 @@ export const Route = createFileRoute("/_authenticated/app")({
   component: Dashboard,
 });
 
-const pageBg = "radial-gradient(1200px 600px at 15% 10%, rgba(255,212,0,0.08), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(255,212,0,0.05), transparent 60%), #0b0b0d";
+const pageBg = "radial-gradient(1200px 600px at 15% 10%, rgba(204,255,0,0.08), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(204,255,0,0.05), transparent 60%), #0a0a0a";
 const glassCard = "rounded-2xl border border-white/10 backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/[0.02] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]";
-const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10";
-const goldBtn = "inline-flex items-center justify-center gap-2 text-black font-semibold rounded-xl px-4 py-2.5 text-sm transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-60";
-const goldBtnStyle = { background: "linear-gradient(135deg, #FFD400, #FFB800)", boxShadow: "0 10px 30px -12px rgba(255,212,0,0.55)" } as const;
+const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--lime)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--lime)]/10";
+const limeBtn = "inline-flex items-center justify-center gap-2 text-black font-bold rounded-xl px-4 py-2.5 text-sm transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-60";
+const limeBtnStyle = { background: "linear-gradient(135deg, #CCFF00, #B8E600)", boxShadow: "0 10px 30px -12px rgba(204,255,0,0.55)" } as const;
 const chipBtn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all";
+// Aliases (compatibilidade com o restante do arquivo)
+const goldBtn = limeBtn;
+const goldBtnStyle = limeBtnStyle;
 
 function Dashboard() {
   const { data: workouts } = useSuspenseQuery(workoutsQO());
