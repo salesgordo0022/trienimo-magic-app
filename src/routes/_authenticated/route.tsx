@@ -127,16 +127,8 @@ function Shell() {
 
 function Logo() {
   return (
-    <Link to="/app" className="flex items-center gap-2">
-      <div className="w-10 h-10 rounded-xl bg-[var(--lime)] flex items-center justify-center">
-        <svg viewBox="0 0 24 24" className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M4 9v6"/><path d="M20 9v6"/><path d="M2 11v2"/><path d="M22 11v2"/>
-        </svg>
-      </div>
-      <div className="leading-tight">
-        <div className="font-black text-white text-base tracking-tight">IMPERIAL</div>
-        <div className="text-[9px] text-[var(--lime)] font-bold tracking-[0.3em] -mt-0.5">FITNESS</div>
-      </div>
+    <Link to="/app" className="flex items-center justify-center w-full py-1">
+      <img src={imperialLogo.url} alt="Imperial Fitness" className="h-16 w-auto object-contain drop-shadow-[0_0_20px_rgba(204,255,0,0.35)]"/>
     </Link>
   );
 }
