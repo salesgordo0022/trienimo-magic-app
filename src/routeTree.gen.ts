@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedProfessorRouteImport } from './routes/_authenticated/professor'
+import { Route as AuthenticatedMeuTreinoRouteImport } from './routes/_authenticated/meu-treino'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedFichaIdRouteImport } from './routes/_authenticated/ficha.$id'
@@ -36,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedProfessorRoute = AuthenticatedProfessorRouteImport.update({
   id: '/professor',
   path: '/professor',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMeuTreinoRoute = AuthenticatedMeuTreinoRouteImport.update({
+  id: '/meu-treino',
+  path: '/meu-treino',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/app': typeof AuthenticatedAppRoute
+  '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/professor': typeof AuthenticatedProfessorRoute
   '/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
   '/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/app': typeof AuthenticatedAppRoute
+  '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/professor': typeof AuthenticatedProfessorRoute
   '/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
   '/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/_authenticated/professor': typeof AuthenticatedProfessorRoute
   '/_authenticated/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
   '/_authenticated/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/app'
+    | '/meu-treino'
     | '/professor'
     | '/ficha/$id'
     | '/ficha/$id/executar'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/app'
+    | '/meu-treino'
     | '/professor'
     | '/ficha/$id'
     | '/ficha/$id/executar'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/app'
+    | '/_authenticated/meu-treino'
     | '/_authenticated/professor'
     | '/_authenticated/ficha/$id'
     | '/_authenticated/ficha/$id/executar'
@@ -166,6 +178,13 @@ declare module '@tanstack/react-router' {
       path: '/professor'
       fullPath: '/professor'
       preLoaderRoute: typeof AuthenticatedProfessorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/meu-treino': {
+      id: '/_authenticated/meu-treino'
+      path: '/meu-treino'
+      fullPath: '/meu-treino'
+      preLoaderRoute: typeof AuthenticatedMeuTreinoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app': {
@@ -222,6 +241,7 @@ const AuthenticatedFichaIdRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedMeuTreinoRoute: typeof AuthenticatedMeuTreinoRoute
   AuthenticatedProfessorRoute: typeof AuthenticatedProfessorRoute
   AuthenticatedFichaIdRoute: typeof AuthenticatedFichaIdRouteWithChildren
 }
@@ -229,6 +249,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedMeuTreinoRoute: AuthenticatedMeuTreinoRoute,
   AuthenticatedProfessorRoute: AuthenticatedProfessorRoute,
   AuthenticatedFichaIdRoute: AuthenticatedFichaIdRouteWithChildren,
 }
