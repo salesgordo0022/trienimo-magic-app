@@ -12,8 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedProgressoRouteImport } from './routes/_authenticated/progresso'
 import { Route as AuthenticatedProfessorRouteImport } from './routes/_authenticated/professor'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedMeuTreinoRouteImport } from './routes/_authenticated/meu-treino'
+import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedFichaIdRouteImport } from './routes/_authenticated/ficha.$id'
 import { Route as AuthenticatedFichaIdHistoricoRouteImport } from './routes/_authenticated/ficha.$id.historico'
@@ -33,14 +39,45 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedProgressoRoute = AuthenticatedProgressoRouteImport.update({
+  id: '/progresso',
+  path: '/progresso',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProfessorRoute = AuthenticatedProfessorRouteImport.update({
   id: '/professor',
   path: '/professor',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMeuTreinoRoute = AuthenticatedMeuTreinoRouteImport.update({
+  id: '/meu-treino',
+  path: '/meu-treino',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedConfiguracoesRoute =
+  AuthenticatedConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAgendaRoute = AuthenticatedAgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -70,8 +107,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/agenda': typeof AuthenticatedAgendaRoute
   '/app': typeof AuthenticatedAppRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/mensagens': typeof AuthenticatedMensagensRoute
+  '/meu-treino': typeof AuthenticatedMeuTreinoRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
   '/professor': typeof AuthenticatedProfessorRoute
+  '/progresso': typeof AuthenticatedProgressoRoute
   '/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
   '/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
   '/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
@@ -80,8 +123,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/agenda': typeof AuthenticatedAgendaRoute
   '/app': typeof AuthenticatedAppRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/mensagens': typeof AuthenticatedMensagensRoute
+  '/meu-treino': typeof AuthenticatedMeuTreinoRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
   '/professor': typeof AuthenticatedProfessorRoute
+  '/progresso': typeof AuthenticatedProgressoRoute
   '/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
   '/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
   '/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
@@ -92,8 +141,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
+  '/_authenticated/meu-treino': typeof AuthenticatedMeuTreinoRoute
+  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/professor': typeof AuthenticatedProfessorRoute
+  '/_authenticated/progresso': typeof AuthenticatedProgressoRoute
   '/_authenticated/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
   '/_authenticated/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
   '/_authenticated/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
@@ -104,8 +159,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/agenda'
     | '/app'
+    | '/configuracoes'
+    | '/mensagens'
+    | '/meu-treino'
+    | '/perfil'
     | '/professor'
+    | '/progresso'
     | '/ficha/$id'
     | '/ficha/$id/executar'
     | '/ficha/$id/historico'
@@ -114,8 +175,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/agenda'
     | '/app'
+    | '/configuracoes'
+    | '/mensagens'
+    | '/meu-treino'
+    | '/perfil'
     | '/professor'
+    | '/progresso'
     | '/ficha/$id'
     | '/ficha/$id/executar'
     | '/ficha/$id/historico'
@@ -125,8 +192,14 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/_authenticated/agenda'
     | '/_authenticated/app'
+    | '/_authenticated/configuracoes'
+    | '/_authenticated/mensagens'
+    | '/_authenticated/meu-treino'
+    | '/_authenticated/perfil'
     | '/_authenticated/professor'
+    | '/_authenticated/progresso'
     | '/_authenticated/ficha/$id'
     | '/_authenticated/ficha/$id/executar'
     | '/_authenticated/ficha/$id/historico'
@@ -161,6 +234,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/progresso': {
+      id: '/_authenticated/progresso'
+      path: '/progresso'
+      fullPath: '/progresso'
+      preLoaderRoute: typeof AuthenticatedProgressoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/professor': {
       id: '/_authenticated/professor'
       path: '/professor'
@@ -168,11 +248,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfessorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/meu-treino': {
+      id: '/_authenticated/meu-treino'
+      path: '/meu-treino'
+      fullPath: '/meu-treino'
+      preLoaderRoute: typeof AuthenticatedMeuTreinoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mensagens': {
+      id: '/_authenticated/mensagens'
+      path: '/mensagens'
+      fullPath: '/mensagens'
+      preLoaderRoute: typeof AuthenticatedMensagensRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app': {
       id: '/_authenticated/app'
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/agenda': {
+      id: '/_authenticated/agenda'
+      path: '/agenda'
+      fullPath: '/agenda'
+      preLoaderRoute: typeof AuthenticatedAgendaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -221,15 +336,27 @@ const AuthenticatedFichaIdRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
+  AuthenticatedMeuTreinoRoute: typeof AuthenticatedMeuTreinoRoute
+  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedProfessorRoute: typeof AuthenticatedProfessorRoute
+  AuthenticatedProgressoRoute: typeof AuthenticatedProgressoRoute
   AuthenticatedFichaIdRoute: typeof AuthenticatedFichaIdRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
+  AuthenticatedMeuTreinoRoute: AuthenticatedMeuTreinoRoute,
+  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedProfessorRoute: AuthenticatedProfessorRoute,
+  AuthenticatedProgressoRoute: AuthenticatedProgressoRoute,
   AuthenticatedFichaIdRoute: AuthenticatedFichaIdRouteWithChildren,
 }
 
