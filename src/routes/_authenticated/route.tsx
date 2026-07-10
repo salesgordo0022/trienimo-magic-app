@@ -135,10 +135,38 @@ function Shell() {
           </div>
         </header>
 
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 pb-24 lg:pb-0">
           <Outlet/>
         </main>
       </div>
+
+      {/* Bottom nav (mobile) */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#0d0d0f]/95 backdrop-blur-xl border-t border-white/10 safe-bottom">
+        <div className="grid grid-cols-5 gap-1 px-2 py-2">
+          {[
+            { to: "/app", label: "Início", icon: Home },
+            { to: "/meu-treino", label: "Treino", icon: Dumbbell },
+            { to: "/progresso", label: "Progresso", icon: TrendingUp },
+            { to: "/mensagens", label: "Chat", icon: MessageSquare },
+            { to: "/perfil", label: "Perfil", icon: User },
+          ].map(item => {
+            const active = pathname === item.to || (item.to !== "/app" && pathname.startsWith(item.to));
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold transition-all ${
+                  active ? "text-black bg-[var(--lime)] shadow-[0_8px_24px_-6px_rgba(204,255,0,0.55)]" : "text-zinc-400"
+                }`}
+              >
+                <Icon className="w-5 h-5"/>
+                <span className="leading-none">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
