@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedProgressoRouteImport } from './routes/_authenticated/progresso'
 import { Route as AuthenticatedProfessorRouteImport } from './routes/_authenticated/professor'
 import { Route as AuthenticatedMeuTreinoRouteImport } from './routes/_authenticated/meu-treino'
+import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -49,6 +50,11 @@ const AuthenticatedProfessorRoute = AuthenticatedProfessorRouteImport.update({
 const AuthenticatedMeuTreinoRoute = AuthenticatedMeuTreinoRouteImport.update({
   id: '/meu-treino',
   path: '/meu-treino',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/app': typeof AuthenticatedAppRoute
+  '/mensagens': typeof AuthenticatedMensagensRoute
   '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/professor': typeof AuthenticatedProfessorRoute
   '/progresso': typeof AuthenticatedProgressoRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/app': typeof AuthenticatedAppRoute
+  '/mensagens': typeof AuthenticatedMensagensRoute
   '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/professor': typeof AuthenticatedProfessorRoute
   '/progresso': typeof AuthenticatedProgressoRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
   '/_authenticated/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/_authenticated/professor': typeof AuthenticatedProfessorRoute
   '/_authenticated/progresso': typeof AuthenticatedProgressoRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agenda'
     | '/app'
+    | '/mensagens'
     | '/meu-treino'
     | '/professor'
     | '/progresso'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agenda'
     | '/app'
+    | '/mensagens'
     | '/meu-treino'
     | '/professor'
     | '/progresso'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/agenda'
     | '/_authenticated/app'
+    | '/_authenticated/mensagens'
     | '/_authenticated/meu-treino'
     | '/_authenticated/professor'
     | '/_authenticated/progresso'
@@ -216,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/meu-treino'
       fullPath: '/meu-treino'
       preLoaderRoute: typeof AuthenticatedMeuTreinoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mensagens': {
+      id: '/_authenticated/mensagens'
+      path: '/mensagens'
+      fullPath: '/mensagens'
+      preLoaderRoute: typeof AuthenticatedMensagensRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app': {
@@ -280,6 +299,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
   AuthenticatedMeuTreinoRoute: typeof AuthenticatedMeuTreinoRoute
   AuthenticatedProfessorRoute: typeof AuthenticatedProfessorRoute
   AuthenticatedProgressoRoute: typeof AuthenticatedProgressoRoute
@@ -290,6 +310,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
   AuthenticatedMeuTreinoRoute: AuthenticatedMeuTreinoRoute,
   AuthenticatedProfessorRoute: AuthenticatedProfessorRoute,
   AuthenticatedProgressoRoute: AuthenticatedProgressoRoute,
