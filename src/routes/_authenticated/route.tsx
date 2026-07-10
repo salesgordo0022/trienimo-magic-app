@@ -145,8 +145,8 @@ function Shell() {
 
 function Logo() {
   return (
-    <Link to="/app" className="flex items-center justify-center w-full py-1">
-      <img src={imperialLogo.url} alt="Imperial Fitness" className="h-16 w-auto object-contain drop-shadow-[0_0_20px_rgba(204,255,0,0.35)]"/>
+    <Link to="/app" className="flex items-center justify-center w-full">
+      <img src={imperialLogo.url} alt="Imperial Fitness" className="w-full max-w-[200px] h-auto object-contain drop-shadow-[0_0_24px_rgba(204,255,0,0.35)]"/>
     </Link>
   );
 }
