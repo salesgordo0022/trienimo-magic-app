@@ -5,6 +5,7 @@ import { getProfile } from "@/lib/workouts.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { Home, Dumbbell, TrendingUp, Calendar, MessageSquare, User, Settings, LogOut, Menu, X, Bell, Shield, Users } from "lucide-react";
 import { useState } from "react";
+import imperialLogo from "@/assets/imperial-logo.png.asset.json";
 
 const profileQO = () => queryOptions({ queryKey: ["profile"], queryFn: () => getProfile() });
 const roleQO = () => queryOptions({ queryKey: ["myRole"], queryFn: () => getMyRole() });
