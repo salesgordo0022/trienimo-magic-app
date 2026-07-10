@@ -232,6 +232,17 @@ function Dashboard() {
   );
 }
 
+function StatChip({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 flex flex-col items-center justify-center text-center min-h-[110px]">
+      <div className="w-8 h-8 rounded-full bg-[var(--lime)]/15 text-[var(--lime)] flex items-center justify-center mb-1">{icon}</div>
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 leading-tight">{label}</div>
+      <div className="text-lg font-black text-white leading-tight">{value}</div>
+      <div className="text-[10px] text-zinc-500">{sub}</div>
+    </div>
+  );
+}
+
 function ProfileDialog({ profile, onClose }: { profile: Awaited<ReturnType<typeof getProfile>>; onClose: () => void }) {
   const qc = useQueryClient();
   const [form, setForm] = useState({
