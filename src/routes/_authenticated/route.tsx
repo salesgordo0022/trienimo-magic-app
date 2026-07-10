@@ -52,12 +52,16 @@ function Shell() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex" style={{ fontFamily: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif" }}>
       {/* Sidebar */}
-      <aside className={`fixed lg:sticky top-0 left-0 h-screen w-[260px] bg-[#0f0f10] border-r border-white/5 z-50 flex flex-col transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="px-5 pt-6 pb-5 flex items-center justify-between">
+      <aside className={`fixed lg:sticky top-0 left-0 h-screen w-[260px] bg-[#0d0d0f] border-r border-white/5 z-50 flex flex-col transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+        {/* Logo area */}
+        <div className="relative px-4 pt-5 pb-6 border-b border-white/5">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--lime)]/40 to-transparent"/>
+          <button className="lg:hidden absolute top-3 right-3 text-zinc-500 hover:text-white" onClick={() => setOpen(false)}><X className="w-5 h-5"/></button>
           <Logo/>
-          <button className="lg:hidden text-zinc-400" onClick={() => setOpen(false)}><X className="w-5 h-5"/></button>
         </div>
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">Menu</div>
           {NAV.map(item => {
             const active = pathname === item.to || (item.to !== "/app" && pathname.startsWith(item.to));
             const Icon = item.icon;
@@ -66,29 +70,43 @@ function Shell() {
                 key={item.to}
                 to={item.to}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   active
-                    ? "bg-[var(--lime)] text-black shadow-[0_8px_24px_-8px_rgba(204,255,0,0.5)]"
+                    ? "bg-[var(--lime)] text-black shadow-[0_10px_30px_-8px_rgba(204,255,0,0.55)]"
                     : "text-zinc-400 hover:text-white hover:bg-white/5"
                 }`}
               >
+                {active && <span className="absolute -left-3 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-[var(--lime)] shadow-[0_0_12px_rgba(204,255,0,0.8)]"/>}
                 <Icon className="w-[18px] h-[18px]"/>{item.label}
               </Link>
             );
           })}
-          {role?.role === "admin" && (
-            <Link to="/admin" onClick={()=>setOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:text-white hover:bg-white/5">
-              <Shield className="w-[18px] h-[18px]"/>Admin
-            </Link>
-          )}
           {(role?.role === "admin" || role?.role === "professor") && (
-            <Link to="/professor" onClick={()=>setOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:text-white hover:bg-white/5">
-              <Users className="w-[18px] h-[18px]"/>Alunos
-            </Link>
+            <>
+              <div className="px-3 pt-4 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">Gestão</div>
+              {role?.role === "admin" && (
+                <Link to="/admin" onClick={()=>setOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:text-white hover:bg-white/5">
+                  <Shield className="w-[18px] h-[18px]"/>Admin
+                </Link>
+              )}
+              <Link to="/professor" onClick={()=>setOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:text-white hover:bg-white/5">
+                <Users className="w-[18px] h-[18px]"/>Alunos
+              </Link>
+            </>
           )}
         </nav>
-        <div className="px-3 pb-5 pt-3 border-t border-white/5">
-          <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:text-white hover:bg-white/5 transition-all">
+
+        <div className="px-3 pb-5 pt-3 border-t border-white/5 space-y-2">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/[0.03]">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--lime)] to-[#88b800] flex items-center justify-center text-black font-black text-xs shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-bold truncate">{firstName}</div>
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider truncate">{role?.role ?? "aluno"}</div>
+            </div>
+          </div>
+          <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:text-red-400 hover:bg-red-500/5 transition-all">
             <LogOut className="w-[18px] h-[18px]"/>Sair
           </button>
         </div>
