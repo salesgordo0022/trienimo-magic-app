@@ -147,3 +147,42 @@ function Executar() {
     </div>
   );
 }
+
+function ExerciseGif({ nome }: { nome: string }) {
+  const [open, setOpen] = useState(false);
+  const q = useQuery({
+    queryKey: ["ex", "byName", nome],
+    queryFn: () => searchExercises({ data: { q: nome, limit: 1 } }),
+    enabled: open,
+    staleTime: 1000 * 60 * 60,
+  });
+  const ex = q.data?.[0];
+  return (
+    <>
+      <button type="button" onClick={()=>setOpen(true)} className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-black bg-[var(--yellow)] rounded-md px-2 py-1">
+        <Eye className="w-3 h-3"/> GIF
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={()=>setOpen(false)}>
+          <div onClick={e=>e.stopPropagation()} className="bg-white rounded-2xl max-w-sm w-full overflow-hidden">
+            <div className="bg-black text-white px-4 py-2 text-sm font-bold uppercase flex justify-between items-center">
+              <span className="truncate">{nome}</span>
+              <button onClick={()=>setOpen(false)} className="text-white/70">✕</button>
+            </div>
+            {q.isLoading && <div className="p-10 text-center text-sm text-gray-500">Carregando...</div>}
+            {!q.isLoading && !ex && <div className="p-10 text-center text-sm text-gray-500">Nenhuma animação encontrada. Tente renomear em inglês (ex: "bench press").</div>}
+            {ex && (
+              <>
+                <img src={ex.gifUrl} alt={ex.name} className="w-full aspect-square object-contain bg-white"/>
+                <div className="p-3 text-xs text-gray-700 space-y-1">
+                  <div><b className="uppercase text-[10px] text-gray-500">Alvo:</b> {ex.target}</div>
+                  <div><b className="uppercase text-[10px] text-gray-500">Equip:</b> {ex.equipment}</div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
