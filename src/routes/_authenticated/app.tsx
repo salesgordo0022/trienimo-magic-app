@@ -5,7 +5,7 @@ import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout } from "@/
 import { getMyRole, listMyStudents } from "@/lib/roles.functions";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, Trash2, Pencil, History, Dumbbell, ChevronRight, TrendingUp, Calendar, Flame, Users } from "lucide-react";
+import { Plus, Trash2, Pencil, History, Dumbbell, ChevronRight, TrendingUp, Calendar, Flame, Users, BookOpen } from "lucide-react";
 
 const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => listWorkouts() });
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
@@ -79,6 +79,18 @@ function Inicio() {
         <StatChip icon={<Calendar className="w-5 h-5"/>} label="Próximo treino" value="Hoje" sub={new Date().toLocaleDateString("pt-BR",{weekday:"long"})}/>
         <StatChip icon={<Flame className="w-5 h-5"/>} label="Sequência" value={String(Math.max(1, workouts.length))} sub="dias"/>
       </section>
+
+      {/* Biblioteca CTA */}
+      <Link to="/biblioteca" className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-gradient-to-r from-[#111112] to-[#161618] p-4 hover:border-[var(--lime)]/40 transition-all">
+        <div className="w-12 h-12 rounded-2xl bg-[var(--lime)]/15 text-[var(--lime)] flex items-center justify-center shrink-0">
+          <BookOpen className="w-6 h-6"/>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-black">Biblioteca de Exercícios</div>
+          <div className="text-xs text-zinc-500">Explore +1.300 exercícios com animação, músculos e equipamentos</div>
+        </div>
+        <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-[var(--lime)] transition-colors"/>
+      </Link>
 
       {/* Criar novo treino */}
       <section className="rounded-2xl border border-white/10 bg-[#111112] p-5">

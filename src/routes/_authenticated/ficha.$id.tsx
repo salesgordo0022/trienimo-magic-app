@@ -8,7 +8,8 @@ import {
   type ExerciseRow,
 } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents } from "@/lib/roles.functions";
-import { Plus, Minus, Trash2, Play, Pause, SkipForward, History, ArrowLeft, User, FileText, Check, Loader2, Flag, Dumbbell } from "lucide-react";
+import { searchExercises, type Exercise } from "@/lib/exercisedb.functions";
+import { Plus, Minus, Trash2, Play, Pause, SkipForward, History, ArrowLeft, User, FileText, Check, Loader2, Flag, Dumbbell, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -258,11 +259,60 @@ function GroupBlock({ group, onDelete, onAddExercise, onDeleteExercise, onExerci
         ))}
       </div>
 
-      <form className="p-3 flex gap-2 border-t border-white/5" onSubmit={(e)=>{e.preventDefault(); if(!newEx)return; onAddExercise(newEx); setNewEx("");}}>
-        <input placeholder="Novo exercício" value={newEx} onChange={e=>setNewEx(e.target.value)} className={`${inputCls} py-2`}/>
+      <form className="p-3 flex gap-2 border-t border-white/5 flex-wrap" onSubmit={(e)=>{e.preventDefault(); if(!newEx)return; onAddExercise(newEx); setNewEx("");}}>
+        <input placeholder="Novo exercício" value={newEx} onChange={e=>setNewEx(e.target.value)} className={`${inputCls} py-2 flex-1 min-w-[150px]`}/>
+        <ExerciseLibraryButton onPick={(name) => onAddExercise(name)}/>
         <button type="submit" className={`${chipBtn} text-black`} style={goldBtnStyle}><Plus className="w-3 h-3"/>Add</button>
       </form>
     </div>
+  );
+}
+
+function ExerciseLibraryButton({ onPick }: { onPick: (name: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const results = useQuery({
+    queryKey: ["ex", "quicksearch", q],
+    queryFn: () => searchExercises({ data: { q: q || undefined, limit: 20 } }),
+    enabled: open,
+    staleTime: 1000 * 60 * 10,
+  });
+  return (
+    <>
+      <button type="button" onClick={()=>setOpen(true)} className={`${chipBtn} bg-white/5 border border-white/10 text-white`}>
+        <Search className="w-3 h-3"/>Biblioteca
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={()=>setOpen(false)}>
+          <div onClick={e=>e.stopPropagation()} className="w-full sm:max-w-2xl bg-[#111112] border border-white/10 rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-4 border-b border-white/10 flex items-center gap-2">
+              <Search className="w-4 h-4 text-zinc-500"/>
+              <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar exercício (ex: bench, curl, squat)" className="flex-1 bg-transparent outline-none text-sm text-white"/>
+              <button onClick={()=>setOpen(false)} className="text-zinc-400 p-1"><X className="w-4 h-4"/></button>
+            </div>
+            <div className="overflow-y-auto p-3">
+              {results.isLoading ? (
+                <div className="p-8 text-center text-sm text-zinc-500"><Loader2 className="w-4 h-4 animate-spin inline mr-2"/>Buscando...</div>
+              ) : (results.data?.length ?? 0) === 0 ? (
+                <div className="p-8 text-center text-sm text-zinc-500">Nada encontrado.</div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {results.data!.map((ex: Exercise) => (
+                    <button key={ex.id} type="button" onClick={()=>{ onPick(ex.name); setOpen(false); }} className="text-left rounded-xl border border-white/10 bg-black/30 overflow-hidden hover:border-[var(--yellow)]/50">
+                      <img src={ex.gifUrl} alt={ex.name} loading="lazy" className="w-full aspect-square object-contain bg-white"/>
+                      <div className="p-2">
+                        <div className="text-[11px] font-bold text-white capitalize line-clamp-2 leading-tight">{ex.name}</div>
+                        <div className="text-[9px] text-zinc-500 mt-0.5 capitalize">{ex.target} · {ex.equipment}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
