@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery, useMutation, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getFicha, startSession, upsertSessionSet, endSession } from "@/lib/workouts.functions";
+import { searchExercises } from "@/lib/exercisedb.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, Pause, Play, SkipForward } from "lucide-react";
+import { ArrowLeft, Check, Pause, Play, SkipForward, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 const fichaQO = (id: string) => queryOptions({ queryKey: ["ficha", id], queryFn: () => getFicha({ data: { id } }) });
@@ -112,7 +113,8 @@ function Executar() {
               {g.exercises.map(ex => (
                 <div key={ex.id} className="p-3">
                   <div className="flex items-baseline justify-between gap-2">
-                    <div className="font-bold text-sm">{ex.nome}</div>
+                    <div className="font-bold text-sm flex-1">{ex.nome}</div>
+                    <ExerciseGif nome={ex.nome}/>
                     <div className="text-xs text-gray-500">Desc: {ex.desc_segundos}s</div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
