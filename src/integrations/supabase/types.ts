@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           desc_segundos: number
+          exercise_db_id: string | null
           group_id: string
           id: string
           nome: string
@@ -30,6 +31,7 @@ export type Database = {
         Insert: {
           created_at?: string
           desc_segundos?: number
+          exercise_db_id?: string | null
           group_id: string
           id?: string
           nome: string
@@ -42,6 +44,7 @@ export type Database = {
         Update: {
           created_at?: string
           desc_segundos?: number
+          exercise_db_id?: string | null
           group_id?: string
           id?: string
           nome?: string
@@ -91,6 +94,63 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           used_at?: string | null
           used_by?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }
