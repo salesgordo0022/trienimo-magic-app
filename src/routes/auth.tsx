@@ -133,7 +133,7 @@ function AuthPage() {
                   required
                   maxLength={80}
                   placeholder="Seu nome"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--lime)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--lime)]/10"
                 />
               </div>
             )}
@@ -145,7 +145,7 @@ function AuthPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="seu@email.com"
-                className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10"
+                className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--lime)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--lime)]/10"
               />
             </div>
             <div className="space-y-1.5">
@@ -157,7 +157,7 @@ function AuthPage() {
                 required
                 minLength={6}
                 placeholder="••••••••"
-                className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10"
+                className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--lime)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--lime)]/10"
               />
             </div>
             {mode === "signup" && (
@@ -170,7 +170,7 @@ function AuthPage() {
                   onChange={(e) => setConvite(e.target.value.toUpperCase())}
                   placeholder="Deixe em branco para entrar como aluno"
                   maxLength={12}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--yellow)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--yellow)]/10"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--lime)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--lime)]/10"
                 />
               </div>
             )}
