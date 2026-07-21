@@ -84,8 +84,7 @@ function AuthPage() {
       className="min-h-screen w-full flex items-center justify-center p-4 sm:p-8 relative overflow-hidden"
       style={{
         fontFamily: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif",
-        background:
-          "radial-gradient(1200px 600px at 15% 10%, rgba(255,212,0,0.10), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(255,212,0,0.06), transparent 60%), #0b0b0d",
+        background: "#000000",
       }}
     >
       <div
