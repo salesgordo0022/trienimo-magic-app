@@ -599,3 +599,60 @@ export const getHistorico = createServerFn({ method: "GET" })
         })),
     })) as SessionHistory[];
   });
+
+export type AllSessionHistory = {
+  id: string;
+  started_at: string;
+  ended_at: string | null;
+  workout_letra: string | null;
+  sets: Array<{
+    exercise_nome: string;
+    set_index: number;
+    reps: number | null;
+    kg: number | null;
+    done: boolean;
+  }>;
+};
+
+export const getAllSessions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: sessions, error } = await context.supabase
+      .from("sessions")
+      .select("id, started_at, ended_at, workouts(letra)")
+      .eq("user_id", context.userId)
+      .order("started_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    const ids = (sessions ?? []).map((s) => s.id);
+    if (!ids.length) return [] as AllSessionHistory[];
+    const { data: sets } = await context.supabase
+      .from("session_sets")
+      .select("session_id, exercise_id, set_index, reps, kg, done, exercises(nome)")
+      .in("session_id", ids);
+    return (sessions ?? []).map((s) => ({
+      id: s.id,
+      started_at: s.started_at,
+      ended_at: s.ended_at,
+      workout_letra: (s.workouts as any)?.letra ?? null,
+      sets: (
+        (sets ?? []) as Array<{
+          session_id: string;
+          exercise_id: string;
+          set_index: number;
+          reps: number | null;
+          kg: number | null;
+          done: boolean;
+          exercises: { nome: string } | null;
+        }>
+      )
+        .filter((x) => x.session_id === s.id)
+        .map((x) => ({
+          exercise_nome: x.exercises?.nome ?? "",
+          set_index: x.set_index,
+          reps: x.reps,
+          kg: x.kg,
+          done: x.done,
+        })),
+    })) as AllSessionHistory[];
+  });

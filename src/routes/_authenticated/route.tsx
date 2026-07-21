@@ -19,13 +19,13 @@ import {
 import {
   Home,
   Dumbbell,
-  TrendingUp,
   MessageSquare,
   User,
   Bell,
   LogOut,
   Shield,
   Users,
+  Apple,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -49,9 +49,9 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 const NAV = [
-  { to: "/app", label: "Início", icon: Home },
+  { to: "/app", label: "Inicio", icon: Home },
   { to: "/meu-treino", label: "Treino", icon: Dumbbell },
-  { to: "/progresso", label: "Progresso", icon: TrendingUp },
+  { to: "/alimentacao", label: "Alimentacao", icon: Apple },
   { to: "/mensagens", label: "Chat", icon: MessageSquare },
   { to: "/perfil", label: "Perfil", icon: User },
 ] as const;
