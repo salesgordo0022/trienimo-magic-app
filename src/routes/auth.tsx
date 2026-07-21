@@ -181,8 +181,8 @@ function AuthPage() {
               disabled={loading}
               className="w-full text-black font-semibold rounded-xl py-3.5 text-sm transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-60 mt-2"
               style={{
-                background: "linear-gradient(135deg, #FFD400, #FFB800)",
-                boxShadow: "0 10px 30px -10px rgba(255,212,0,0.55)",
+                background: "linear-gradient(135deg, #CCFF00, #A8D400)",
+                boxShadow: "0 10px 30px -10px rgba(204,255,0,0.55)",
               }}
             >
               {loading ? "Carregando..." : mode === "login" ? "Entrar" : "Criar conta"}
