@@ -97,7 +97,7 @@ function AuthPage() {
           <img
             src="/imperial-fitness-logo.png"
             alt="Imperial Fitness"
-            className="mx-auto h-20 w-auto object-contain mb-4 drop-shadow-[0_0_20px_rgba(204,255,0,0.35)]"
+            className="mx-auto h-32 sm:h-36 w-auto object-contain mb-4 drop-shadow-[0_0_28px_rgba(204,255,0,0.45)]"
           />
           <h1 className="text-2xl font-bold text-white tracking-tight">Ficha de Treino</h1>
           <p className="text-sm text-zinc-400 mt-1.5">
