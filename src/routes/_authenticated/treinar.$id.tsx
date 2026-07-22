@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { getFicha } from "@/lib/workouts.functions";
-import { ArrowLeft, Dumbbell, CheckCircle2, ChevronRight, ChevronLeft, Flag } from "lucide-react";
+import { getExerciseById, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, type Exercise } from "@/lib/exercisedb.functions";
+import { ArrowLeft, Dumbbell, CheckCircle2, ChevronRight, ChevronLeft, Flag, Loader2 } from "lucide-react";
 import { useState, useMemo } from "react";
 
 const fichaQO = (id: string) =>
@@ -20,6 +21,30 @@ function TreinarPage() {
     [ficha.groups],
   );
 
+  // Fetch exercise details (GIF, target, equipment) for exercises that have exercise_db_id
+  const dbIds = useMemo(
+    () => allExercises.filter((e) => e.exercise_db_id).map((e) => e.exercise_db_id!),
+    [allExercises],
+  );
+
+  const exerciseDetails = useQuery({
+    queryKey: ["ex", "details", dbIds],
+    queryFn: async () => {
+      const results = await Promise.all(
+        dbIds.map((eid) => getExerciseById({ data: { id: eid } }).catch(() => null)),
+      );
+      return results.filter(Boolean) as Exercise[];
+    },
+    enabled: dbIds.length > 0,
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const detailMap = useMemo(() => {
+    const m = new Map<string, Exercise>();
+    (exerciseDetails.data ?? []).forEach((ex) => m.set(ex.id, ex));
+    return m;
+  }, [exerciseDetails.data]);
+
   const [currentIdx, setCurrentIdx] = useState(0);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [finished, setFinished] = useState(false);
@@ -27,6 +52,7 @@ function TreinarPage() {
   const current = allExercises[currentIdx];
   const total = allExercises.length;
   const doneCount = completed.size;
+  const currentDetail = current?.exercise_db_id ? detailMap.get(current.exercise_db_id) : null;
 
   const toggleComplete = (exId: string) => {
     setCompleted((prev) => {
@@ -83,9 +109,10 @@ function TreinarPage() {
   const currentGroup = ficha.groups.find((g) =>
     g.exercises.some((e) => e.id === current.id),
   );
+  const reps = current.sets_config?.[0]?.reps ?? "12";
 
   return (
-    <div className="min-h-screen bg-[#111112] flex flex-col">
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
       {/* Top bar */}
       <div className="shrink-0 px-4 pt-4 pb-2">
         <div className="flex items-center gap-3 mb-3">
@@ -93,43 +120,72 @@ function TreinarPage() {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold text-white truncate">Treino {ficha.workout.letra}</div>
+            <div className="text-xs font-black text-white tracking-widest uppercase">Treino {ficha.workout.letra}</div>
           </div>
-          <button onClick={() => toggleComplete(current.id)} className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all ${
-            completed.has(current.id) ? "bg-[var(--lime)] text-black" : "bg-white/5 text-zinc-400"
-          }`}>
-            {completed.has(current.id) ? "Feito" : "Pular"}
+          <button
+            onClick={() => goNext()}
+            className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-white/5 text-zinc-400 hover:text-white transition-all"
+          >
+            Pular
           </button>
         </div>
 
         {/* Progress bar + counter */}
         <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-[var(--lime)] shrink-0">{doneCount}/{total}</span>
+          <span className="text-xs font-bold text-[var(--lime)] shrink-0">{currentIdx + 1}/{total}</span>
           <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full rounded-full bg-[var(--lime)] transition-all duration-500" style={{ width: `${Math.round((doneCount / total) * 100)}%` }} />
+            <div className="h-full rounded-full bg-[var(--lime)] transition-all duration-500" style={{ width: `${((currentIdx + 1) / total) * 100}%` }} />
           </div>
-          <span className="text-xs font-bold text-white/60 shrink-0">{Math.round((doneCount / total) * 100)}%</span>
+          <span className="text-xs font-bold text-white/60 shrink-0">{Math.round(((currentIdx + 1) / total) * 100)}%</span>
         </div>
       </div>
 
-      {/* Exercise */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-        {currentGroup && (
-          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-500 bg-white/5 px-2.5 py-1 rounded-lg self-start mb-3">
-            <Dumbbell className="w-3 h-3" />
-            {currentGroup.nome}
+      {/* Exercise content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-4 min-h-0">
+        <div className="w-full max-w-sm space-y-5">
+          {/* GIF */}
+          {currentDetail?.gifUrl ? (
+            <div className="relative mx-auto w-full max-w-[240px]">
+              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-[var(--lime)]/10 via-transparent to-[var(--lime)]/5 blur-sm" />
+              <div className="relative rounded-2xl bg-white/95 overflow-hidden">
+                <img src={currentDetail.gifUrl} alt={current.nome} className="w-full aspect-square object-contain" />
+              </div>
+            </div>
+          ) : (
+            <div className="relative mx-auto w-full max-w-[240px]">
+              <div className="relative rounded-2xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center aspect-square">
+                <Dumbbell className="w-16 h-16 text-zinc-700" />
+              </div>
+            </div>
+          )}
+
+          {/* Name + tags */}
+          <div className="text-center">
+            <h3 className="text-xl font-black text-white capitalize">{current.nome}</h3>
+            {currentDetail && (
+              <div className="flex justify-center flex-wrap gap-2 mt-2">
+                {currentDetail.target && (
+                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--lime)]/12 text-[var(--lime)] border border-[var(--lime)]/20">
+                    {ptTerm(TARGET_PT, currentDetail.target) ?? currentDetail.target}
+                  </span>
+                )}
+                {currentDetail.equipment && (
+                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-white/5 text-zinc-400 border border-white/10">
+                    {ptTerm(EQUIPMENT_PT, currentDetail.equipment) ?? currentDetail.equipment}
+                  </span>
+                )}
+              </div>
+            )}
+            {currentGroup && (
+              <span className="inline-flex items-center gap-1 mt-3 text-[10px] font-black uppercase tracking-widest text-zinc-500 bg-white/5 px-2.5 py-1 rounded-lg">
+                <Dumbbell className="w-3 h-3" />
+                {currentGroup.nome}
+              </span>
+            )}
           </div>
-        )}
 
-        <h2 className="text-2xl font-black text-white mb-1 capitalize text-center">{current.nome}</h2>
-
-        {current.obs && (
-          <p className="text-xs text-zinc-500 mb-5 text-center">{current.obs}</p>
-        )}
-
-        {/* Series x Reps summary */}
-        {current.series > 0 && (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] py-5 px-6 text-center w-full max-w-sm">
+          {/* Series x Reps summary */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] py-4 px-5 text-center">
             <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Series x Repeticoes</div>
             <div className="flex items-center justify-center gap-4">
               <div>
@@ -138,22 +194,21 @@ function TreinarPage() {
               </div>
               <span className="text-2xl text-zinc-600 font-bold">de</span>
               <div>
-                <span className="text-3xl font-black text-[var(--lime)]">{current.sets_config?.[0]?.reps ?? "12"}</span>
+                <span className="text-3xl font-black text-[var(--lime)]">{reps}</span>
                 <span className="text-sm text-zinc-400 ml-1">repeticoes</span>
               </div>
             </div>
           </div>
-        )}
 
-        {current.series === 0 && (
-          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 text-zinc-400 text-sm">
-            Sem series configuradas
-          </div>
-        )}
+          {/* Obs */}
+          {current.obs && (
+            <p className="text-xs text-zinc-500 text-center">{current.obs}</p>
+          )}
+        </div>
       </div>
 
       {/* Bottom navigation */}
-      <div className="shrink-0 px-4 py-4 border-t border-white/5">
+      <div className="shrink-0 px-4 pb-6 pt-2 border-t border-white/5">
         <div className="flex justify-center gap-3 max-w-sm mx-auto">
           {currentIdx > 0 && (
             <button onClick={goPrev} className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-5 py-4 text-sm font-bold text-white hover:bg-white/10 transition-all">
