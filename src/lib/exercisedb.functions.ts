@@ -226,17 +226,60 @@ export const translateBodyPart = createServerFn({ method: "GET" })
   .inputValidator((d: { term: string }) => z.object({ term: z.string() }).parse(d))
   .handler(({ data }) => PT_BODYPART[data.term.toLowerCase().trim()] ?? null);
 
-export const listBodyParts = createServerFn({ method: "GET" }).handler(async () =>
-  cachedJson<string[]>(`${BASE}/exercises/bodyPartList`),
-);
+// ============ DB-backed queries (fonte principal após sync) ============
+async function dbClient() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
 
-export const listTargets = createServerFn({ method: "GET" }).handler(async () =>
-  cachedJson<string[]>(`${BASE}/exercises/targetList`),
-);
+async function dbHasData(): Promise<boolean> {
+  const db = await dbClient();
+  const { count } = await db
+    .from("exercises_catalog")
+    .select("*", { count: "exact", head: true });
+  return (count ?? 0) > 0;
+}
 
-export const listEquipments = createServerFn({ method: "GET" }).handler(async () =>
-  cachedJson<string[]>(`${BASE}/exercises/equipmentList`),
-);
+function rowToExercise(r: any): Exercise {
+  return {
+    id: r.id,
+    name: r.name,
+    bodyPart: r.body_part ?? "",
+    target: r.target ?? "",
+    equipment: r.equipment ?? "",
+    difficulty: r.difficulty ?? undefined,
+    secondaryMuscles: r.secondary_muscles ?? undefined,
+    instructions: r.instructions ?? undefined,
+    gifUrl: `/api/public/exercise-gif/${r.id}`,
+  };
+}
+
+export const listBodyParts = createServerFn({ method: "GET" }).handler(async () => {
+  if (await dbHasData()) {
+    const db = await dbClient();
+    const { data } = await db.from("exercises_catalog").select("body_part").not("body_part", "is", null);
+    return Array.from(new Set((data ?? []).map((r: any) => r.body_part))).sort();
+  }
+  return cachedJson<string[]>(`${BASE}/exercises/bodyPartList`);
+});
+
+export const listTargets = createServerFn({ method: "GET" }).handler(async () => {
+  if (await dbHasData()) {
+    const db = await dbClient();
+    const { data } = await db.from("exercises_catalog").select("target").not("target", "is", null);
+    return Array.from(new Set((data ?? []).map((r: any) => r.target))).sort();
+  }
+  return cachedJson<string[]>(`${BASE}/exercises/targetList`);
+});
+
+export const listEquipments = createServerFn({ method: "GET" }).handler(async () => {
+  if (await dbHasData()) {
+    const db = await dbClient();
+    const { data } = await db.from("exercises_catalog").select("equipment").not("equipment", "is", null);
+    return Array.from(new Set((data ?? []).map((r: any) => r.equipment))).sort();
+  }
+  return cachedJson<string[]>(`${BASE}/exercises/equipmentList`);
+});
 
 export const searchExercises = createServerFn({ method: "GET" })
   .inputValidator(
@@ -262,11 +305,25 @@ export const searchExercises = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const limit = data.limit ?? 24;
     const offset = data.offset ?? 0;
-    let url: string;
-    // try translate PT term if bodyPart looks portuguese
     let bodyPart = data.bodyPart?.toLowerCase();
     if (bodyPart && PT_BODYPART[bodyPart]) bodyPart = PT_BODYPART[bodyPart];
 
+    if (await dbHasData()) {
+      const db = await dbClient();
+      let query = db.from("exercises_catalog").select("*");
+      if (data.q && data.q.trim()) query = query.ilike("name", `%${data.q.trim()}%`);
+      if (bodyPart) query = query.eq("body_part", bodyPart);
+      if (data.target) query = query.eq("target", data.target);
+      if (data.equipment) query = query.eq("equipment", data.equipment);
+      const { data: rows } = await query
+        .order("name", { ascending: true })
+        .range(offset, offset + limit - 1);
+      const items = (rows ?? []).map(rowToExercise);
+      return await Promise.all(items.map((e) => translateSummary(e)));
+    }
+
+    // fallback API
+    let url: string;
     if (data.q && data.q.trim().length > 0) {
       url = `${BASE}/exercises/name/${encodeURIComponent(data.q.trim().toLowerCase())}?limit=${limit}&offset=${offset}`;
     } else if (bodyPart) {
@@ -280,13 +337,24 @@ export const searchExercises = createServerFn({ method: "GET" })
     }
     const items = await cachedJson<Exercise[]>(url);
     const translated = await Promise.all(items.map((e) => translateSummary(e)));
-    // attach proxied gif url so client never sees the api key
     return translated.map((e) => ({ ...e, gifUrl: `/api/public/exercise-gif/${e.id}` }));
   });
 
 export const getExerciseById = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().min(1).max(10) }).parse(d))
   .handler(async ({ data }) => {
+    if (await dbHasData()) {
+      const db = await dbClient();
+      const { data: row } = await db
+        .from("exercises_catalog")
+        .select("*")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (row) {
+        const ex = rowToExercise(row);
+        return await translateFull(ex);
+      }
+    }
     const ex = await cachedJson<Exercise>(
       `${BASE}/exercises/exercise/${encodeURIComponent(data.id)}`,
     );

@@ -103,7 +103,7 @@ function ProfessorPage() {
 /* ─── Link Student Section ─── */
 function LinkStudentSection({ studentsQO: sqo }: { studentsQO: () => any }) {
   const qc = useQueryClient();
-  const { data: myStudents } = useSuspenseQuery(sqo());
+  const { data: myStudents } = useSuspenseQuery(sqo()) as { data: Array<{ id: string; nome: string | null }> };
   const [email, setEmail] = useState("");
   const [searchResult, setSearchResult] = useState<{ id: string; nome: string | null } | null>(null);
   const [searching, setSearching] = useState(false);
@@ -111,7 +111,7 @@ function LinkStudentSection({ studentsQO: sqo }: { studentsQO: () => any }) {
 
   const search = useMutation({
     mutationFn: useServerFn(searchUserByEmail),
-    onSuccess: (data) => { setSearchResult(data); setSearching(false); },
+    onSuccess: (data) => { setSearchResult(data as { id: string; nome: string | null }); setSearching(false); },
     onError: (e) => { toast.error(e.message); setSearching(false); setSearchResult(null); },
   });
 
@@ -261,7 +261,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
       qc.invalidateQueries({ queryKey: ["workouts"] });
       setLetra("");
       setShowCreate(false);
-      toast.success(`Ficha ${data.letra} criada para ${studentName}!`);
+      toast.success(`Ficha ${(data as { letra: string }).letra} criada para ${studentName}!`);
     },
     onError: (e) => toast.error(e.message),
   });

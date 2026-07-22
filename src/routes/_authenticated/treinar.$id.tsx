@@ -28,8 +28,8 @@ function TreinarPage() {
           <Dumbbell className="w-8 h-8" />
         </div>
         <h1 className="text-2xl font-black text-white">
-          Treino {ficha.letra}
-          {ficha.nome ? ` — ${ficha.nome}` : ""}
+          Treino {ficha.workout.letra}
+          {ficha.workout.nome ? ` — ${ficha.workout.nome}` : ""}
         </h1>
         <p className="text-sm text-zinc-500">
           Como você quer treinar hoje?
