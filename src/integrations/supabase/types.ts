@@ -64,6 +64,51 @@ export type Database = {
           },
         ]
       }
+      exercises_catalog: {
+        Row: {
+          body_part: string | null
+          difficulty: string | null
+          equipment: string | null
+          gif_path: string | null
+          id: string
+          instructions: string[] | null
+          instructions_pt: string[] | null
+          name: string
+          name_pt: string | null
+          secondary_muscles: string[] | null
+          synced_at: string
+          target: string | null
+        }
+        Insert: {
+          body_part?: string | null
+          difficulty?: string | null
+          equipment?: string | null
+          gif_path?: string | null
+          id: string
+          instructions?: string[] | null
+          instructions_pt?: string[] | null
+          name: string
+          name_pt?: string | null
+          secondary_muscles?: string[] | null
+          synced_at?: string
+          target?: string | null
+        }
+        Update: {
+          body_part?: string | null
+          difficulty?: string | null
+          equipment?: string | null
+          gif_path?: string | null
+          id?: string
+          instructions?: string[] | null
+          instructions_pt?: string[] | null
+          name?: string
+          name_pt?: string | null
+          secondary_muscles?: string[] | null
+          synced_at?: string
+          target?: string | null
+        }
+        Relationships: []
+      }
       invites: {
         Row: {
           code: string
@@ -412,6 +457,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "professor" | "aluno"
