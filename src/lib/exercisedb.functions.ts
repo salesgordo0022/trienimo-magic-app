@@ -243,7 +243,7 @@ async function dbHasData(): Promise<boolean> {
 function rowToExercise(r: any): Exercise {
   return {
     id: r.id,
-    name: r.name,
+    name: r.name_pt ?? r.name,
     bodyPart: r.body_part ?? "",
     target: r.target ?? "",
     equipment: r.equipment ?? "",
@@ -311,15 +311,25 @@ export const searchExercises = createServerFn({ method: "GET" })
     if (await dbHasData()) {
       const db = await dbClient();
       let query = db.from("exercises_catalog").select("*");
-      if (data.q && data.q.trim()) query = query.ilike("name", `%${data.q.trim()}%`);
+      if (data.q && data.q.trim()) {
+        const q = `%${data.q.trim()}%`;
+        query = query.or(`name.ilike.${q},name_pt.ilike.${q}`);
+      }
       if (bodyPart) query = query.eq("body_part", bodyPart);
       if (data.target) query = query.eq("target", data.target);
       if (data.equipment) query = query.eq("equipment", data.equipment);
       const { data: rows } = await query
         .order("name", { ascending: true })
         .range(offset, offset + limit - 1);
-      const items = (rows ?? []).map(rowToExercise);
-      return await Promise.all(items.map((e) => translateSummary(e)));
+      const rows2 = rows ?? [];
+      const items = rows2.map(rowToExercise);
+      const translated = await Promise.all(items.map((e) => translateSummary(e)));
+      for (const t of translated) {
+        if (t.name !== rows2.find((r: any) => r.id === t.id)?.name) {
+          await db.from("exercises_catalog").update({ name_pt: t.name }).eq("id", t.id);
+        }
+      }
+      return translated;
     }
 
     // fallback API
@@ -352,7 +362,12 @@ export const getExerciseById = createServerFn({ method: "GET" })
         .maybeSingle();
       if (row) {
         const ex = rowToExercise(row);
-        return await translateFull(ex);
+        const translated = await translateFull(ex);
+        if (translated.name !== row.name) {
+          const db2 = await dbClient();
+          await db2.from("exercises_catalog").update({ name_pt: translated.name }).eq("id", row.id);
+        }
+        return translated;
       }
     }
     const ex = await cachedJson<Exercise>(

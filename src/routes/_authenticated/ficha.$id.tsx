@@ -735,12 +735,6 @@ function ExerciseRowEditor({
                 )
               }
             />
-          ) : ex.exercise_db_id ? (
-            <img
-              src={`/api/public/exercise-gif/${ex.exercise_db_id}`}
-              alt=""
-              className="w-7 h-7 rounded-md object-contain bg-white shrink-0 border border-white/10"
-            />
           ) : null}
           <span className={`${inp} w-full ${ro ? "text-white" : ""}`}>{s.nome}</span>
           {status === "saving" && (
@@ -872,18 +866,7 @@ function ExerciseCardMobile({
     return (
       <div className="p-3 space-y-2">
         <div className="flex gap-2 items-center">
-          {ex.exercise_db_id ? (
-            <img
-              src={`/api/public/exercise-gif/${ex.exercise_db_id}`}
-              alt=""
-              className="w-8 h-8 rounded-md object-contain bg-white shrink-0 border border-white/10"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-md bg-white/5 border border-white/10 text-zinc-500 flex items-center justify-center shrink-0">
-              <Dumbbell className="w-4 h-4" />
-            </div>
-          )}
-          <span className="flex-1 font-semibold text-sm text-white">{s.nome}</span>
+          <span className="font-semibold text-sm text-white">{s.nome}</span>
         </div>
         <div className="flex gap-3 text-xs text-zinc-400 items-center">
           <span>Séries: <span className="text-white">{s.series}</span></span>
