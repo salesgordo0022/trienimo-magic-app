@@ -3,12 +3,12 @@ import { queryOptions, useSuspenseQuery, useMutation, useQueryClient } from "@ta
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { listAllUsers, setUserRole, assignStudent, createInvite, listInvites, deleteInvite, getMyRole, createStudent, type AppRole } from "@/lib/roles.functions";
-import { getSyncProgress, importExerciseMetadata, importGifsBatch, batchTranslateExercises } from "@/lib/exercise-sync.functions";
+import { getSyncProgress, importExerciseMetadata, importGifsBatch } from "@/lib/exercise-sync.functions";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Plus, Trash2, RefreshCw, Languages, Image } from "lucide-react";
+import { ArrowLeft, Copy, Plus, Trash2, RefreshCw, Image } from "lucide-react";
 
 const usersQO = () => queryOptions({ queryKey: ["allUsers"], queryFn: () => listAllUsers() });
 const invitesQO = () => queryOptions({ queryKey: ["invites"], queryFn: () => listInvites() });
@@ -215,12 +215,6 @@ function ExerciseSync() {
     onError: (e) => toast.error(e.message),
   });
 
-  const translate = useMutation({
-    mutationFn: useServerFn(batchTranslateExercises),
-    onSuccess: (r: any) => { qc.invalidateQueries({ queryKey: ["syncProgress"] }); if (r.done) toast.success("Todos traduzidos!"); else toast.success(`${r.processed} traduzidos, ${r.pending} restantes`); },
-    onError: (e) => toast.error(e.message),
-  });
-
   return (
     <div className="space-y-3">
       <div className="bg-white border border-black/10">
@@ -234,11 +228,8 @@ function ExerciseSync() {
             <Button size="sm" onClick={() => importGif.mutate({ data: { batchSize: 10 } })} disabled={importGif.isPending} className="bg-black text-white">
               <Image className="w-3 h-3 mr-1" /> Baixar GIFs (lote)
             </Button>
-            <Button size="sm" onClick={() => translate.mutate({ data: { batchSize: 15 } })} disabled={translate.isPending} className="bg-black text-white">
-              <Languages className="w-3 h-3 mr-1" /> Traduzir (lote)
-            </Button>
           </div>
-          <p className="text-[10px] text-gray-400">Clique em "Traduzir" repetidamente até todos os exercícios estarem em português.</p>
+          <p className="text-[10px] text-gray-400">A tradução para português é automática durante a importação e também sob demanda ao navegar.</p>
         </div>
       </div>
     </div>

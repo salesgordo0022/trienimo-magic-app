@@ -411,8 +411,27 @@ const EXERCISE_INSTRUCTION_PT: Record<string, string> = {
   "don't let your hips sag": "não deixe o quadril cair",
 };
 
+// Tenta traduzir via LibreTranslate (fallback grátis, sem chave)
+async function translateLibre(text: string): Promise<string | null> {
+  for (const host of ["https://libretranslate.de", "https://translate.argosopentech.com"]) {
+    try {
+      const r = await fetch(`${host}/translate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q: text, source: "en", target: "pt" }),
+      });
+      if (!r.ok) continue;
+      const json = (await r.json()) as { translatedText?: string };
+      if (json.translatedText) return json.translatedText;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 // Tradução de texto livre (nome, instruções, descrição):
-// 1º verifica dicionário estático, 2º MyMemory API com cache
+// 1º dicionário estático, 2º MyMemory API, 3º LibreTranslate
 export async function translateEN(text: string): Promise<string> {
   const trimmed = text.trim();
   if (!trimmed) return text;
@@ -422,23 +441,38 @@ export async function translateEN(text: string): Promise<string> {
   const key = `tr:${trimmed}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL) return hit.data as string;
+  let result = text;
   try {
+    // Tenta MyMemory primeiro
     const r = await fetch(
       `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|pt-BR`,
     );
-    if (!r.ok) return text;
-    const json = (await r.json()) as {
-      responseData?: { translatedText?: string };
-      responseStatus?: number;
-    };
-    const translated = json.responseData?.translatedText;
-    const ok = json.responseStatus === 200 && translated && !/MYMEMORY WARNING/i.test(translated);
-    const result = ok ? translated! : text;
-    cache.set(key, { at: Date.now(), data: result });
-    return result;
+    if (r.ok) {
+      const json = (await r.json()) as {
+        responseData?: { translatedText?: string };
+        responseStatus?: number;
+      };
+      const translated = json.responseData?.translatedText;
+      if (json.responseStatus === 200 && translated && !/MYMEMORY WARNING/i.test(translated)) {
+        result = translated;
+      }
+    }
+    // Se MyMemory falhou ou deu warning, tenta LibreTranslate
+    if (result === text) {
+      const libre = await translateLibre(trimmed);
+      if (libre) result = libre;
+    }
   } catch {
-    return text;
+    // Fallback: tenta LibreTranslate direto
+    try {
+      const libre = await translateLibre(trimmed);
+      if (libre) result = libre;
+    } catch {
+      // mantém texto original
+    }
   }
+  cache.set(key, { at: Date.now(), data: result });
+  return result;
 }
 
 function translateDict(e: Exercise): Exercise {

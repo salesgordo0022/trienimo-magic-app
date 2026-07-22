@@ -41,7 +41,7 @@ export const getSyncProgress = createServerFn({ method: "GET" })
     };
   });
 
-// Fase 1: importa metadados de todos os exercícios da API (sem GIFs)
+// Fase 1: importa metadados de todos os exercícios da API (sem GIFs) e já traduz para pt-BR
 export const importExerciseMetadata = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -71,6 +71,34 @@ export const importExerciseMetadata = createServerFn({ method: "POST" })
         .from("exercises_catalog")
         .upsert(chunk, { onConflict: "id", ignoreDuplicates: false });
       if (error) throw new Error(error.message);
+    }
+    // Traduzir automaticamente todos os exercícios em segundo plano
+    // (ignora erros para não bloquear a importação)
+    const { translateEN } = await import("./exercisedb.functions");
+    const { data: toTranslate } = await supabaseAdmin
+      .from("exercises_catalog")
+      .select("id, name, instructions")
+      .is("name_pt", null);
+    if (toTranslate?.length) {
+      let translatedCount = 0;
+      for (const ex of toTranslate) {
+        try {
+          const ptName = await translateEN(ex.name);
+          if (ptName !== ex.name) {
+            const upd: any = { name_pt: ptName };
+            if (ex.instructions?.length) {
+              upd.instructions_pt = await Promise.all(
+                (ex.instructions as string[]).map((s: string) => translateEN(s)),
+              );
+            }
+            await supabaseAdmin.from("exercises_catalog").update(upd).eq("id", ex.id);
+            translatedCount++;
+          }
+          await new Promise((r) => setTimeout(r, 500));
+        } catch {
+          // continua com o próximo
+        }
+      }
     }
     return { imported: rows.length };
   });
