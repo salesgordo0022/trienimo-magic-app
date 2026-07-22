@@ -178,8 +178,6 @@ function AdminPage() {
             </table>
           </div>
         )}
-
-        {tab === "exercicios" && <ExerciseSyncPanel />}
       </main>
 
       <div className="max-w-5xl mx-auto px-4 pb-6 text-xs text-gray-500">
