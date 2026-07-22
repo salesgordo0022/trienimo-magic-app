@@ -1,10 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { getFicha } from "@/lib/workouts.functions";
-import {
-  ArrowLeft, Dumbbell, CheckCircle2, Circle, ChevronRight,
-  ChevronLeft, Play, Trophy
-} from "lucide-react";
+import { ArrowLeft, Dumbbell, CheckCircle2, ChevronRight, ChevronLeft, Flag } from "lucide-react";
 import { useState, useMemo } from "react";
 
 const fichaQO = (id: string) =>
@@ -29,7 +26,7 @@ function TreinarPage() {
 
   const current = allExercises[currentIdx];
   const total = allExercises.length;
-  const progress = total > 0 ? Math.round((completed.size / total) * 100) : 0;
+  const doneCount = completed.size;
 
   const toggleComplete = (exId: string) => {
     setCompleted((prev) => {
@@ -41,11 +38,8 @@ function TreinarPage() {
   };
 
   const goNext = () => {
-    if (currentIdx < total - 1) {
-      setCurrentIdx((i) => i + 1);
-    } else {
-      setFinished(true);
-    }
+    if (currentIdx < total - 1) setCurrentIdx((i) => i + 1);
+    else setFinished(true);
   };
 
   const goPrev = () => {
@@ -54,33 +48,23 @@ function TreinarPage() {
 
   if (finished) {
     return (
-      <div className="p-4 sm:p-6 max-w-lg mx-auto">
-        <div className="rounded-2xl border border-white/10 bg-[#111112] p-8 text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-[var(--lime)] flex items-center justify-center mx-auto">
-            <Trophy className="w-8 h-8 text-black" />
+      <div className="min-h-screen bg-[#111112] flex items-center justify-center p-4">
+        <div className="text-center space-y-5 max-w-sm">
+          <div className="w-20 h-20 rounded-full bg-[var(--lime)] flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-10 h-10 text-black" />
           </div>
-          <h2 className="text-xl font-black text-white">Treino Concluido!</h2>
-          <p className="text-sm text-zinc-400">
-            {completed.size} de {total} exercicios realizados
-          </p>
-          <div className="flex flex-wrap justify-center gap-2 pt-2">
+          <h2 className="text-2xl font-black text-white">Treino Concluido!</h2>
+          <p className="text-zinc-400 text-sm">{doneCount} de {total} exercicios realizados</p>
+          <div className="flex flex-wrap justify-center gap-2">
             {allExercises.map((ex) => (
-              <div
-                key={ex.id}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                  completed.has(ex.id)
-                    ? "bg-[var(--lime)] text-black"
-                    : "bg-white/10 text-zinc-500"
-                }`}
-              >
-                {completed.has(ex.id) ? <CheckCircle2 className="w-4 h-4" /> : ex.nome[0]}
+              <div key={ex.id} className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold ${
+                completed.has(ex.id) ? "bg-[var(--lime)] text-black" : "bg-white/10 text-zinc-600"
+              }`}>
+                {completed.has(ex.id) ? <CheckCircle2 className="w-4 h-4" /> : ex.nome[0].toUpperCase()}
               </div>
             ))}
           </div>
-          <Link
-            to="/app"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black px-6 py-3 font-bold text-sm hover:brightness-110 transition-all mt-2"
-          >
+          <Link to="/app" className="inline-flex items-center gap-2 rounded-xl bg-[var(--lime)] text-black px-8 py-3.5 font-bold text-sm hover:brightness-110 transition-all mt-2">
             <Dumbbell className="w-4 h-4" /> Voltar ao Inicio
           </Link>
         </div>
@@ -90,10 +74,8 @@ function TreinarPage() {
 
   if (!current) {
     return (
-      <div className="p-4 sm:p-6 max-w-lg mx-auto">
-        <div className="rounded-2xl border border-white/10 bg-[#111112] p-8 text-center text-zinc-500">
-          Nenhum exercicio nesta ficha.
-        </div>
+      <div className="min-h-screen bg-[#111112] flex items-center justify-center p-4">
+        <div className="text-zinc-500 text-sm">Nenhum exercicio nesta ficha.</div>
       </div>
     );
   }
@@ -102,145 +84,85 @@ function TreinarPage() {
     g.exercises.some((e) => e.id === current.id),
   );
 
+  const isDone = completed.has(current.id);
+
   return (
-    <div className="p-4 sm:p-6 max-w-lg mx-auto space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link
-          to="/app"
-          className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-all shrink-0"
-        >
+    <div className="min-h-screen bg-[#111112] flex flex-col">
+      {/* Top bar */}
+      <div className="px-4 pt-4 pb-2 flex items-center gap-3">
+        <Link to="/app" className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all shrink-0">
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm font-black text-white truncate">Treino {ficha.workout.letra}</h1>
-          <p className="text-[11px] text-zinc-500">
-            Exercicio {currentIdx + 1} de {total}
-          </p>
+          <div className="text-xs font-bold text-white truncate">Treino {ficha.workout.letra}</div>
+          <div className="text-[10px] text-zinc-500">{doneCount} de {total}</div>
         </div>
-        <div className="text-xs font-bold text-[var(--lime)]">{progress}%</div>
+        <button onClick={() => toggleComplete(current.id)} className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all ${
+          isDone ? "bg-[var(--lime)] text-black" : "bg-white/5 text-zinc-400"
+        }`}>
+          {isDone ? "Feito" : "Pular"}
+        </button>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-        <div
-          className="h-full rounded-full bg-[var(--lime)] transition-all duration-500"
-          style={{ width: `${progress}%` }}
-        />
+      {/* Progress */}
+      <div className="px-4 pb-4">
+        <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+          <div className="h-full rounded-full bg-[var(--lime)] transition-all duration-500" style={{ width: `${Math.round((doneCount / total) * 100)}%` }} />
+        </div>
       </div>
 
-      {/* Exercise card */}
-      <div className="rounded-2xl border border-white/10 bg-[#111112] overflow-hidden">
-        {/* Group badge */}
+      {/* Exercise */}
+      <div className="flex-1 flex flex-col px-4">
         {currentGroup && (
-          <div className="px-4 pt-3">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-500 bg-white/5 px-2.5 py-1 rounded-lg">
-              <Dumbbell className="w-3 h-3" />
-              {currentGroup.nome}
-            </div>
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-500 bg-white/5 px-2.5 py-1 rounded-lg self-start mb-3">
+            <Dumbbell className="w-3 h-3" />
+            {currentGroup.nome}
           </div>
         )}
 
-        {/* Exercise name */}
-        <div className="px-4 pt-2 pb-4">
-          <h2 className="text-xl font-black text-white capitalize">{current.nome}</h2>
-          {current.obs && (
-            <p className="text-xs text-zinc-500 mt-1">{current.obs}</p>
-          )}
-        </div>
+        <h2 className="text-2xl font-black text-white mb-1 capitalize">{current.nome}</h2>
 
-        {/* Sets */}
+        {current.obs && (
+          <p className="text-xs text-zinc-500 mb-4">{current.obs}</p>
+        )}
+
+        {/* Reps per set - simple list */}
         {current.series > 0 && (
-          <div className="px-4 pb-4">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">
-              Series
-            </div>
-            <div className="space-y-2">
-              {Array.from({ length: current.series }).map((_, i) => {
-                const cfg = current.sets_config?.[i];
-                return (
-                  <div
-                    key={i}
-                    className={`rounded-xl border p-3 flex items-center gap-3 transition-all ${
-                      completed.has(current.id)
-                        ? "border-[var(--lime)]/30 bg-[var(--lime)]/5"
-                        : "border-white/10 bg-white/[0.02]"
-                    }`}
-                  >
-                    <button
-                      onClick={() => toggleComplete(current.id)}
-                      className="shrink-0"
-                    >
-                      {completed.has(current.id) ? (
-                        <CheckCircle2 className="w-5 h-5 text-[var(--lime)]" />
-                      ) : (
-                        <Circle className="w-5 h-5 text-zinc-600 hover:text-zinc-400 transition-colors" />
-                      )}
-                    </button>
-                    <div className="flex-1 flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-xs font-bold text-zinc-400">
-                        {i + 1}
-                      </div>
-                      {cfg?.reps && (
-                        <div className="text-sm font-bold text-white">{cfg.reps} rep.</div>
-                      )}
-                      {cfg?.kg && (
-                        <div className="text-sm text-zinc-400">{cfg.kg} kg</div>
-                      )}
-                      {!cfg?.reps && !cfg?.kg && (
-                        <div className="text-sm text-zinc-400">{current.series} series</div>
-                      )}
-                    </div>
+          <div className="space-y-2 mt-2">
+            {Array.from({ length: current.series }).map((_, i) => {
+              const cfg = current.sets_config?.[i];
+              return (
+                <div key={i} className="rounded-xl border border-white/10 bg-white/[0.02] p-4 flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--lime)]/10 flex items-center justify-center text-xs font-bold text-[var(--lime)]">
+                    {i + 1}
                   </div>
-                );
-              })}
-            </div>
+                  <div className="flex-1">
+                    {cfg?.reps && <span className="text-lg font-black text-white">{cfg.reps} repeticoes</span>}
+                    {cfg?.kg && <span className="text-base text-zinc-400 ml-2">{cfg.kg} kg</span>}
+                    {!cfg?.reps && !cfg?.kg && <span className="text-base text-zinc-400">{current.series} series</span>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
-        {/* No sets configured */}
         {current.series === 0 && (
-          <div className="px-4 pb-4">
-            <button
-              onClick={() => toggleComplete(current.id)}
-              className={`w-full rounded-xl border p-4 flex items-center gap-3 transition-all ${
-                completed.has(current.id)
-                  ? "border-[var(--lime)]/30 bg-[var(--lime)]/5"
-                  : "border-white/10 bg-white/[0.02]"
-              }`}
-            >
-              {completed.has(current.id) ? (
-                <CheckCircle2 className="w-5 h-5 text-[var(--lime)]" />
-              ) : (
-                <Circle className="w-5 h-5 text-zinc-600" />
-              )}
-              <span className="text-sm text-zinc-400">
-                {completed.has(current.id) ? "Concluido" : "Marcar como concluido"}
-              </span>
-            </button>
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 text-zinc-400 text-sm mt-2">
+            Sem series configuradas
           </div>
         )}
       </div>
 
-      {/* Navigation */}
-      <div className="flex gap-2">
+      {/* Bottom navigation */}
+      <div className="px-4 py-4 flex justify-center gap-3">
         {currentIdx > 0 && (
-          <button
-            onClick={goPrev}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111112] px-4 py-3 text-sm font-bold text-zinc-300 hover:bg-white/5 transition-all"
-          >
+          <button onClick={goPrev} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#111112] px-6 py-3.5 text-sm font-bold text-zinc-300 hover:bg-white/5 transition-all">
             <ChevronLeft className="w-4 h-4" /> Anterior
           </button>
         )}
-        <button
-          onClick={goNext}
-          className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black px-4 py-3 text-sm font-bold hover:brightness-110 transition-all"
-        >
-          {currentIdx < total - 1 ? (
-            <>Proximo <ChevronRight className="w-4 h-4" /></>
-          ) : (
-            <>Finalizar <Play className="w-4 h-4" /></>
-          )}
+        <button onClick={goNext} className="inline-flex items-center gap-2 rounded-xl bg-[var(--lime)] text-black px-8 py-3.5 text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-[var(--lime)]/20">
+          {currentIdx < total - 1 ? <>Proximo <ChevronRight className="w-4 h-4" /></> : <>Finalizar <Flag className="w-4 h-4" /></>}
         </button>
       </div>
     </div>
