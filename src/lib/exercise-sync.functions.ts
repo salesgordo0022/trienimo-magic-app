@@ -138,3 +138,56 @@ export const importGifsBatch = createServerFn({ method: "POST" })
       pending: remaining.count ?? 0,
     };
   });
+
+// Traduz um lote de exercícios via MyMemory e salva em name_pt / instructions_pt
+export const batchTranslateExercises = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { batchSize?: number }) =>
+    z.object({ batchSize: z.number().int().min(1).max(30).optional() }).parse(d ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const size = data.batchSize ?? 10;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: pending, error } = await supabaseAdmin
+      .from("exercises_catalog")
+      .select("id, name, instructions")
+      .is("name_pt", null)
+      .order("id", { ascending: true })
+      .limit(size);
+    if (error) throw new Error(error.message);
+    if (!pending?.length) return { processed: 0, done: true, pending: 0 };
+
+    const { translateEN } = await import("./exercisedb.functions");
+    let processed = 0;
+    for (const row of pending) {
+      try {
+        const ptName = await translateEN(row.name);
+        let ptInstructions: string[] | null = null;
+        if (row.instructions?.length) {
+          ptInstructions = await Promise.all(row.instructions.map((s: string) => translateEN(s)));
+        }
+        const upd: any = { name_pt: ptName };
+        if (ptInstructions) upd.instructions_pt = ptInstructions;
+        const { error: updErr } = await supabaseAdmin
+          .from("exercises_catalog")
+          .update(upd)
+          .eq("id", row.id);
+        if (!updErr) processed++;
+        await new Promise((r) => setTimeout(r, 600));
+      } catch {
+        // skip failed
+      }
+    }
+
+    const remaining = await supabaseAdmin
+      .from("exercises_catalog")
+      .select("*", { count: "exact", head: true })
+      .is("name_pt", null);
+    return {
+      processed,
+      done: (remaining.count ?? 0) === 0,
+      pending: remaining.count ?? 0,
+    };
+  });

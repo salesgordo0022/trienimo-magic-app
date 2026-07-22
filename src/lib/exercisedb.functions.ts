@@ -413,7 +413,7 @@ const EXERCISE_INSTRUCTION_PT: Record<string, string> = {
 
 // Tradução de texto livre (nome, instruções, descrição):
 // 1º verifica dicionário estático, 2º MyMemory API com cache
-async function translateEN(text: string): Promise<string> {
+export async function translateEN(text: string): Promise<string> {
   const trimmed = text.trim();
   if (!trimmed) return text;
   const lower = trimmed.toLowerCase();

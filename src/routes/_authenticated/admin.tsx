@@ -3,11 +3,12 @@ import { queryOptions, useSuspenseQuery, useMutation, useQueryClient } from "@ta
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { listAllUsers, setUserRole, assignStudent, createInvite, listInvites, deleteInvite, getMyRole, createStudent, type AppRole } from "@/lib/roles.functions";
+import { getSyncProgress, importExerciseMetadata, importGifsBatch, batchTranslateExercises } from "@/lib/exercise-sync.functions";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Plus, Trash2, RefreshCw, Languages, Image } from "lucide-react";
 
 const usersQO = () => queryOptions({ queryKey: ["allUsers"], queryFn: () => listAllUsers() });
 const invitesQO = () => queryOptions({ queryKey: ["invites"], queryFn: () => listInvites() });
@@ -28,7 +29,7 @@ function AdminPage() {
   const { data: invites } = useSuspenseQuery(invitesQO());
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"professores" | "alunos" | "convites">("professores");
+  const [tab, setTab] = useState<"professores" | "alunos" | "convites" | "exercicios">("professores");
   const [online, setOnline] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -88,7 +89,7 @@ function AdminPage() {
         </div>
       </header>
       <div className="max-w-5xl mx-auto px-4 pt-3 flex gap-1">
-        {(["professores","alunos","convites"] as const).map(t => (
+        {(["professores","alunos","convites","exercicios"] as const).map(t => (
           <button key={t} onClick={()=>setTab(t)} className={`px-3 py-2 text-xs font-bold uppercase ${tab===t?"bg-[var(--yellow)] text-black":"bg-white text-gray-500"}`}>{t}</button>
         ))}
       </div>
@@ -184,11 +185,61 @@ function AdminPage() {
             </div>
           </div>
         )}
+        {tab === "exercicios" && <ExerciseSync />}
       </main>
 
 
       <div className="max-w-5xl mx-auto px-4 pb-6 text-xs text-gray-500">
         <Link to="/app" className="underline">Voltar ao app</Link>
+      </div>
+    </div>
+  );
+}
+
+function ExerciseSync() {
+  const qc = useQueryClient();
+  const { data: progress } = useSuspenseQuery(queryOptions({
+    queryKey: ["syncProgress"],
+    queryFn: () => getSyncProgress(),
+  }));
+
+  const importMeta = useMutation({
+    mutationFn: useServerFn(importExerciseMetadata),
+    onSuccess: (r: any) => { qc.invalidateQueries({ queryKey: ["syncProgress"] }); toast.success(`${r.imported} exercícios importados`); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const importGif = useMutation({
+    mutationFn: useServerFn(importGifsBatch),
+    onSuccess: (r: any) => { qc.invalidateQueries({ queryKey: ["syncProgress"] }); if (r.done) toast.success("Todos os GIFs baixados!"); else toast.success(`${r.processed} GIFs baixados, ${r.pending} restantes`); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const translate = useMutation({
+    mutationFn: useServerFn(batchTranslateExercises),
+    onSuccess: (r: any) => { qc.invalidateQueries({ queryKey: ["syncProgress"] }); if (r.done) toast.success("Todos traduzidos!"); else toast.success(`${r.processed} traduzidos, ${r.pending} restantes`); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-3">
+      <div className="bg-white border border-black/10">
+        <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Biblioteca de Exercícios</div>
+        <div className="p-3 text-sm space-y-2">
+          <p className="text-gray-600">Total: <strong>{progress.total}</strong> exercícios | GIFs: <strong>{progress.withGif}</strong> | Pendentes: <strong>{progress.pending}</strong></p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => importMeta.mutate({})} disabled={importMeta.isPending} className="bg-black text-white">
+              <RefreshCw className={`w-3 h-3 mr-1 ${importMeta.isPending ? "animate-spin" : ""}`} /> Importar Metadados
+            </Button>
+            <Button size="sm" onClick={() => importGif.mutate({ data: { batchSize: 10 } })} disabled={importGif.isPending} className="bg-black text-white">
+              <Image className="w-3 h-3 mr-1" /> Baixar GIFs (lote)
+            </Button>
+            <Button size="sm" onClick={() => translate.mutate({ data: { batchSize: 15 } })} disabled={translate.isPending} className="bg-black text-white">
+              <Languages className="w-3 h-3 mr-1" /> Traduzir (lote)
+            </Button>
+          </div>
+          <p className="text-[10px] text-gray-400">Clique em "Traduzir" repetidamente até todos os exercícios estarem em português.</p>
+        </div>
       </div>
     </div>
   );
