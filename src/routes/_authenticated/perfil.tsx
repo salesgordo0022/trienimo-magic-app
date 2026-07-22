@@ -1,11 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getProfile, updateProfile, getAllSessions } from "@/lib/workouts.functions";
 import type { AllSessionHistory } from "@/lib/workouts.functions";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Save, TrendingUp, ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
+import { Save, TrendingUp, ChevronDown, ChevronUp, CheckCircle2, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const profileQO = () => queryOptions({ queryKey: ["profile"], queryFn: () => getProfile() });
 const sessionsQO = () => queryOptions({ queryKey: ["allSessions"], queryFn: () => getAllSessions() });
@@ -23,6 +24,14 @@ function Perfil() {
   const { data: sessions } = useSuspenseQuery(sessionsQO());
   const qc = useQueryClient();
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+  const logout = async () => {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
 
   const [form, setForm] = useState({
     nome: profile.nome ?? "",
@@ -288,6 +297,15 @@ function Perfil() {
           )}
         </div>
       </div>
+
+      {/* Sair da conta */}
+      <button
+        onClick={logout}
+        className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/30 text-red-400 px-5 py-3 font-bold text-sm hover:bg-red-500/10 transition-all"
+      >
+        <LogOut className="w-4 h-4" />
+        Sair da conta
+      </button>
     </div>
   );
 }
