@@ -217,9 +217,8 @@ function Inicio() {
 
               <div className="w-full max-w-sm space-y-3">
                 <Link
-                  to="/ficha/$id"
+                  to="/treinar/$id"
                   params={{ id: meuTreinoModal }}
-                  search={{ tab: "executar" }}
                   onClick={() => setMeuTreinoModal(null)}
                   className="w-full group relative overflow-hidden rounded-2xl border border-[var(--lime)]/15 p-0 text-left transition-all hover:border-[var(--lime)]/30 active:scale-[0.98] block"
                 >
@@ -235,7 +234,7 @@ function Inicio() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-base font-black text-white mb-0.5">Passo a Passo</div>
-                      <div className="text-xs text-zinc-400 leading-relaxed">Exercicio por exercicio com timer de descanso e series</div>
+                      <div className="text-xs text-zinc-400 leading-relaxed">Exercicio por exercicio com series e progresso</div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-[var(--lime)] group-hover:translate-x-0.5 transition-all shrink-0" />
                   </div>
