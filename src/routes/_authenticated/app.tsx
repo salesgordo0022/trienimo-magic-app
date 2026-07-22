@@ -5,8 +5,8 @@ import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout } from "@/
 import { getMyRole, listMyStudents, searchUserByEmail, linkStudent } from "@/lib/roles.functions";
 import { searchExercises, BODYPART_PT, type Exercise } from "@/lib/exercisedb.functions";
 import { toast } from "sonner";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, Trash2, Pencil, History, Dumbbell, ChevronRight, TrendingUp, Calendar, Flame, Users, BookOpen, ListChecks, X, FileText, Loader2, ArrowLeft, Play, Pause, SkipForward, RotateCcw, Flag, Apple } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Trash2, Pencil, History, Dumbbell, ChevronRight, TrendingUp, Calendar, Flame, Users, BookOpen, ListChecks, X, FileText, Loader2, ArrowLeft, RotateCcw, Flag, Apple } from "lucide-react";
 
 const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => listWorkouts() });
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
@@ -42,10 +42,7 @@ function Inicio() {
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [loadingExercises, setLoadingExercises] = useState(false);
   const [exerciseConfig, setExerciseConfig] = useState<Record<number, { sets: number; reps: number; rest: number }>>({});
-  const [currentSet, setCurrentSet] = useState(1);
-  const [restTimer, setRestTimer] = useState({ active: false, seconds: 0, total: 0 });
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
-  const restRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const getExerciseConfig = (idx: number) => {
     if (exerciseConfig[idx]) return exerciseConfig[idx];
@@ -60,24 +57,6 @@ function Inicio() {
         : { sets: 3, reps: 12, rest: 60 };
   };
 
-  const startRestTimer = useCallback((seconds: number) => {
-    setRestTimer({ active: true, seconds, total: seconds });
-  }, []);
-
-  useEffect(() => {
-    if (restTimer.active && restTimer.seconds > 0) {
-      restRef.current = setInterval(() => {
-        setRestTimer(prev => {
-          if (prev.seconds <= 1) {
-            if (restRef.current) clearInterval(restRef.current);
-            return { active: false, seconds: 0, total: 0 };
-          }
-          return { ...prev, seconds: prev.seconds - 1 };
-        });
-      }, 1000);
-    }
-    return () => { if (restRef.current) clearInterval(restRef.current); };
-  }, [restTimer.active]);
 
   const BODY_PARTS = [
     { key: "chest", label: "Peito", img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&h=400&fit=crop&crop=center", accent: "from-red-500/20 to-red-900/10" },
@@ -95,9 +74,7 @@ function Inicio() {
     setNovoStep("choice");
     setLetra(""); setNome(""); setAssignTo("");
     setSelectedBodyPart(""); setExerciseList([]); setExerciseIndex(0);
-    setExerciseConfig({}); setCurrentSet(1);
-    setRestTimer({ active: false, seconds: 0, total: 0 });
-    setCompletedExercises(new Set());
+    setExerciseConfig({}); setCompletedExercises(new Set());
   };
 
   const startPassoAPasso = async (bodyPart: string) => {
@@ -105,8 +82,6 @@ function Inicio() {
     setNovoStep("exercise");
     setLoadingExercises(true);
     setExerciseIndex(0);
-    setCurrentSet(1);
-    setRestTimer({ active: false, seconds: 0, total: 0 });
     setCompletedExercises(new Set());
     try {
       const exercises = await searchExercises({ data: { bodyPart, limit: 20, offset: 0 } });
@@ -132,24 +107,9 @@ function Inicio() {
   const advanceExercise = () => {
     setCompletedExercises(prev => new Set(prev).add(exerciseIndex));
     if (exerciseIndex < exerciseList.length - 1) {
-      const cfg = getExerciseConfig(exerciseIndex);
-      startRestTimer(cfg.rest);
-      setTimeout(() => {
-        setExerciseIndex(exerciseIndex + 1);
-        setCurrentSet(1);
-      }, 500);
+      setExerciseIndex(exerciseIndex + 1);
     } else {
       setNovoStep("completed");
-    }
-  };
-
-  const advanceSet = () => {
-    const cfg = getExerciseConfig(exerciseIndex);
-    if (currentSet < cfg.sets) {
-      setCurrentSet(currentSet + 1);
-      startRestTimer(cfg.rest);
-    } else {
-      advanceExercise();
     }
   };
 
@@ -720,11 +680,11 @@ function Inicio() {
         </div>
       )}
 
-      {/* TELA CHEIA: Exerc\u00EDcio Passo a Passo */}
+      {/* TELA CHEIA: Exercicio Passo a Passo */}
       {novoTreinoModal && novoStep === "exercise" && (
-        <div className="fixed inset-0 z-50 bg-[#0a0a0a] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-[#0a0a0a] flex flex-col">
           {/* Header */}
-          <div className="shrink-0 px-4 pt-4 pb-2 safe-top">
+          <div className="shrink-0 px-4 pt-4 pb-2">
             <div className="flex items-center justify-between mb-3">
               <button onClick={() => setNovoStep("bodyparts")} className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all">
                 <ArrowLeft className="w-5 h-5" />
@@ -733,210 +693,86 @@ function Inicio() {
                 <div className="w-1.5 h-1.5 rounded-full bg-[var(--lime)] animate-pulse" />
                 <span className="text-[10px] font-black text-[var(--lime)] uppercase tracking-widest">{BODYPART_PT[selectedBodyPart] ?? selectedBodyPart}</span>
               </div>
-              <button onClick={() => { setNovoTreinoModal(false); if (restRef.current) clearInterval(restRef.current); setRestTimer({ active: false, seconds: 0, total: 0 }); }} className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all">
+              <button onClick={() => setNovoTreinoModal(false)} className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            {/* Barra de progresso */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black text-[var(--lime)] tabular-nums">{exerciseIndex + 1}/{exerciseList.length}</span>
-              <div className="flex-1 h-1.5 bg-white/8 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700 ease-out"
-                  style={{
-                    width: exerciseList.length > 0 ? `${((exerciseIndex + 1) / exerciseList.length) * 100}%` : "0%",
-                    background: "linear-gradient(90deg, var(--lime), #c8ff33)",
-                  }}
-                />
-              </div>
-            </div>
-            {/* Dots */}
-            <div className="flex justify-center gap-0.5 mt-2.5">
-              {exerciseList.map((_, i) => (
-                <div
-                  key={i}
-                  className={`rounded-full transition-all duration-300 ${
-                    completedExercises.has(i)
-                      ? "w-1.5 h-1.5 bg-[var(--lime)]"
-                      : i === exerciseIndex
-                        ? "w-5 h-1.5 bg-[var(--lime)]"
-                        : "w-1.5 h-1.5 bg-white/15"
-                  }`}
-                />
-              ))}
+            {/* Progress bar */}
+            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-700 bg-[var(--lime)]" style={{ width: exerciseList.length > 0 ? `${((exerciseIndex + 1) / exerciseList.length) * 100}%` : "0%" }} />
             </div>
           </div>
 
-          {/* Conteudo */}
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-3 overflow-y-auto min-h-0">
+          {/* Content */}
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-4 min-h-0">
             {loadingExercises ? (
               <div className="flex flex-col items-center gap-4">
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full border-4 border-white/10 border-t-[var(--lime)] animate-spin" />
-                  <Dumbbell className="w-8 h-8 text-[var(--lime)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                </div>
-                <span className="text-sm font-bold text-zinc-500 animate-pulse">Carregando exerc\u00EDcios...</span>
-              </div>
-            ) : restTimer.active ? (
-              /* TIMER DE DESCANSO */
-              <div className="w-full max-w-sm flex flex-col items-center gap-6" style={{ animation: "exerciseFadeIn 0.4s ease-out" }}>
-                <div className="text-center space-y-2">
-                  <div className="flex items-center gap-2 justify-center">
-                    <Pause className="w-5 h-5 text-[var(--lime)]" />
-                    <span className="text-sm font-black text-[var(--lime)] uppercase tracking-widest">Descanso</span>
-                  </div>
-                  <p className="text-xs text-zinc-500">Respire e se prepare para a pr\u00F3xima serie</p>
-                </div>
-
-                {/* Timer circular */}
-                <div className="relative w-44 h-44">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
-                    <circle
-                      cx="50" cy="50" r="44" fill="none"
-                      stroke="url(#timerGrad)"
-                      strokeWidth="5"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 44}`}
-                      strokeDashoffset={`${2 * Math.PI * 44 * (1 - restTimer.seconds / restTimer.total)}`}
-                      className="transition-[stroke-dashoffset] duration-1000 ease-linear"
-                    />
-                    <defs>
-                      <linearGradient id="timerGrad" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor="var(--lime)" />
-                        <stop offset="100%" stopColor="#c8ff33" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-5xl font-black text-white tabular-nums" style={{ animation: "popIn 0.3s ease-out" }}>{restTimer.seconds}</span>
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mt-1">segundos</span>
-                  </div>
-                </div>
-
-                {/* Info da serie */}
-                <div className="w-full rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                  <div className="text-center mb-3">
-                    <span className="text-xs text-zinc-500">Pr\u00F3xima: </span>
-                    <span className="text-xs font-black text-white capitalize">{currentExercise?.name}</span>
-                  </div>
-                  <div className="flex justify-center gap-6">
-                    <div className="text-center">
-                      <div className="text-lg font-black text-[var(--lime)]">{getExerciseConfig(exerciseIndex).sets - (currentSet - 1)}x</div>
-                      <div className="text-[9px] text-zinc-500 uppercase tracking-widest">Series restantes</div>
-                    </div>
-                    <div className="w-px bg-white/10" />
-                    <div className="text-center">
-                      <div className="text-lg font-black text-white">{getExerciseConfig(exerciseIndex).reps}</div>
-                      <div className="text-[9px] text-zinc-500 uppercase tracking-widest">Repeticoes</div>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => { if (restRef.current) clearInterval(restRef.current); setRestTimer({ active: false, seconds: 0, total: 0 }); }}
-                  className="w-full rounded-2xl px-4 py-3.5 text-sm font-black text-black bg-white/10 border border-white/10 hover:bg-white/15 active:scale-95 transition-all"
-                >
-                  Pular Descanso
-                </button>
+                <div className="w-16 h-16 rounded-full border-4 border-white/10 border-t-[var(--lime)] animate-spin" />
+                <span className="text-sm font-bold text-zinc-500 animate-pulse">Carregando exercicios...</span>
               </div>
             ) : !currentExercise ? (
-              <div className="text-center text-zinc-500 text-sm">Nenhum exerc\u00EDcio encontrado.</div>
+              <div className="text-zinc-500 text-sm">Nenhum exercicio encontrado.</div>
             ) : (
-              <div className="w-full max-w-sm space-y-4" style={{ animation: "exerciseFadeIn 0.4s ease-out" }} key={`exercise-${exerciseIndex}-set-${currentSet}`}>
-                {/* GIF do exercicio */}
-                <div className="relative mx-auto w-full max-w-[280px]">
-                  <div className="absolute -inset-1.5 rounded-3xl bg-gradient-to-br from-[var(--lime)]/15 via-transparent to-[var(--lime)]/5 blur-sm" />
-                  <div className="relative rounded-2xl bg-white/95 overflow-hidden shadow-[0_20px_60px_-15px_rgba(204,255,0,0.15)]">
+              <div className="w-full max-w-sm space-y-5" key={`exercise-${exerciseIndex}`}>
+                {/* GIF */}
+                <div className="relative mx-auto w-full max-w-[260px]">
+                  <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-[var(--lime)]/10 via-transparent to-[var(--lime)]/5 blur-sm" />
+                  <div className="relative rounded-2xl bg-white/95 overflow-hidden">
                     <img
-                      key={exerciseIndex}
                       src={currentExercise.gifUrl}
                       alt={currentExercise.name}
                       className="w-full aspect-square object-contain"
-                      style={{ animation: "exerciseFadeIn 0.4s ease-out" }}
                     />
-                    {/* Badge de serie */}
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[var(--lime)] animate-pulse" />
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">
-                        Serie {currentSet} de {getExerciseConfig(exerciseIndex).sets}
-                      </span>
-                    </div>
                   </div>
                 </div>
 
-                {/* Info do exercicio */}
-                <div className="text-center space-y-2.5">
-                  <h3
-                    key={`name-${exerciseIndex}-${currentSet}`}
-                    className="text-xl font-black text-white capitalize"
-                    style={{ animation: "exerciseFadeIn 0.5s ease-out" }}
-                  >
-                    {currentExercise.name}
-                  </h3>
-                  <div className="flex justify-center flex-wrap gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[var(--lime)]/12 text-[var(--lime)] border border-[var(--lime)]/20">
+                {/* Name */}
+                <div className="text-center">
+                  <h3 className="text-xl font-black text-white capitalize">{currentExercise.name}</h3>
+                  <div className="flex justify-center flex-wrap gap-2 mt-2">
+                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--lime)]/12 text-[var(--lime)] border border-[var(--lime)]/20">
                       {currentExercise.target}
                     </span>
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/5 text-zinc-400 border border-white/8">
+                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-white/5 text-zinc-400 border border-white/10">
                       {currentExercise.equipment}
                     </span>
                   </div>
                 </div>
 
-                {/* Config de series/reps */}
-                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold text-center mb-3">Configuracao</div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center space-y-1">
-                      <div className="text-2xl font-black text-white">{getExerciseConfig(exerciseIndex).sets}</div>
-                      <div className="text-[9px] text-zinc-500 uppercase tracking-widest">Series</div>
-                    </div>
-                    <div className="text-center space-y-1">
-                      <div className="text-2xl font-black text-[var(--lime)]">{getExerciseConfig(exerciseIndex).reps}</div>
-                      <div className="text-[9px] text-zinc-500 uppercase tracking-widest">Reps</div>
-                    </div>
-                    <div className="text-center space-y-1">
-                      <div className="text-2xl font-black text-white">{getExerciseConfig(exerciseIndex).rest}s</div>
-                      <div className="text-[9px] text-zinc-500 uppercase tracking-widest">Descanso</div>
-                    </div>
-                  </div>
-                  {/* Progresso das series */}
-                  <div className="flex justify-center gap-1.5 mt-3">
+                {/* Reps per set */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold text-center mb-3">Repeticoes</div>
+                  <div className="space-y-2">
                     {Array.from({ length: getExerciseConfig(exerciseIndex).sets }).map((_, s) => (
-                      <div
-                        key={s}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                          s < currentSet - 1
-                            ? "w-5 bg-[var(--lime)]"
-                            : s === currentSet - 1
-                              ? "w-5 bg-[var(--lime)]"
-                              : "w-5 bg-white/10"
-                        }`}
-                        style={s === currentSet - 1 ? { boxShadow: "0 0 8px rgba(204,255,0,0.4)" } : {}}
-                      />
+                      <div key={s} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                        <div className="w-7 h-7 rounded-lg bg-[var(--lime)]/10 flex items-center justify-center text-xs font-bold text-[var(--lime)]">
+                          {s + 1}
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-base font-black text-white">{getExerciseConfig(exerciseIndex).reps} repeticoes</span>
+                        </div>
+                        {completedExercises.has(exerciseIndex) && (
+                          <CheckCircle2 className="w-4 h-4 text-[var(--lime)]" />
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Contador visual */}
-                <div className="flex items-center justify-center gap-5 py-1">
+                {/* Progress counter */}
+                <div className="flex items-center justify-center gap-5">
                   <div className="text-center">
-                    <div className="text-2xl font-black text-[var(--lime)] tabular-nums" style={{ animation: "popIn 0.3s ease-out" }}>
-                      {exerciseIndex + 1}
-                    </div>
+                    <div className="text-lg font-black text-[var(--lime)]">{exerciseIndex + 1}</div>
                     <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Exercicio</div>
                   </div>
-                  <div className="w-px h-8 bg-white/8" />
+                  <div className="w-px h-6 bg-white/10" />
                   <div className="text-center">
-                    <div className="text-2xl font-black text-white tabular-nums">{exerciseList.length}</div>
+                    <div className="text-lg font-black text-white">{exerciseList.length}</div>
                     <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Total</div>
                   </div>
-                  <div className="w-px h-8 bg-white/8" />
+                  <div className="w-px h-6 bg-white/10" />
                   <div className="text-center">
-                    <div className="text-2xl font-black text-[var(--lime)] tabular-nums">
-                      {Math.round(((exerciseIndex + 1) / exerciseList.length) * 100)}%
-                    </div>
+                    <div className="text-lg font-black text-[var(--lime)]">{Math.round(((exerciseIndex + 1) / exerciseList.length) * 100)}%</div>
                     <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Feito</div>
                   </div>
                 </div>
@@ -944,48 +780,21 @@ function Inicio() {
             )}
           </div>
 
-          {/* Botoes */}
-          {!restTimer.active && !loadingExercises && currentExercise && (
-            <div className="shrink-0 px-4 pb-5 safe-bottom">
-              <div className="flex gap-3 max-w-sm mx-auto">
-                <button
-                  onClick={() => { if (exerciseIndex > 0) { setExerciseIndex(exerciseIndex - 1); setCurrentSet(1); } }}
-                  disabled={exerciseIndex === 0}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/8 px-4 py-3.5 text-sm font-bold text-white disabled:opacity-0 disabled:pointer-events-none hover:bg-white/10 active:scale-95 transition-all"
-                >
-                  <ArrowLeft className="w-4 h-4"/>
-                </button>
-                <button
-                  onClick={advanceSet}
-                  className="flex-1 inline-flex items-center justify-center gap-2.5 rounded-2xl px-4 py-3.5 text-sm font-black text-black active:scale-[0.97] transition-all"
-                  style={{
-                    background: "linear-gradient(135deg, var(--lime), #c8ff33)",
-                    boxShadow: "0 8px 30px -5px rgba(204,255,0,0.35)",
-                  }}
-                >
-                  {currentSet < getExerciseConfig(exerciseIndex).sets ? (
-                    <><Play className="w-5 h-5" fill="currentColor"/> Concluir Serie {currentSet}</>
-                  ) : exerciseIndex < exerciseList.length - 1 ? (
-                    <><SkipForward className="w-5 h-5"/> Proximo Exercicio</>
-                  ) : (
-                    <><Flag className="w-5 h-5"/> Finalizar Treino</>
-                  )}
+          {/* Buttons */}
+          {!loadingExercises && currentExercise && (
+            <div className="shrink-0 px-4 pb-5">
+              <div className="flex justify-center gap-3 max-w-sm mx-auto">
+                {exerciseIndex > 0 && (
+                  <button onClick={() => setExerciseIndex(exerciseIndex - 1)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-5 py-3.5 text-sm font-bold text-white hover:bg-white/10 transition-all">
+                    <ArrowLeft className="w-4 h-4" /> Anterior
+                  </button>
+                )}
+                <button onClick={advanceExercise} className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-black text-black transition-all hover:brightness-110" style={{ background: "linear-gradient(135deg, var(--lime), #a3e635)", boxShadow: "0 8px 30px -5px rgba(163,230,53,0.35)" }}>
+                  {exerciseIndex < exerciseList.length - 1 ? (<>Proximo <ChevronRight className="w-4 h-4" /></>) : (<>Finalizar <Flag className="w-4 h-4" /></>)}
                 </button>
               </div>
             </div>
           )}
-
-          <style>{`
-            @keyframes exerciseFadeIn {
-              from { opacity: 0; transform: translateY(10px) scale(0.98); }
-              to { opacity: 1; transform: translateY(0) scale(1); }
-            }
-            @keyframes popIn {
-              0% { transform: scale(0.6); opacity: 0; }
-              70% { transform: scale(1.08); }
-              100% { transform: scale(1); opacity: 1; }
-            }
-          `}</style>
         </div>
       )}
 
