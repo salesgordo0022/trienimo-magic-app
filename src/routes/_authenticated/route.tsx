@@ -52,7 +52,7 @@ const NAV = [
   { to: "/app", label: "Inicio", icon: Home },
   { to: "/meu-treino", label: "Treino", icon: Dumbbell },
   { to: "/alimentacao", label: "Alimentacao", icon: Apple },
-  { to: "/mensagens", label: "Chat", icon: MessageSquare },
+  { to: "/mensagens", label: "Mensagens", icon: MessageSquare },
   { to: "/perfil", label: "Perfil", icon: User },
 ] as const;
 

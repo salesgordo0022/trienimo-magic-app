@@ -175,7 +175,7 @@ function Biblioteca() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por nome (ex: bench press, squat)"
+            placeholder="Buscar por nome (ex: supino, agachamento, rosca)"
             className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white outline-none focus:border-[var(--lime)]/60 focus:ring-2 focus:ring-[var(--lime)]/20 placeholder:text-zinc-600"
           />
         </div>

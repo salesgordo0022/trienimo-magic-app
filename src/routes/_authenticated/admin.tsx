@@ -84,7 +84,7 @@ function AdminPage() {
       <header className="bg-black text-white">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate({ to: "/app" })} className="text-white/70 hover:text-white"><ArrowLeft className="w-4 h-4"/></button>
-          <div className="text-[var(--yellow)] font-display text-xl font-black">ADMIN</div>
+          <div className="text-[var(--yellow)] font-display text-xl font-black">ADMINISTRADOR</div>
         </div>
       </header>
       <div className="max-w-5xl mx-auto px-4 pt-3 flex gap-1">
@@ -96,10 +96,10 @@ function AdminPage() {
       <main className="max-w-5xl mx-auto p-3 sm:p-4">
         {tab === "professores" && (
           <div className="bg-white border border-black/10">
-            <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Professores & Admins</div>
+            <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Professores e Administradores</div>
             <div className="overflow-x-auto -mx-px">
               <table className="w-full text-sm min-w-[520px]">
-                <thead className="bg-gray-100 text-left"><tr><th className="p-2 whitespace-nowrap">Nome</th><th className="p-2 whitespace-nowrap">Papel</th><th className="p-2 whitespace-nowrap">Online</th><th className="p-2 whitespace-nowrap">Ações</th></tr></thead>
+                <thead className="bg-gray-100 text-left"><tr><th className="p-2 whitespace-nowrap">Nome</th><th className="p-2 whitespace-nowrap">Papel</th><th className="p-2 whitespace-nowrap">Conectado</th><th className="p-2 whitespace-nowrap">Ações</th></tr></thead>
                 <tbody>
                   {professors.map(u => (
                     <tr key={u.id} className="border-t">
@@ -108,7 +108,7 @@ function AdminPage() {
                       <td className="p-2 whitespace-nowrap">{online.has(u.id) ? <span className="inline-block w-2 h-2 rounded-full bg-green-500"/> : <span className="inline-block w-2 h-2 rounded-full bg-gray-300"/>}</td>
                       <td className="p-2 whitespace-nowrap">
                         <select className="border px-1 py-0.5 text-xs" value={u.role} onChange={e => changeRole.mutate({ data: { user_id: u.id, role: e.target.value as AppRole } })}>
-                          <option value="admin">admin</option>
+                          <option value="admin">administrador</option>
                           <option value="professor">professor</option>
                           <option value="aluno">aluno</option>
                         </select>
@@ -196,7 +196,8 @@ function AdminPage() {
 
 function Badge({ role }: { role: AppRole }) {
   const map: Record<AppRole, string> = { admin: "bg-red-600 text-white", professor: "bg-black text-[var(--yellow)]", aluno: "bg-gray-200 text-black" };
-  return <span className={`px-2 py-0.5 text-[10px] font-bold uppercase ${map[role]}`}>{role}</span>;
+  const label: Record<AppRole, string> = { admin: "administrador", professor: "professor", aluno: "aluno" };
+  return <span className={`px-2 py-0.5 text-[10px] font-bold uppercase ${map[role]}`}>{label[role]}</span>;
 }
 
 function AdminNewStudent() {

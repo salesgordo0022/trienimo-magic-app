@@ -530,7 +530,7 @@ function Inicio() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
                     <div className="absolute top-3 right-3 z-10">
-                      <span className="text-[9px] font-black text-[var(--lime)] uppercase tracking-widest px-2 py-0.5 rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/20">Popular</span>
+                      <span className="text-[9px] font-black text-[var(--lime)] uppercase tracking-widest px-2 py-0.5 rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/20">Mais Popular</span>
                     </div>
                     <div className="relative flex items-center gap-4 p-5">
                       <div className="w-14 h-14 rounded-2xl bg-[var(--lime)]/10 border border-[var(--lime)]/15 flex items-center justify-center shrink-0 group-hover:bg-[var(--lime)]/15 transition-colors">

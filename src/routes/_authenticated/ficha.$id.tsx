@@ -182,7 +182,7 @@ function FichaEditor() {
                   />
                   <div className="hidden md:block border-l border-white/10 pl-4">
                     <div className="font-semibold text-sm text-white">
-                      {data.profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}
+                      {data.profile.personal_nome ?? "SEU NOME - TREINADOR PESSOAL"}
                     </div>
                     <div className="text-xs text-zinc-500 mt-0.5">FICHA DE TREINO</div>
                   </div>
@@ -436,14 +436,14 @@ function GroupBlock({
               {[0, 1, 2, 3].map((i) => (
                 <>
                   <th key={"r" + i} className="px-2 py-2 w-16 text-left font-bold">
-                    Repets
+                    Repetições
                   </th>
                   <th key={"k" + i} className="px-2 py-2 w-16 text-left font-bold">
                     Kg
                   </th>
                 </>
               ))}
-              <th className="px-2 py-2 w-16 text-left font-bold">Desc</th>
+              <th className="px-2 py-2 w-16 text-left font-bold">Descanso</th>
               <th className="px-2 py-2 w-24 text-left font-bold">Obs</th>
               <th className="px-2 py-2 w-8"></th>
             </tr>
@@ -492,7 +492,7 @@ function GroupBlock({
         <ExerciseLibraryButton onPick={(ex) => onAddExercise(ex.name, ex.id)} />
         <button type="submit" className={`${chipBtn} text-black`} style={limeBtnStyle}>
           <Plus className="w-3 h-3" />
-          Add
+          Adicionar
         </button>
       </form>
     </div>
@@ -545,7 +545,7 @@ function ExerciseLibraryButton({
                   autoFocus
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Buscar exercício (ex: bench, curl, squat)"
+                  placeholder="Buscar exercício (ex: supino, rosca, agachamento)"
                   className="flex-1 bg-transparent outline-none text-sm text-white"
                 />
                 <button onClick={() => setOpen(false)} className="text-zinc-400 p-1">
@@ -886,7 +886,7 @@ function ExerciseCardMobile({
           </button>
         </div>
         <label className="flex items-center gap-1.5">
-          Desc{" "}
+          Descanso{" "}
           <input
             value={s.desc}
             onChange={(e) => s.setDesc(e.target.value)}
@@ -908,7 +908,7 @@ function ExerciseCardMobile({
                 s.setSets(c);
               }}
               onBlur={save}
-              placeholder="reps"
+              placeholder="repetições"
               className="w-full bg-transparent text-white outline-none placeholder:text-zinc-700"
             />
             <input

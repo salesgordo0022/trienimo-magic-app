@@ -68,7 +68,7 @@ function ProfessorPage() {
           </div>
           <Link to="/app" className="inline-flex items-center gap-2 rounded-xl bg-[var(--lime)] text-black px-4 py-2 text-xs font-bold hover:brightness-110 transition-all">
             <Dumbbell className="w-4 h-4" />
-            Dashboard
+            Painel
           </Link>
         </div>
       </header>
