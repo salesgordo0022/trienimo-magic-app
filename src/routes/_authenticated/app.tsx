@@ -1203,14 +1203,14 @@ function Inicio() {
 
 function VincularAlunoSection({ studentsQO }: { studentsQO: () => any }) {
   const qc = useQueryClient();
-  const { data: myStudents } = useSuspenseQuery(studentsQO());
+  const { data: myStudents } = useSuspenseQuery(studentsQO()) as { data: Array<{ id: string; nome: string | null }> };
   const [email, setEmail] = useState("");
   const [searchResult, setSearchResult] = useState<{ id: string; nome: string | null } | null>(null);
   const [searching, setSearching] = useState(false);
 
   const search = useMutation({
     mutationFn: useServerFn(searchUserByEmail),
-    onSuccess: (data) => { setSearchResult(data); setSearching(false); },
+    onSuccess: (data) => { setSearchResult(data as { id: string; nome: string | null }); setSearching(false); },
     onError: (e) => { toast.error(e.message); setSearching(false); setSearchResult(null); },
   });
 
