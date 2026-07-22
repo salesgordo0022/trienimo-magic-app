@@ -88,7 +88,7 @@ function AdminPage() {
         </div>
       </header>
       <div className="max-w-5xl mx-auto px-4 pt-3 flex gap-1">
-        {(["professores","alunos","convites","exercicios"] as const).map(t => (
+        {(["professores","alunos","convites"] as const).map(t => (
           <button key={t} onClick={()=>setTab(t)} className={`px-3 py-2 text-xs font-bold uppercase ${tab===t?"bg-[var(--yellow)] text-black":"bg-white text-gray-500"}`}>{t}</button>
         ))}
       </div>
