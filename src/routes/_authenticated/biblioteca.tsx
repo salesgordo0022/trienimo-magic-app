@@ -7,6 +7,9 @@ import {
   listEquipments,
   BODYPART_PT,
   EQUIPMENT_PT,
+  TARGET_PT,
+  DIFFICULTY_PT,
+  ptTerm,
   type Exercise,
 } from "@/lib/exercisedb.functions";
 import { Search, Loader2, X } from "lucide-react";
@@ -304,10 +307,10 @@ function ExerciseCard({
         </div>
         <div className="mt-1.5 flex flex-wrap gap-1">
           <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[var(--lime)]/15 text-[var(--lime)]">
-            {exercise.target}
+            {ptTerm(TARGET_PT, exercise.target) ?? exercise.target}
           </span>
           <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/5 text-zinc-400">
-            {exercise.equipment}
+            {ptTerm(EQUIPMENT_PT, exercise.equipment) ?? exercise.equipment}
           </span>
         </div>
       </div>
@@ -349,10 +352,10 @@ function ExerciseDetail({
         <div className="p-5 space-y-3">
           <h2 className="text-lg font-black text-white capitalize">{exercise.name}</h2>
           <div className="flex flex-wrap gap-1.5">
-            <Tag>{exercise.bodyPart}</Tag>
-            <Tag primary>{exercise.target}</Tag>
-            <Tag>{exercise.equipment}</Tag>
-            {exercise.difficulty && <Tag>{exercise.difficulty}</Tag>}
+            <Tag>{ptTerm(BODYPART_PT, exercise.bodyPart) ?? exercise.bodyPart}</Tag>
+            <Tag primary>{ptTerm(TARGET_PT, exercise.target) ?? exercise.target}</Tag>
+            <Tag>{ptTerm(EQUIPMENT_PT, exercise.equipment) ?? exercise.equipment}</Tag>
+            {exercise.difficulty && <Tag>{ptTerm(DIFFICULTY_PT, exercise.difficulty) ?? exercise.difficulty}</Tag>}
           </div>
           {exercise.secondaryMuscles?.length ? (
             <div>
@@ -361,7 +364,7 @@ function ExerciseDetail({
               </div>
               <div className="flex flex-wrap gap-1">
                 {exercise.secondaryMuscles.map((m) => (
-                  <Tag key={m}>{m}</Tag>
+                  <Tag key={m}>{ptTerm(TARGET_PT, m) ?? ptTerm(BODYPART_PT, m) ?? m}</Tag>
                 ))}
               </div>
             </div>

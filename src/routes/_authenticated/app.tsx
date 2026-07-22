@@ -3,7 +3,7 @@ import { useSuspenseQuery, useMutation, useQueryClient, queryOptions } from "@ta
 import { useServerFn } from "@tanstack/react-start";
 import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents, searchUserByEmail, linkStudent } from "@/lib/roles.functions";
-import { searchExercises, BODYPART_PT, type Exercise } from "@/lib/exercisedb.functions";
+import { searchExercises, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, type Exercise } from "@/lib/exercisedb.functions";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Pencil, History, Dumbbell, ChevronRight, TrendingUp, Calendar, Flame, Users, BookOpen, ListChecks, X, FileText, Loader2, ArrowLeft, RotateCcw, Flag, Apple } from "lucide-react";
@@ -730,8 +730,8 @@ function Inicio() {
                 <div className="text-center">
                   <h3 className="text-xl font-black text-white capitalize">{currentExercise.name}</h3>
                   <div className="flex justify-center flex-wrap gap-2 mt-2">
-                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--lime)]/12 text-[var(--lime)] border border-[var(--lime)]/20">{currentExercise.target}</span>
-                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-white/5 text-zinc-400 border border-white/10">{currentExercise.equipment}</span>
+                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--lime)]/12 text-[var(--lime)] border border-[var(--lime)]/20">{ptTerm(TARGET_PT, currentExercise.target) ?? currentExercise.target}</span>
+                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-white/5 text-zinc-400 border border-white/10">{ptTerm(EQUIPMENT_PT, currentExercise.equipment) ?? currentExercise.equipment}</span>
                   </div>
                 </div>
 

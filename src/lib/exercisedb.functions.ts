@@ -142,13 +142,13 @@ export const EQUIPMENT_PT: Record<string, string> = {
 
 const MUSCLE_PT: Record<string, string> = { ...BODYPART_PT, ...TARGET_PT };
 
-const DIFFICULTY_PT: Record<string, string> = {
+export const DIFFICULTY_PT: Record<string, string> = {
   beginner: "iniciante",
   intermediate: "intermediário",
   expert: "avançado",
 };
 
-function ptTerm(map: Record<string, string>, term?: string): string | undefined {
+export function ptTerm(map: Record<string, string>, term?: string): string | undefined {
   if (!term) return term;
   return map[term.toLowerCase().trim()] ?? term;
 }
