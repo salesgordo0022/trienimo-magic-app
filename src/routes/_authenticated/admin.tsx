@@ -93,30 +93,32 @@ function AdminPage() {
         ))}
       </div>
 
-      <main className="max-w-5xl mx-auto p-4">
+      <main className="max-w-5xl mx-auto p-3 sm:p-4">
         {tab === "professores" && (
           <div className="bg-white border border-black/10">
             <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Professores & Admins</div>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100 text-left"><tr><th className="p-2">Nome</th><th className="p-2">Papel</th><th className="p-2">Online</th><th className="p-2">Ações</th></tr></thead>
-              <tbody>
-                {professors.map(u => (
-                  <tr key={u.id} className="border-t">
-                    <td className="p-2">{u.nome ?? "-"}</td>
-                    <td className="p-2"><Badge role={u.role}/></td>
-                    <td className="p-2">{online.has(u.id) ? <span className="inline-block w-2 h-2 rounded-full bg-green-500"/> : <span className="inline-block w-2 h-2 rounded-full bg-gray-300"/>}</td>
-                    <td className="p-2">
-                      <select className="border px-1 py-0.5 text-xs" value={u.role} onChange={e => changeRole.mutate({ data: { user_id: u.id, role: e.target.value as AppRole } })}>
-                        <option value="admin">admin</option>
-                        <option value="professor">professor</option>
-                        <option value="aluno">aluno</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-                {professors.length === 0 && <tr><td colSpan={4} className="p-4 text-center text-gray-500">Nenhum professor. Crie um convite na aba Convites.</td></tr>}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto -mx-px">
+              <table className="w-full text-sm min-w-[520px]">
+                <thead className="bg-gray-100 text-left"><tr><th className="p-2 whitespace-nowrap">Nome</th><th className="p-2 whitespace-nowrap">Papel</th><th className="p-2 whitespace-nowrap">Online</th><th className="p-2 whitespace-nowrap">Ações</th></tr></thead>
+                <tbody>
+                  {professors.map(u => (
+                    <tr key={u.id} className="border-t">
+                      <td className="p-2 whitespace-nowrap">{u.nome ?? "-"}</td>
+                      <td className="p-2 whitespace-nowrap"><Badge role={u.role}/></td>
+                      <td className="p-2 whitespace-nowrap">{online.has(u.id) ? <span className="inline-block w-2 h-2 rounded-full bg-green-500"/> : <span className="inline-block w-2 h-2 rounded-full bg-gray-300"/>}</td>
+                      <td className="p-2 whitespace-nowrap">
+                        <select className="border px-1 py-0.5 text-xs" value={u.role} onChange={e => changeRole.mutate({ data: { user_id: u.id, role: e.target.value as AppRole } })}>
+                          <option value="admin">admin</option>
+                          <option value="professor">professor</option>
+                          <option value="aluno">aluno</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                  {professors.length === 0 && <tr><td colSpan={4} className="p-4 text-center text-gray-500">Nenhum professor. Crie um convite na aba Convites.</td></tr>}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -125,60 +127,65 @@ function AdminPage() {
             <AdminNewStudent />
             <div className="bg-white border border-black/10">
               <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Alunos</div>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100 text-left"><tr><th className="p-2">Nome</th><th className="p-2">Professor</th><th className="p-2">Ações</th></tr></thead>
-              <tbody>
-                {alunos.map(u => (
-                  <tr key={u.id} className="border-t">
-                    <td className="p-2">{u.nome ?? "-"}</td>
-                    <td className="p-2">
-                      <select className="border px-1 py-0.5 text-xs" value={u.teacher_id ?? ""} onChange={e => assign.mutate({ data: { student_id: u.id, teacher_id: e.target.value || null } })}>
-                        <option value="">— sem professor —</option>
-                        {professors.map(p => <option key={p.id} value={p.id}>{p.nome ?? p.id.slice(0,8)}</option>)}
-                      </select>
-                    </td>
-                    <td className="p-2">
-                      <Button size="sm" variant="outline" onClick={() => changeRole.mutate({ data: { user_id: u.id, role: "professor" } })}>Promover a professor</Button>
-                    </td>
-                  </tr>
-                ))}
-                {alunos.length === 0 && <tr><td colSpan={3} className="p-4 text-center text-gray-500">Nenhum aluno.</td></tr>}
-              </tbody>
-            </table>
+              <div className="overflow-x-auto -mx-px">
+                <table className="w-full text-sm min-w-[520px]">
+                  <thead className="bg-gray-100 text-left"><tr><th className="p-2 whitespace-nowrap">Nome</th><th className="p-2 whitespace-nowrap">Professor</th><th className="p-2 whitespace-nowrap">Ações</th></tr></thead>
+                  <tbody>
+                    {alunos.map(u => (
+                      <tr key={u.id} className="border-t">
+                        <td className="p-2 whitespace-nowrap">{u.nome ?? "-"}</td>
+                        <td className="p-2 whitespace-nowrap">
+                          <select className="border px-1 py-0.5 text-xs max-w-[180px]" value={u.teacher_id ?? ""} onChange={e => assign.mutate({ data: { student_id: u.id, teacher_id: e.target.value || null } })}>
+                            <option value="">— sem professor —</option>
+                            {professors.map(p => <option key={p.id} value={p.id}>{p.nome ?? p.id.slice(0,8)}</option>)}
+                          </select>
+                        </td>
+                        <td className="p-2 whitespace-nowrap">
+                          <Button size="sm" variant="outline" onClick={() => changeRole.mutate({ data: { user_id: u.id, role: "professor" } })}>Promover a professor</Button>
+                        </td>
+                      </tr>
+                    ))}
+                    {alunos.length === 0 && <tr><td colSpan={3} className="p-4 text-center text-gray-500">Nenhum aluno.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
 
         {tab === "convites" && (
           <div className="bg-white border border-black/10">
-            <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm flex items-center justify-between">
-              Convites
-              <Button size="sm" onClick={() => createInv.mutate({ data: { role: "professor" } })} className="bg-black text-white h-7"><Plus className="w-3 h-3 mr-1"/>Novo convite de professor</Button>
+            <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm flex flex-wrap items-center justify-between gap-2">
+              <span>Convites</span>
+              <Button size="sm" onClick={() => createInv.mutate({ data: { role: "professor" } })} className="bg-black text-white h-7"><Plus className="w-3 h-3 mr-1"/>Novo convite</Button>
             </div>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100 text-left"><tr><th className="p-2">Código</th><th className="p-2">Papel</th><th className="p-2">Usado por</th><th className="p-2">Expira</th><th className="p-2"></th></tr></thead>
-              <tbody>
-                {invites.map(i => {
-                  const link = `${window.location.origin}/auth?convite=${i.code}`;
-                  return (
-                    <tr key={i.id} className="border-t">
-                      <td className="p-2 font-mono">{i.code}</td>
-                      <td className="p-2"><Badge role={i.role as AppRole}/></td>
-                      <td className="p-2 text-xs">{i.used_by ? "usado" : "livre"}</td>
-                      <td className="p-2 text-xs text-gray-500">{i.expires_at ? new Date(i.expires_at).toLocaleDateString("pt-BR") : "—"}</td>
-                      <td className="p-2 flex gap-1">
-                        <Button size="sm" variant="outline" className="h-7" onClick={() => { navigator.clipboard?.writeText(link); toast.success("Link copiado"); }}><Copy className="w-3 h-3"/></Button>
-                        <Button size="sm" variant="outline" className="h-7 text-red-600" onClick={() => delInv.mutate({ data: { id: i.id } })}><Trash2 className="w-3 h-3"/></Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {invites.length === 0 && <tr><td colSpan={5} className="p-4 text-center text-gray-500">Nenhum convite ainda.</td></tr>}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto -mx-px">
+              <table className="w-full text-sm min-w-[560px]">
+                <thead className="bg-gray-100 text-left"><tr><th className="p-2 whitespace-nowrap">Código</th><th className="p-2 whitespace-nowrap">Papel</th><th className="p-2 whitespace-nowrap">Usado por</th><th className="p-2 whitespace-nowrap">Expira</th><th className="p-2"></th></tr></thead>
+                <tbody>
+                  {invites.map(i => {
+                    const link = `${window.location.origin}/auth?convite=${i.code}`;
+                    return (
+                      <tr key={i.id} className="border-t">
+                        <td className="p-2 font-mono whitespace-nowrap">{i.code}</td>
+                        <td className="p-2 whitespace-nowrap"><Badge role={i.role as AppRole}/></td>
+                        <td className="p-2 text-xs whitespace-nowrap">{i.used_by ? "usado" : "livre"}</td>
+                        <td className="p-2 text-xs text-gray-500 whitespace-nowrap">{i.expires_at ? new Date(i.expires_at).toLocaleDateString("pt-BR") : "—"}</td>
+                        <td className="p-2 flex gap-1 whitespace-nowrap">
+                          <Button size="sm" variant="outline" className="h-7" onClick={() => { navigator.clipboard?.writeText(link); toast.success("Link copiado"); }}><Copy className="w-3 h-3"/></Button>
+                          <Button size="sm" variant="outline" className="h-7 text-red-600" onClick={() => delInv.mutate({ data: { id: i.id } })}><Trash2 className="w-3 h-3"/></Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {invites.length === 0 && <tr><td colSpan={5} className="p-4 text-center text-gray-500">Nenhum convite ainda.</td></tr>}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </main>
+
 
       <div className="max-w-5xl mx-auto px-4 pb-6 text-xs text-gray-500">
         <Link to="/app" className="underline">Voltar ao app</Link>

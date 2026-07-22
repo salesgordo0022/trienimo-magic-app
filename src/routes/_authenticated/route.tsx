@@ -76,66 +76,67 @@ function Shell() {
 
   return (
     <div
-      className="min-h-screen bg-[#0a0a0a] text-white flex flex-col"
+      className="min-h-screen bg-[#0a0a0a] text-white flex flex-col overflow-x-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif" }}
     >
-      <header className="sticky top-0 z-30 bg-[#0a0a0a]/85 backdrop-blur-xl border-b border-white/5 safe-top">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-30 bg-[#0a0a0a]/85 backdrop-blur-xl border-b border-white/5 safe-top safe-x">
+        <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3">
           <Link to="/app" className="shrink-0">
             <img
               src="/imperial-fitness-logo.png"
               alt="Imperial Fitness"
-              className="h-10 w-auto object-contain drop-shadow-[0_0_16px_rgba(204,255,0,0.35)]"
+              className="h-9 sm:h-10 w-auto object-contain drop-shadow-[0_0_16px_rgba(204,255,0,0.35)]"
             />
           </Link>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0">
             <div className="text-sm sm:text-base font-black leading-tight truncate">
               Olá, {firstName}! 👋
             </div>
             <div className="text-[11px] text-zinc-500 truncate">Bora treinar hoje?</div>
           </div>
-          {isStaff && (
-            <>
-              {role?.role === "admin" && (
+
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            {/* Desktop-only quick shortcuts */}
+            {isStaff && (
+              <div className="hidden sm:flex items-center gap-2">
+                {role?.role === "admin" && (
+                  <Link
+                    to="/admin"
+                    aria-label="Admin"
+                    className="p-2 rounded-xl bg-white/5 border border-white/10 text-zinc-300 hover:text-white"
+                  >
+                    <Shield className="w-[18px] h-[18px]" />
+                  </Link>
+                )}
                 <Link
-                  to="/admin"
-                  aria-label="Admin"
+                  to="/professor"
+                  aria-label="Alunos"
                   className="p-2 rounded-xl bg-white/5 border border-white/10 text-zinc-300 hover:text-white"
                 >
-                  <Shield className="w-[18px] h-[18px]" />
+                  <Users className="w-[18px] h-[18px]" />
                 </Link>
-              )}
-              <Link
-                to="/professor"
-                aria-label="Alunos"
-                className="p-2 rounded-xl bg-white/5 border border-white/10 text-zinc-300 hover:text-white"
-              >
-                <Users className="w-[18px] h-[18px]" />
-              </Link>
-            </>
-          )}
-          <NotificationBell />
-          <button
-            onClick={logout}
-            aria-label="Sair"
-            className="p-2 rounded-xl bg-white/5 border border-white/10 text-zinc-300 hover:text-red-400"
-          >
-            <LogOut className="w-[18px] h-[18px]" />
-          </button>
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--lime)] to-[#88b800] flex items-center justify-center text-black font-black text-xs shrink-0">
-            {initials}
+              </div>
+            )}
+            <NotificationBell />
+            <UserMenu
+              initials={initials}
+              firstName={firstName}
+              isStaff={isStaff}
+              role={role?.role ?? null}
+              onLogout={logout}
+            />
           </div>
         </div>
       </header>
 
-      <main className="flex-1 min-w-0 pb-24">
-        <div className="max-w-3xl mx-auto">
+      <main className="flex-1 min-w-0 pb-24 safe-x">
+        <div className="max-w-3xl mx-auto w-full">
           <Outlet />
         </div>
       </main>
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#0d0d0f]/95 backdrop-blur-xl border-t border-white/10 safe-bottom">
+      <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#0d0d0f]/95 backdrop-blur-xl border-t border-white/10 safe-bottom safe-x">
         <div className="max-w-3xl mx-auto grid grid-cols-5 gap-1 px-2 py-2">
           {NAV.map((item) => {
             const active =
@@ -145,14 +146,14 @@ function Shell() {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold transition-all ${
+                className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold transition-all min-w-0 ${
                   active
                     ? "text-black bg-[var(--lime)] shadow-[0_8px_24px_-6px_rgba(204,255,0,0.55)]"
                     : "text-zinc-400"
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span className="leading-none">{item.label}</span>
+                <Icon className="w-5 h-5 shrink-0" />
+                <span className="leading-none truncate max-w-full">{item.label}</span>
               </Link>
             );
           })}
@@ -161,6 +162,84 @@ function Shell() {
     </div>
   );
 }
+
+function UserMenu({
+  initials,
+  firstName,
+  isStaff,
+  role,
+  onLogout,
+}: {
+  initials: string;
+  firstName: string;
+  isStaff: boolean;
+  role: string | null;
+  onLogout: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Menu do usuário"
+        className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--lime)] to-[#88b800] flex items-center justify-center text-black font-black text-xs shrink-0"
+      >
+        {initials}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-white/10 bg-[#111112] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] z-50 overflow-hidden">
+          <div className="px-4 py-3 border-b border-white/5">
+            <div className="text-sm font-bold text-white truncate">{firstName}</div>
+            {role && (
+              <div className="text-[10px] uppercase tracking-widest text-zinc-500 mt-0.5">
+                {role}
+              </div>
+            )}
+          </div>
+          {isStaff && (
+            <div className="py-1 sm:hidden">
+              {role === "admin" && (
+                <Link
+                  to="/admin"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-200 hover:bg-white/5"
+                >
+                  <Shield className="w-4 h-4 text-[var(--lime)]" /> Admin
+                </Link>
+              )}
+              <Link
+                to="/professor"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-200 hover:bg-white/5"
+              >
+                <Users className="w-4 h-4 text-[var(--lime)]" /> Meus alunos
+              </Link>
+              <div className="border-t border-white/5 my-1" />
+            </div>
+          )}
+          <button
+            onClick={() => {
+              setOpen(false);
+              onLogout();
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10"
+          >
+            <LogOut className="w-4 h-4" /> Sair
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 function NotificationBell() {
   const [open, setOpen] = useState(false);
@@ -209,7 +288,7 @@ function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-2xl border border-white/10 bg-[#111112] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] z-50">
+        <div className="absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] sm:w-80 max-w-sm max-h-96 overflow-y-auto rounded-2xl border border-white/10 bg-[#111112] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] z-50">
           <div className="px-4 py-3 border-b border-white/5 text-sm font-semibold text-white">
             Notificações
           </div>
