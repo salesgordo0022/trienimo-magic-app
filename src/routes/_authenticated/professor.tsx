@@ -13,7 +13,7 @@ import {
   listWorkoutsForStudent, createWorkout, deleteWorkout, updateWorkout,
   listWorkouts, createWorkoutWithExercises,
 } from "@/lib/workouts.functions";
-import { searchExercises, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, type Exercise } from "@/lib/exercisedb.functions";
+import { searchExercises, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, listBodyParts, listEquipments, type Exercise } from "@/lib/exercisedb.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -250,17 +250,6 @@ function StudentList({ students, selected, onSelect }: { students: any[]; select
   );
 }
 
-const BODY_PARTS = [
-  { key: "chest", label: "Peito", img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&h=400&fit=crop&crop=center", accent: "from-red-500/20 to-red-900/10" },
-  { key: "back", label: "Costas", img: "https://images.unsplash.com/photo-1603287681836-b1a467a28a2e?w=400&h=400&fit=crop&crop=center", accent: "from-blue-500/20 to-blue-900/10" },
-  { key: "shoulders", label: "Ombros", img: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&h=400&fit=crop&crop=top", accent: "from-purple-500/20 to-purple-900/10" },
-  { key: "upper arms", label: "Bracos", img: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&h=400&fit=crop&crop=center", accent: "from-amber-500/20 to-amber-900/10" },
-  { key: "upper legs", label: "Pernas", img: "https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400&h=400&fit=crop&crop=center", accent: "from-emerald-500/20 to-emerald-900/10" },
-  { key: "lower legs", label: "Panturrilha", img: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&h=400&fit=crop&crop=bottom", accent: "from-teal-500/20 to-teal-900/10" },
-  { key: "waist", label: "Abdomen", img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop&crop=center", accent: "from-orange-500/20 to-orange-900/10" },
-  { key: "cardio", label: "Cardio", img: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=400&h=400&fit=crop&crop=center", accent: "from-pink-500/20 to-pink-900/10" },
-];
-
 /* ─── Student Panel ─── */
 function StudentPanel({ studentId, studentName }: { studentId: string; studentName: string }) {
   const qc = useQueryClient();
@@ -269,12 +258,11 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
     queryFn: () => listWorkoutsForStudent({ data: { student_id: studentId } }),
   });
   const [showAssign, setShowAssign] = useState(false);
-  const [assignStep, setAssignStep] = useState<"choice" | "ficha" | "bodyparts" | "passo" | "review" | "completed">("choice");
-  const [selectedBodyPart, setSelectedBodyPart] = useState("");
-  const [exerciseList, setExerciseList] = useState<Exercise[]>([]);
-  const [loadingExercises, setLoadingExercises] = useState(false);
+  const [assignStep, setAssignStep] = useState<"choice" | "ficha" | "biblioteca" | "review" | "completed">("choice");
+  const [libQuery, setLibQuery] = useState("");
+  const [libBodyPart, setLibBodyPart] = useState("");
+  const [libEquipment, setLibEquipment] = useState("");
   const [selectedExercises, setSelectedExercises] = useState<Array<{ exercise: Exercise; sets: number; reps: number }>>([]);
-  const [currentExerciseIdx, setCurrentExerciseIdx] = useState(0);
   const [passoLetra, setPassoLetra] = useState("");
   const [passoNome, setPassoNome] = useState("");
 
@@ -318,32 +306,8 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
 
   const startFichaAssign = () => setAssignStep("ficha");
 
-  const startPassoAPasso = async (bodyPart: string) => {
-    setSelectedBodyPart(bodyPart);
-    setAssignStep("passo");
-    setLoadingExercises(true);
-    setCurrentExerciseIdx(0);
-    setSelectedExercises([]);
-    try {
-      const exercises = await searchExercises({ data: { bodyPart, limit: 30, offset: 0 } });
-      setExerciseList(exercises);
-      setCurrentExerciseIdx(0);
-    } catch {
-      toast.error("Erro ao carregar exercicios. Verifique a API.");
-      setExerciseList([]);
-    }
-    setLoadingExercises(false);
-  };
-
-  const addCurrentExercise = (sets: number, reps: number) => {
-    const ex = exerciseList[currentExerciseIdx];
-    if (!ex) return;
-    setSelectedExercises(prev => [...prev, { exercise: ex, sets, reps }]);
-    if (currentExerciseIdx < exerciseList.length - 1) {
-      setCurrentExerciseIdx(currentExerciseIdx + 1);
-    } else {
-      setAssignStep("review");
-    }
+  const addExerciseToWorkout = (exercise: Exercise, sets: number, reps: number) => {
+    setSelectedExercises(prev => [...prev, { exercise, sets, reps }]);
   };
 
   const removeSelectedExercise = (idx: number) => {
@@ -358,7 +322,6 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
         letra: passoLetra.trim(),
         nome: passoNome.trim() || undefined,
         assigned_to: studentId,
-        body_part_label: BODYPART_PT[selectedBodyPart] ?? selectedBodyPart,
         exercises: selectedExercises.map(ex => ({
           exercise_db_id: ex.exercise.id.toString(),
           nome: ex.exercise.name,
@@ -372,13 +335,47 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
   const openAssign = () => {
     setShowAssign(true);
     setAssignStep("choice");
-    setSelectedBodyPart("");
-    setExerciseList([]);
+    setLibQuery("");
+    setLibBodyPart("");
+    setLibEquipment("");
     setSelectedExercises([]);
-    setCurrentExerciseIdx(0);
     setPassoLetra("");
     setPassoNome("");
   };
+
+  const libIsSearching = !!(libQuery || libBodyPart || libEquipment);
+
+  const libResults = useQuery({
+    queryKey: ["ex", "search", { q: libQuery, bodyPart: libBodyPart, equipment: libEquipment }],
+    queryFn: () =>
+      searchExercises({
+        data: {
+          q: libQuery || undefined,
+          bodyPart: libBodyPart || undefined,
+          equipment: libEquipment || undefined,
+          limit: 50,
+        },
+      }),
+    staleTime: 1000 * 60 * 10,
+    enabled: libIsSearching,
+  });
+
+  const bodyParts = useQuery({
+    queryKey: ["ex", "bodyParts"],
+    queryFn: () => listBodyParts(),
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const equipments = useQuery({
+    queryKey: ["ex", "equipments"],
+    queryFn: () => listEquipments(),
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const activeBodyParts = bodyParts.data ?? [
+    "chest", "back", "shoulders", "upper arms", "lower arms",
+    "upper legs", "lower legs", "waist", "cardio", "neck",
+  ];
 
   return (
     <div className="space-y-4">
@@ -484,7 +481,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                 </button>
 
                 <button
-                  onClick={() => setAssignStep("bodyparts")}
+                  onClick={() => setAssignStep("biblioteca")}
                   className="w-full group relative overflow-hidden rounded-2xl border border-[var(--lime)]/15 p-0 text-left transition-all hover:border-[var(--lime)]/30 active:scale-[0.98]"
                 >
                   <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80" alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity" />
@@ -495,7 +492,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-base font-black text-white mb-0.5">Passo a Passo</div>
-                      <div className="text-xs text-zinc-400 leading-relaxed">Escolher exercicios um por um da biblioteca</div>
+                      <div className="text-xs text-zinc-400 leading-relaxed">Biblioteca completa - escolha qualquer exercicio</div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-[var(--lime)] group-hover:translate-x-0.5 transition-all shrink-0" />
                   </div>
@@ -539,118 +536,89 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
             </div>
           )}
 
-          {/* Step: Bodyparts */}
-          {assignStep === "bodyparts" && (
-            <div className="relative z-10 flex-1 overflow-y-auto px-6 pb-8">
-              <div className="text-center mb-6 space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/15 mb-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--lime)] animate-pulse" />
-                  <span className="text-[10px] font-black text-[var(--lime)] uppercase tracking-widest">Passo a Passo</span>
-                </div>
-                <h1 className="text-2xl font-black text-white">Qual parte do corpo?</h1>
-                <p className="text-sm text-zinc-500">Escolha o grupo muscular para os exercicios</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto w-full">
-                {BODY_PARTS.map((bp, i) => (
-                  <button
-                    key={bp.key}
-                    onClick={() => startPassoAPasso(bp.key)}
-                    className="group relative overflow-hidden rounded-2xl border border-white/8 bg-white/[0.03] text-left transition-all hover:border-[var(--lime)]/30 active:scale-[0.97]"
-                  >
-                    <div className="relative w-full aspect-square overflow-hidden">
-                      <img src={bp.img} alt={bp.label} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                      <div className={`absolute inset-0 bg-gradient-to-br ${bp.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ boxShadow: "inset 0 0 30px rgba(204,255,0,0.1)" }} />
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-black text-white drop-shadow-lg">{bp.label}</span>
-                          <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:bg-[var(--lime)]/20 group-hover:border-[var(--lime)]/30 transition-all">
-                            <ChevronRight className="w-3.5 h-3.5 text-white/60 group-hover:text-[var(--lime)] transition-colors" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step: Passo a passo - exercise selection */}
-          {assignStep === "passo" && (
-            <div className="relative z-10 flex-1 flex flex-col px-4 pb-6">
-              {/* Progress */}
-              {!loadingExercises && exerciseList.length > 0 && (
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-xs font-bold text-[var(--lime)] shrink-0">
-                    {selectedExercises.length + (currentExerciseIdx < exerciseList.length ? 0 : 0)}/{exerciseList.length}
-                  </span>
-                  <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-700 bg-[var(--lime)]" style={{ width: `${((selectedExercises.length) / Math.max(1, exerciseList.length)) * 100}%` }} />
-                  </div>
-                  <span className="text-xs font-bold text-white/60 shrink-0">{Math.round((selectedExercises.length / Math.max(1, exerciseList.length)) * 100)}%</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-black text-[var(--lime)] uppercase tracking-widest">{BODYPART_PT[selectedBodyPart] ?? selectedBodyPart}</span>
-                <span className="text-xs text-zinc-500">- Selecione os exercicios</span>
-              </div>
-
-              {/* Selected count */}
-              {selectedExercises.length > 0 && (
-                <button
-                  onClick={() => setAssignStep("review")}
-                  className="mb-3 inline-flex items-center gap-2 rounded-xl bg-[var(--lime)]/10 border border-[var(--lime)]/20 px-3 py-2 text-xs font-bold text-[var(--lime)] hover:bg-[var(--lime)]/20 transition-all"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  {selectedExercises.length} exercicio{selectedExercises.length !== 1 ? "s" : ""} selecionado{selectedExercises.length !== 1 ? "s" : ""} - Revisar
-                </button>
-              )}
-
-              {/* Current exercise */}
-              {loadingExercises ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 rounded-full border-4 border-white/10 border-t-[var(--lime)] animate-spin" />
-                    <span className="text-sm font-bold text-zinc-500 animate-pulse">Carregando exercicios...</span>
-                  </div>
-                </div>
-              ) : exerciseList.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">Nenhum exercicio encontrado.</div>
-              ) : currentExerciseIdx < exerciseList.length ? (
-                <div className="flex-1 flex flex-col items-center justify-center" key={`ex-${currentExerciseIdx}`}>
-                  <div className="w-full max-w-sm space-y-5">
-                    <div className="relative mx-auto w-full max-w-[220px]">
-                      <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-[var(--lime)]/10 via-transparent to-[var(--lime)]/5 blur-sm" />
-                      <div className="relative rounded-2xl bg-white/95 overflow-hidden">
-                        <img src={exerciseList[currentExerciseIdx].gifUrl} alt={exerciseList[currentExerciseIdx].name} className="w-full aspect-square object-contain" />
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <h3 className="text-lg font-black text-white capitalize">{exerciseList[currentExerciseIdx].name}</h3>
-                      <div className="flex justify-center flex-wrap gap-2 mt-2">
-                        <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--lime)]/12 text-[var(--lime)] border border-[var(--lime)]/20">{ptTerm(TARGET_PT, exerciseList[currentExerciseIdx].target) ?? exerciseList[currentExerciseIdx].target}</span>
-                        <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-white/5 text-zinc-400 border border-white/10">{ptTerm(EQUIPMENT_PT, exerciseList[currentExerciseIdx].equipment) ?? exerciseList[currentExerciseIdx].equipment}</span>
-                      </div>
-                    </div>
-                    <PassoConfigurator
-                      key={`cfg-${currentExerciseIdx}`}
-                      exercise={exerciseList[currentExerciseIdx]}
-                      exerciseIndex={currentExerciseIdx}
-                      onAdd={(sets, reps) => addCurrentExercise(sets, reps)}
-                      onSkip={() => {
-                        if (currentExerciseIdx < exerciseList.length - 1) setCurrentExerciseIdx(currentExerciseIdx + 1);
-                        else setAssignStep("review");
-                      }}
+          {/* Step: Biblioteca - full exercise library */}
+          {assignStep === "biblioteca" && (
+            <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
+              <div className="overflow-y-auto px-5 pb-36 pt-2 space-y-4">
+                {/* Search + Filters */}
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                    <input
+                      value={libQuery}
+                      onChange={(e) => setLibQuery(e.target.value)}
+                      placeholder="Buscar exercicio por nome..."
+                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white outline-none focus:border-[var(--lime)]/60 focus:ring-2 focus:ring-[var(--lime)]/20 placeholder:text-zinc-600"
                     />
                   </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <select value={libBodyPart} onChange={(e) => setLibBodyPart(e.target.value)} className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[var(--lime)]/60 capitalize">
+                      <option value="">Todos grupos</option>
+                      {activeBodyParts.map((b) => (
+                        <option key={b} value={b}>{BODYPART_PT[b] ?? b}</option>
+                      ))}
+                    </select>
+                    <select value={libEquipment} onChange={(e) => setLibEquipment(e.target.value)} className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[var(--lime)]/60 capitalize">
+                      <option value="">Todos equipamentos</option>
+                      {(equipments.data ?? []).map((b) => (
+                        <option key={b} value={b}>{EQUIPMENT_PT[b] ?? b}</option>
+                      ))}
+                    </select>
+                    {libIsSearching && (
+                      <button onClick={() => { setLibQuery(""); setLibBodyPart(""); setLibEquipment(""); }} className="inline-flex items-center gap-1.5 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-xs text-zinc-400 hover:text-white hover:bg-white/10 transition-all">
+                        <X className="w-3 h-3" /> Limpar
+                      </button>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <p className="text-zinc-500">Todos exercicios vistos. Clique em Revisar.</p>
+
+                {/* Results */}
+                {!libIsSearching ? (
+                  <p className="text-sm text-zinc-500 text-center py-8">Use a busca ou filtros acima para encontrar exercicios</p>
+                ) : libResults.isLoading ? (
+                  <div className="flex items-center justify-center py-16 text-zinc-500">
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" /> Carregando...
+                  </div>
+                ) : libResults.isError ? (
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">Erro ao buscar exercicios.</div>
+                ) : (libResults.data?.length ?? 0) === 0 ? (
+                  <div className="rounded-xl border border-white/10 bg-[#111112] p-8 text-center text-sm text-zinc-500">Nada encontrado. Tente outros filtros.</div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {libResults.data!.map((ex) => (
+                      <LibExerciseCard
+                        key={ex.id}
+                        exercise={ex}
+                        onAdd={(sets, reps) => addExerciseToWorkout(ex, sets, reps)}
+                        added={selectedExercises.some((s) => s.exercise.id === ex.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom bar: selected count + finalizar */}
+              <div className="absolute bottom-0 left-0 right-0 z-20 border-t border-white/10 bg-[#0a0a0a]/95 backdrop-blur-xl p-4">
+                <div className="max-w-sm mx-auto flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    {selectedExercises.length > 0 ? (
+                      <div className="text-sm text-zinc-300">
+                        <span className="font-black text-[var(--lime)]">{selectedExercises.length}</span> exercicio{selectedExercises.length !== 1 ? "s" : ""} selecionado{selectedExercises.length !== 1 ? "s" : ""}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-zinc-500">Nenhum exercicio selecionado</div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setAssignStep("review")}
+                    disabled={selectedExercises.length === 0}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[var(--lime)] text-black px-5 py-3 font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Finalizar
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
@@ -686,7 +654,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
 
                 {/* Voltar para adicionar mais */}
                 <button
-                  onClick={() => setAssignStep("passo")}
+                  onClick={() => setAssignStep("biblioteca")}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 text-zinc-400 px-4 py-3 text-sm font-bold hover:border-[var(--lime)]/40 hover:text-[var(--lime)] transition-all"
                 >
                   <Plus className="w-4 h-4" /> Adicionar mais exercicios
@@ -808,84 +776,118 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
   );
 }
 
-/* ─── Passo Configurator ─── */
-function PassoConfigurator({
+/* ─── Library Exercise Card ─── */
+function LibExerciseCard({
   exercise,
-  exerciseIndex,
   onAdd,
-  onSkip,
+  added,
 }: {
   exercise: Exercise;
-  exerciseIndex: number;
   onAdd: (sets: number, reps: number) => void;
-  onSkip: () => void;
+  added: boolean;
+}) {
+  const [showDetail, setShowDetail] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setShowDetail(true)}
+        className="text-left rounded-2xl border border-white/10 bg-[#111112] overflow-hidden hover:border-[var(--lime)]/40 transition-all group"
+      >
+        <div className="aspect-square bg-white overflow-hidden">
+          <img src={exercise.gifUrl} alt={exercise.name} loading="lazy" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+        </div>
+        <div className="p-3">
+          <div className="text-xs font-bold text-white capitalize line-clamp-2 leading-tight">{exercise.name}</div>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[var(--lime)]/15 text-[var(--lime)]">{ptTerm(TARGET_PT, exercise.target) ?? exercise.target}</span>
+            <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/5 text-zinc-400">{ptTerm(EQUIPMENT_PT, exercise.equipment) ?? exercise.equipment}</span>
+          </div>
+          {added && (
+            <div className="mt-2 text-[10px] font-bold text-[var(--lime)] flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Adicionado
+            </div>
+          )}
+        </div>
+      </button>
+
+      {showDetail && (
+        <LibExerciseDetail exercise={exercise} onAdd={onAdd} added={added} onClose={() => setShowDetail(false)} />
+      )}
+    </>
+  );
+}
+
+/* ─── Library Exercise Detail + Add ─── */
+function LibExerciseDetail({
+  exercise,
+  onAdd,
+  added,
+  onClose,
+}: {
+  exercise: Exercise;
+  onAdd: (sets: number, reps: number) => void;
+  added: boolean;
+  onClose: () => void;
 }) {
   const isCardio = exercise.bodyPart === "cardio";
   const isLegs = exercise.bodyPart === "upper legs" || exercise.bodyPart === "lower legs";
-  const defaultSets = isCardio ? 1 : isLegs ? 4 : 3;
-  const defaultReps = isCardio ? 1 : isLegs ? 10 : 12;
-  const [sets, setSets] = useState(defaultSets);
-  const [reps, setReps] = useState(defaultReps);
+  const [sets, setSets] = useState(isCardio ? 1 : isLegs ? 4 : 3);
+  const [reps, setReps] = useState(isCardio ? 1 : isLegs ? 10 : 12);
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] py-3 px-4 text-center">
-        <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Series x Repeticoes</div>
-        <div className="flex items-center justify-center gap-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSets(Math.max(1, sets - 1))}
-              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
-            >
-              -
-            </button>
-            <div className="text-center min-w-[60px]">
-              <span className="text-2xl font-black text-white">{sets}</span>
-              <span className="text-xs text-zinc-400 ml-1">series</span>
-            </div>
-            <button
-              onClick={() => setSets(Math.min(10, sets + 1))}
-              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
-            >
-              +
-            </button>
-          </div>
-          <span className="text-lg text-zinc-600 font-bold">de</span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setReps(Math.max(1, reps - 1))}
-              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
-            >
-              -
-            </button>
-            <div className="text-center min-w-[60px]">
-              <span className="text-2xl font-black text-[var(--lime)]">{reps}</span>
-              <span className="text-xs text-zinc-400 ml-1">reps</span>
-            </div>
-            <button
-              onClick={() => setReps(Math.min(50, reps + 1))}
-              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
-            >
-              +
-            </button>
-          </div>
+    <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-lg bg-[#111112] border border-white/10 rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-white">
+          <img src={exercise.gifUrl} alt={exercise.name} className="w-full aspect-square object-contain" />
+          <button onClick={onClose} className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/70 text-white flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
         </div>
-      </div>
+        <div className="p-5 space-y-4">
+          <h2 className="text-lg font-black text-white capitalize">{exercise.name}</h2>
+          <div className="flex flex-wrap gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-[var(--lime)]/15 text-[var(--lime)]">{ptTerm(BODYPART_PT, exercise.bodyPart) ?? exercise.bodyPart}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-white/5 text-zinc-400">{ptTerm(EQUIPMENT_PT, exercise.equipment) ?? exercise.equipment}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-white/5 text-zinc-400">{ptTerm(TARGET_PT, exercise.target) ?? exercise.target}</span>
+          </div>
 
-      <div className="flex gap-3">
-        <button
-          onClick={onSkip}
-          className="flex-1 rounded-xl bg-white/5 border border-white/10 text-zinc-400 py-3 text-sm font-bold hover:bg-white/10 hover:text-white transition-all"
-        >
-          Pular
-        </button>
-        <button
-          onClick={() => onAdd(sets, reps)}
-          className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black py-3 text-sm font-bold hover:brightness-110 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          Adicionar
-        </button>
+          {/* Sets x Reps config */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] py-3 px-4 text-center">
+            <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Series x Repeticoes</div>
+            <div className="flex items-center justify-center gap-3">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setSets(Math.max(1, sets - 1))} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center">-</button>
+                <div className="text-center min-w-[60px]">
+                  <span className="text-2xl font-black text-white">{sets}</span>
+                  <span className="text-xs text-zinc-400 ml-1">series</span>
+                </div>
+                <button onClick={() => setSets(Math.min(10, sets + 1))} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center">+</button>
+              </div>
+              <span className="text-lg text-zinc-600 font-bold">de</span>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setReps(Math.max(1, reps - 1))} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center">-</button>
+                <div className="text-center min-w-[60px]">
+                  <span className="text-2xl font-black text-[var(--lime)]">{reps}</span>
+                  <span className="text-xs text-zinc-400 ml-1">reps</span>
+                </div>
+                <button onClick={() => setReps(Math.min(50, reps + 1))} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center">+</button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => { onAdd(sets, reps); onClose(); }}
+            disabled={added}
+            className={`w-full inline-flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all ${
+              added
+                ? "bg-[var(--lime)]/10 text-[var(--lime)] border border-[var(--lime)]/30 cursor-default"
+                : "bg-[var(--lime)] text-black hover:brightness-110"
+            }`}
+          >
+            {added ? <><CheckCircle2 className="w-4 h-4" /> Adicionado</> : <><Plus className="w-4 h-4" /> Adicionar ao Treino</>}
+          </button>
+        </div>
       </div>
     </div>
   );
