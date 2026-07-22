@@ -28,7 +28,7 @@ function AdminPage() {
   const { data: invites } = useSuspenseQuery(invitesQO());
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"professores" | "alunos" | "convites">("professores");
+  const [tab, setTab] = useState<"professores" | "alunos" | "convites" | "exercicios">("professores");
   const [online, setOnline] = useState<Set<string>>(new Set());
 
   useEffect(() => {
