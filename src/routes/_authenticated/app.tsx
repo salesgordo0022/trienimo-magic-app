@@ -697,9 +697,13 @@ function Inicio() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            {/* Progress bar */}
-            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-700 bg-[var(--lime)]" style={{ width: exerciseList.length > 0 ? `${((exerciseIndex + 1) / exerciseList.length) * 100}%` : "0%" }} />
+            {/* Progress bar + counter */}
+            <div className="flex items-center gap-3 mb-1">
+              <span className="text-xs font-bold text-[var(--lime)] shrink-0">{exerciseIndex + 1}/{exerciseList.length}</span>
+              <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700 bg-[var(--lime)]" style={{ width: exerciseList.length > 0 ? `${((exerciseIndex + 1) / exerciseList.length) * 100}%` : "0%" }} />
+              </div>
+              <span className="text-xs font-bold text-white/60 shrink-0">{Math.round(((exerciseIndex + 1) / exerciseList.length) * 100)}%</span>
             </div>
           </div>
 
@@ -718,62 +722,32 @@ function Inicio() {
                 <div className="relative mx-auto w-full max-w-[260px]">
                   <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-[var(--lime)]/10 via-transparent to-[var(--lime)]/5 blur-sm" />
                   <div className="relative rounded-2xl bg-white/95 overflow-hidden">
-                    <img
-                      src={currentExercise.gifUrl}
-                      alt={currentExercise.name}
-                      className="w-full aspect-square object-contain"
-                    />
+                    <img src={currentExercise.gifUrl} alt={currentExercise.name} className="w-full aspect-square object-contain" />
                   </div>
                 </div>
 
-                {/* Name */}
+                {/* Name + tags */}
                 <div className="text-center">
                   <h3 className="text-xl font-black text-white capitalize">{currentExercise.name}</h3>
                   <div className="flex justify-center flex-wrap gap-2 mt-2">
-                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--lime)]/12 text-[var(--lime)] border border-[var(--lime)]/20">
-                      {currentExercise.target}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-white/5 text-zinc-400 border border-white/10">
-                      {currentExercise.equipment}
-                    </span>
+                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--lime)]/12 text-[var(--lime)] border border-[var(--lime)]/20">{currentExercise.target}</span>
+                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-white/5 text-zinc-400 border border-white/10">{currentExercise.equipment}</span>
                   </div>
                 </div>
 
-                {/* Reps per set */}
-                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold text-center mb-3">Repeticoes</div>
-                  <div className="space-y-2">
-                    {Array.from({ length: getExerciseConfig(exerciseIndex).sets }).map((_, s) => (
-                      <div key={s} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                        <div className="w-7 h-7 rounded-lg bg-[var(--lime)]/10 flex items-center justify-center text-xs font-bold text-[var(--lime)]">
-                          {s + 1}
-                        </div>
-                        <div className="flex-1">
-                          <span className="text-base font-black text-white">{getExerciseConfig(exerciseIndex).reps} repeticoes</span>
-                        </div>
-                        {completedExercises.has(exerciseIndex) && (
-                          <CheckCircle2 className="w-4 h-4 text-[var(--lime)]" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Progress counter */}
-                <div className="flex items-center justify-center gap-5">
-                  <div className="text-center">
-                    <div className="text-lg font-black text-[var(--lime)]">{exerciseIndex + 1}</div>
-                    <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Exercicio</div>
-                  </div>
-                  <div className="w-px h-6 bg-white/10" />
-                  <div className="text-center">
-                    <div className="text-lg font-black text-white">{exerciseList.length}</div>
-                    <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Total</div>
-                  </div>
-                  <div className="w-px h-6 bg-white/10" />
-                  <div className="text-center">
-                    <div className="text-lg font-black text-[var(--lime)]">{Math.round(((exerciseIndex + 1) / exerciseList.length) * 100)}%</div>
-                    <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Feito</div>
+                {/* Series x Reps summary */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02] py-4 px-5 text-center">
+                  <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Series x Repeticoes</div>
+                  <div className="flex items-center justify-center gap-4">
+                    <div>
+                      <span className="text-3xl font-black text-white">{getExerciseConfig(exerciseIndex).sets}</span>
+                      <span className="text-sm text-zinc-400 ml-1">series</span>
+                    </div>
+                    <span className="text-2xl text-zinc-600 font-bold">de</span>
+                    <div>
+                      <span className="text-3xl font-black text-[var(--lime)]">{getExerciseConfig(exerciseIndex).reps}</span>
+                      <span className="text-sm text-zinc-400 ml-1">repeticoes</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -782,14 +756,14 @@ function Inicio() {
 
           {/* Buttons */}
           {!loadingExercises && currentExercise && (
-            <div className="shrink-0 px-4 pb-5">
+            <div className="shrink-0 px-4 pb-6 pt-2 border-t border-white/5">
               <div className="flex justify-center gap-3 max-w-sm mx-auto">
                 {exerciseIndex > 0 && (
-                  <button onClick={() => setExerciseIndex(exerciseIndex - 1)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-5 py-3.5 text-sm font-bold text-white hover:bg-white/10 transition-all">
+                  <button onClick={() => setExerciseIndex(exerciseIndex - 1)} className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-5 py-4 text-sm font-bold text-white hover:bg-white/10 transition-all">
                     <ArrowLeft className="w-4 h-4" /> Anterior
                   </button>
                 )}
-                <button onClick={advanceExercise} className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-black text-black transition-all hover:brightness-110" style={{ background: "linear-gradient(135deg, var(--lime), #a3e635)", boxShadow: "0 8px 30px -5px rgba(163,230,53,0.35)" }}>
+                <button onClick={advanceExercise} className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-4 text-sm font-black text-black transition-all hover:brightness-110" style={{ background: "linear-gradient(135deg, var(--lime), #a3e635)", boxShadow: "0 8px 30px -5px rgba(163,230,53,0.35)" }}>
                   {exerciseIndex < exerciseList.length - 1 ? (<>Proximo <ChevronRight className="w-4 h-4" /></>) : (<>Finalizar <Flag className="w-4 h-4" /></>)}
                 </button>
               </div>
