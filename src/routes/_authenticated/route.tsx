@@ -288,7 +288,7 @@ function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-2xl border border-white/10 bg-[#111112] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] z-50">
+        <div className="absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] sm:w-80 max-w-sm max-h-96 overflow-y-auto rounded-2xl border border-white/10 bg-[#111112] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] z-50">
           <div className="px-4 py-3 border-b border-white/5 text-sm font-semibold text-white">
             Notificações
           </div>
