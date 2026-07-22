@@ -175,10 +175,20 @@ export const createStudent = createServerFn({ method: "POST" })
     return { id: newId };
   });
 
-// --- Teacher: list my students ---
+// --- Teacher / admin: list my students ---
 export const listMyStudents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Admins see ALL alunos (no need to link)
+    const { data: isAdmin } = await context.supabase
+      .rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (isAdmin) {
+      const { data: profiles, error: pErr } = await context.supabase
+        .from("profiles").select("id, nome").order("nome", { ascending: true });
+      if (pErr) throw new Error(pErr.message);
+      return (profiles ?? []) as Array<{ id: string; nome: string | null }>;
+    }
+    // Otherwise, return linked students only
     const { data: links, error } = await context.supabase
       .from("teacher_students").select("student_id").eq("teacher_id", context.userId);
     if (error) throw new Error(error.message);
