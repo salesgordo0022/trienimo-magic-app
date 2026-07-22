@@ -3,7 +3,6 @@ import { queryOptions, useSuspenseQuery, useMutation, useQueryClient } from "@ta
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { listAllUsers, setUserRole, assignStudent, createInvite, listInvites, deleteInvite, getMyRole, createStudent, type AppRole } from "@/lib/roles.functions";
-import { getSyncProgress, importExerciseMetadata, importGifsBatch } from "@/lib/exercise-sync.functions";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,7 @@ function AdminPage() {
   const { data: invites } = useSuspenseQuery(invitesQO());
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"professores" | "alunos" | "convites" | "exercicios">("professores");
+  const [tab, setTab] = useState<"professores" | "alunos" | "convites">("professores");
   const [online, setOnline] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -89,7 +88,7 @@ function AdminPage() {
         </div>
       </header>
       <div className="max-w-5xl mx-auto px-4 pt-3 flex gap-1">
-        {(["professores","alunos","convites","exercicios"] as const).map(t => (
+        {(["professores","alunos","convites"] as const).map(t => (
           <button key={t} onClick={()=>setTab(t)} className={`px-3 py-2 text-xs font-bold uppercase ${tab===t?"bg-[var(--yellow)] text-black":"bg-white text-gray-500"}`}>{t}</button>
         ))}
       </div>
@@ -179,8 +178,6 @@ function AdminPage() {
             </table>
           </div>
         )}
-
-        {tab === "exercicios" && <ExerciseSyncPanel />}
       </main>
 
       <div className="max-w-5xl mx-auto px-4 pb-6 text-xs text-gray-500">
@@ -224,78 +221,6 @@ function AdminNewStudent() {
           <p className="md:col-span-4 text-[10px] text-gray-500">O aluno usará esse e-mail e senha. Depois atribua a um professor abaixo.</p>
         </form>
       )}
-    </div>
-  );
-}
-
-function ExerciseSyncPanel() {
-  const qc = useQueryClient();
-  const progressQO = () => queryOptions({ queryKey: ["syncProgress"], queryFn: () => getSyncProgress(), refetchInterval: 2000 });
-  const { data: progress } = useSuspenseQuery(progressQO()) as { data: { total: number; withGif: number; pending: number } };
-  const [running, setRunning] = useState(false);
-  const [log, setLog] = useState<string[]>([]);
-
-  const meta = useMutation({
-    mutationFn: useServerFn(importExerciseMetadata),
-    onSuccess: (r: any) => { toast.success(`Metadados importados: ${r.imported}`); qc.invalidateQueries({ queryKey: ["syncProgress"] }); },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const runAll = async () => {
-    setRunning(true);
-    setLog(["Iniciando download dos GIFs..."]);
-    try {
-      // primeiro garante metadados
-      const p = await getSyncProgress();
-      if (p.total === 0) {
-        setLog(l => [...l, "Importando metadados..."]);
-        const r = await importExerciseMetadata();
-        setLog(l => [...l, `Metadados: ${r.imported} exercícios`]);
-      }
-      let safety = 500;
-      while (safety-- > 0) {
-        const r: any = await importGifsBatch({ data: { batchSize: 8 } });
-        setLog(l => [...l.slice(-40), `+${r.processed} GIFs (falhas ${r.failed}), faltam ${r.pending}`]);
-        qc.invalidateQueries({ queryKey: ["syncProgress"] });
-        if (r.done) { setLog(l => [...l, "✅ Sincronização concluída!"]); break; }
-      }
-    } catch (e: any) {
-      setLog(l => [...l, `ERRO: ${e.message}`]);
-      toast.error(e.message);
-    } finally {
-      setRunning(false);
-    }
-  };
-
-  const pct = progress.total > 0 ? Math.round((progress.withGif / progress.total) * 100) : 0;
-
-  return (
-    <div className="bg-white border border-black/10">
-      <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Biblioteca de Exercícios</div>
-      <div className="p-4 space-y-4">
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <div className="bg-gray-100 p-3"><div className="text-2xl font-black">{progress.total}</div><div className="text-[10px] uppercase text-gray-500">Total</div></div>
-          <div className="bg-gray-100 p-3"><div className="text-2xl font-black text-green-600">{progress.withGif}</div><div className="text-[10px] uppercase text-gray-500">Com GIF</div></div>
-          <div className="bg-gray-100 p-3"><div className="text-2xl font-black text-orange-500">{progress.pending}</div><div className="text-[10px] uppercase text-gray-500">Pendentes</div></div>
-        </div>
-        <div className="h-3 bg-gray-200 rounded overflow-hidden">
-          <div className="h-full bg-[var(--yellow)] transition-all" style={{ width: `${pct}%` }}/>
-        </div>
-        <div className="text-xs text-gray-500">{pct}% concluído — após sincronizar, o sistema deixa de usar a API externa.</div>
-        <div className="flex gap-2 flex-wrap">
-          <Button onClick={() => meta.mutate({} as any)} disabled={meta.isPending || running} variant="outline">
-            1. Importar metadados
-          </Button>
-          <Button onClick={runAll} disabled={running || progress.pending === 0} className="bg-black text-[var(--yellow)] font-bold uppercase">
-            {running ? "Baixando GIFs..." : progress.pending === 0 && progress.total > 0 ? "✅ Tudo sincronizado" : "2. Baixar todos os GIFs"}
-          </Button>
-        </div>
-        {log.length > 0 && (
-          <div className="bg-black text-green-400 font-mono text-[10px] p-2 max-h-40 overflow-auto">
-            {log.map((l, i) => <div key={i}>{l}</div>)}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
