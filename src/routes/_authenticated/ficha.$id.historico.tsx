@@ -82,25 +82,6 @@ function Historico() {
             </div>
           </div>
         )}
-
-        <div className="bg-white border border-black/10">
-          <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Sessões</div>
-          <div className="divide-y">
-            {sessions.map(s => (
-              <div key={s.id} className="p-3">
-                <div className="flex justify-between text-sm">
-                  <div className="font-bold">{new Date(s.started_at).toLocaleString("pt-BR")}</div>
-                  <div className="text-xs text-gray-500">{s.sets.filter(x=>x.done).length} séries</div>
-                </div>
-                <div className="mt-1 flex flex-wrap gap-1 text-xs">
-                  {s.sets.filter(x=>x.done).map((x,i) => (
-                    <span key={i} className="bg-gray-100 px-1.5 py-0.5">{x.exercise_nome}: {x.reps ?? "?"}×{x.kg ?? "?"}kg</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </main>
     </div>
   );
