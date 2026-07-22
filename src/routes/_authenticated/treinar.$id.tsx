@@ -66,18 +66,18 @@ function TreinarPage() {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-5 text-center overflow-hidden" style={{ background: "linear-gradient(180deg, #0d0d0f 0%, #0a0a0a 50%, #0a0f0a 100%)" }}>
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {Array.from({ length: 40 }).map((_, i) => (
+          {Array.from({ length: 60 }).map((_, i) => (
             <div key={i} className="absolute" style={{
               left: `${Math.random() * 100}%`, top: `-5%`,
-              width: `${3 + Math.random() * 4}px`, height: `${3 + Math.random() * 4}px`,
-              borderRadius: i % 2 === 0 ? "50%" : "2px",
-              background: [["var(--lime)"], ["#c8ff33"], ["#FFD400"], ["#22c55e"]][i % 4][0],
-              animation: `confettiFall ${2 + Math.random() * 2}s linear ${Math.random() * 1.5}s infinite`,
-              opacity: 0.7,
+              width: `${4 + Math.random() * 6}px`, height: `${4 + Math.random() * 6}px`,
+              borderRadius: i % 3 === 0 ? "50%" : i % 3 === 1 ? "2px" : "0",
+              background: ["var(--lime)", "#c8ff33", "#FFD400", "#fff", "#22c55e", "#84cc16", "#facc15"][i % 7],
+              animation: `confettiFall ${2.5 + Math.random() * 3}s linear ${Math.random() * 2}s infinite`,
+              opacity: 0.85, transform: `rotate(${Math.random() * 360}deg)`,
             }} />
           ))}
         </div>
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full blur-[100px]" style={{ background: "radial-gradient(circle, rgba(204,255,0,0.1), transparent)" }} />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-[120px]" style={{ background: "radial-gradient(circle, rgba(204,255,0,0.12), transparent)" }} />
         <div className="relative flex flex-col items-center gap-6 w-full max-w-xs">
           <div className="relative w-28 h-28">
             <div className="absolute inset-0 rounded-full bg-[var(--lime)]/15 animate-ping" style={{ animationDuration: "2.5s" }} />
