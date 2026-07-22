@@ -3,6 +3,7 @@ import { queryOptions, useSuspenseQuery, useMutation, useQueryClient } from "@ta
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { listAllUsers, setUserRole, assignStudent, createInvite, listInvites, deleteInvite, getMyRole, createStudent, type AppRole } from "@/lib/roles.functions";
+import { getSyncProgress, importExerciseMetadata, importGifsBatch } from "@/lib/exercise-sync.functions";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
