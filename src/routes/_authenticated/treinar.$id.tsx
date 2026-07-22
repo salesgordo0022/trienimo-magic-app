@@ -64,103 +64,62 @@ function TreinarPage() {
 
   if (finished) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center overflow-hidden" style={{ background: "linear-gradient(180deg, #0d0d0f 0%, #0a0a0a 50%, #0a0f0a 100%)" }}>
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-5 text-center overflow-hidden" style={{ background: "linear-gradient(180deg, #0d0d0f 0%, #0a0a0a 50%, #0a0f0a 100%)" }}>
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {Array.from({ length: 60 }).map((_, i) => (
+          {Array.from({ length: 40 }).map((_, i) => (
             <div key={i} className="absolute" style={{
               left: `${Math.random() * 100}%`, top: `-5%`,
-              width: `${4 + Math.random() * 6}px`, height: `${4 + Math.random() * 6}px`,
-              borderRadius: i % 3 === 0 ? "50%" : i % 3 === 1 ? "2px" : "0",
-              background: ["var(--lime)", "#c8ff33", "#FFD400", "#fff", "#22c55e", "#84cc16", "#facc15"][i % 7],
-              animation: `confettiFall ${2.5 + Math.random() * 3}s linear ${Math.random() * 2}s infinite`,
-              opacity: 0.85, transform: `rotate(${Math.random() * 360}deg)`,
+              width: `${3 + Math.random() * 4}px`, height: `${3 + Math.random() * 4}px`,
+              borderRadius: i % 2 === 0 ? "50%" : "2px",
+              background: [["var(--lime)"], ["#c8ff33"], ["#FFD400"], ["#22c55e"]][i % 4][0],
+              animation: `confettiFall ${2 + Math.random() * 2}s linear ${Math.random() * 1.5}s infinite`,
+              opacity: 0.7,
             }} />
           ))}
         </div>
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-[120px]" style={{ background: "radial-gradient(circle, rgba(204,255,0,0.12), transparent)" }} />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-[80px]" style={{ background: "radial-gradient(circle, rgba(204,255,0,0.06), transparent)" }} />
-        <div className="relative space-y-7 max-w-sm w-full">
-          <div className="relative mx-auto w-36 h-36">
-            <div className="absolute inset-0 rounded-full bg-[var(--lime)]/20 animate-ping" style={{ animationDuration: "2s" }} />
-            <div className="absolute inset-2 rounded-full bg-[var(--lime)]/10 animate-pulse" />
-            <div className="absolute inset-4 rounded-full bg-[var(--lime)]/5 animate-pulse" style={{ animationDelay: "0.5s" }} />
-            <div className="relative w-36 h-36 rounded-full flex items-center justify-center" style={{
-              background: "linear-gradient(135deg, var(--lime), #c8ff33, #a8d400)",
-              boxShadow: "0 0 80px -15px rgba(204,255,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3)",
-              animation: "trophyPulse 2s ease-in-out infinite",
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full blur-[100px]" style={{ background: "radial-gradient(circle, rgba(204,255,0,0.1), transparent)" }} />
+        <div className="relative flex flex-col items-center gap-6 w-full max-w-xs">
+          <div className="relative w-28 h-28">
+            <div className="absolute inset-0 rounded-full bg-[var(--lime)]/15 animate-ping" style={{ animationDuration: "2.5s" }} />
+            <div className="absolute inset-3 rounded-full bg-[var(--lime)]/10 animate-pulse" />
+            <div className="relative w-28 h-28 rounded-full flex items-center justify-center" style={{
+              background: "linear-gradient(135deg, var(--lime), #c8ff33)",
+              boxShadow: "0 0 50px -10px rgba(204,255,0,0.4)",
             }}>
-              <span className="text-7xl drop-shadow-lg" style={{ animation: "popIn 0.5s ease-out 0.3s both" }}>{'\u{1F3C6}'}</span>
+              <CheckCircle2 className="w-12 h-12 text-black" />
             </div>
           </div>
-          <div className="space-y-3">
-            <h1 className="text-5xl font-black text-transparent bg-clip-text" style={{
-              backgroundImage: "linear-gradient(135deg, var(--lime), #c8ff33, #fff, var(--lime))",
-              backgroundSize: "200% auto",
-              animation: "gradientShift 3s ease infinite, completionFadeUp 0.7s ease-out 0.2s both",
-            }}>INCRIVEL!</h1>
-            <p className="text-xl font-black text-white" style={{ animation: "completionFadeUp 0.7s ease-out 0.3s both" }}>Treino Concluido!</p>
-            <p className="text-sm text-zinc-500 leading-relaxed" style={{ animation: "completionFadeUp 0.7s ease-out 0.4s both" }}>
-              Voce completou todos os <span className="font-black text-[var(--lime)]">{total} exercicios</span> do Treino {ficha.workout.letra}
+          <div className="space-y-1.5">
+            <h1 className="text-3xl font-black text-white">Treino Concluido!</h1>
+            <p className="text-sm text-zinc-400">
+              <span className="font-bold text-[var(--lime)]">{total} exercicios</span> do Treino {ficha.workout.letra}
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3" style={{ animation: "completionFadeUp 0.7s ease-out 0.5s both" }}>
-            <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 space-y-1.5">
-              <div className="w-9 h-9 rounded-full bg-[var(--lime)]/12 text-[var(--lime)] flex items-center justify-center mx-auto">
-                <Dumbbell className="w-4 h-4" />
-              </div>
-              <div className="text-2xl font-black text-white">{total}</div>
+          <div className="w-full grid grid-cols-2 gap-2.5">
+            <div className="rounded-xl border border-white/8 bg-white/[0.03] py-3 px-2 space-y-0.5">
+              <div className="text-lg font-black text-white">{total}</div>
               <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Exercicios</div>
             </div>
-            <div className="rounded-2xl border border-[var(--lime)]/20 bg-[var(--lime)]/5 p-4 space-y-1.5">
-              <div className="w-9 h-9 rounded-full bg-[var(--lime)]/20 text-[var(--lime)] flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <div className="text-2xl font-black text-[var(--lime)]">100%</div>
+            <div className="rounded-xl border border-[var(--lime)]/20 bg-[var(--lime)]/5 py-3 px-2 space-y-0.5">
+              <div className="text-lg font-black text-[var(--lime)]">100%</div>
               <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Progresso</div>
             </div>
           </div>
-          <div style={{ animation: "completionFadeUp 0.7s ease-out 0.6s both" }}>
-            <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Resumo</span>
-                <div className="flex items-center gap-1 text-[var(--lime)]">
-                  <CheckCircle2 className="w-3 h-3" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Finalizado</span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                {allExercises.map((ex, i) => (
-                  <div key={ex.id} className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-[var(--lime)]/15 text-[var(--lime)] flex items-center justify-center text-[10px] font-black">{i + 1}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-white capitalize truncate">{ex.nome}</div>
-                      <div className="text-[10px] text-zinc-500">{ex.series}x{ex.sets_config?.[0]?.reps ?? "12"}</div>
-                    </div>
-                    <CheckCircle2 className="w-4 h-4 text-[var(--lime)] shrink-0" />
-                  </div>
-                ))}
-              </div>
+          <div className="w-full rounded-xl border border-white/8 bg-white/[0.03] p-3.5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Progresso</span>
+              <span className="text-[10px] font-black text-[var(--lime)]">100%</span>
+            </div>
+            <div className="w-full h-1.5 bg-white/8 rounded-full overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: "100%", background: "linear-gradient(90deg, var(--lime), #c8ff33, var(--lime))", backgroundSize: "200% 100%", animation: "shimmer 2s linear infinite" }} />
             </div>
           </div>
-          <div style={{ animation: "completionFadeUp 0.7s ease-out 0.7s both" }}>
-            <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Progresso total</span>
-                <span className="text-xs font-black text-[var(--lime)]">100%</span>
-              </div>
-              <div className="w-full h-2 bg-white/8 rounded-full overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: "100%", background: "linear-gradient(90deg, var(--lime), #c8ff33, var(--lime))", backgroundSize: "200% 100%", animation: "shimmer 2s linear infinite" }} />
-              </div>
-            </div>
-          </div>
-          <div style={{ animation: "completionFadeUp 0.7s ease-out 0.8s both" }}>
-            <button onClick={() => navigate({ to: "/app" })} className="w-full rounded-2xl px-5 py-4 font-black text-sm text-black active:scale-[0.97] transition-all" style={{
-              background: "linear-gradient(135deg, var(--lime), #c8ff33)",
-              boxShadow: "0 8px 30px -5px rgba(204,255,0,0.35)",
-            }}>
-              Voltar ao Inicio
-            </button>
-          </div>
+          <button onClick={() => navigate({ to: "/app" })} className="w-full rounded-xl py-3.5 font-black text-sm text-black active:scale-[0.97] transition-all" style={{
+            background: "linear-gradient(135deg, var(--lime), #c8ff33)",
+            boxShadow: "0 6px 20px -5px rgba(204,255,0,0.3)",
+          }}>
+            Voltar ao Inicio
+          </button>
         </div>
       </div>
     );
