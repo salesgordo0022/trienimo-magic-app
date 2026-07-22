@@ -187,3 +187,35 @@ export const listMyStudents = createServerFn({ method: "GET" })
     const { data: profiles } = await context.supabase.from("profiles").select("id, nome").in("id", ids);
     return (profiles ?? []) as Array<{ id: string; nome: string | null }>;
   });
+
+// --- Search user by email (for professor to link existing student) ---
+export const searchUserByEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { email: string }) =>
+    z.object({ email: z.string().trim().email().max(255) }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: users, error } = await supabaseAdmin.auth.admin.listUsers();
+    if (error) throw new Error(error.message);
+    const user = users.users.find(u => u.email?.toLowerCase() === data.email.toLowerCase());
+    if (!user) throw new Error("Usuario nao encontrado com este email");
+    const { data: profile } = await context.supabase
+      .from("profiles").select("id, nome").eq("id", user.id).single();
+    if (!profile) throw new Error("Perfil nao encontrado");
+    return { id: profile.id, nome: profile.nome };
+  });
+
+// --- Link existing student to professor ---
+export const linkStudent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { student_id: string }) =>
+    z.object({ student_id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { error: delErr } = await context.supabase
+      .from("teacher_students").delete().eq("student_id", data.student_id);
+    if (delErr) throw new Error(delErr.message);
+    const { error } = await context.supabase
+      .from("teacher_students").insert({ student_id: data.student_id, teacher_id: context.userId });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedProgressoRouteImport } from './routes/_authenticated/progresso'
 import { Route as AuthenticatedProfessorRouteImport } from './routes/_authenticated/professor'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedMeuTreinoRouteImport } from './routes/_authenticated/meu-treino'
@@ -20,8 +19,10 @@ import { Route as AuthenticatedMensagensRouteImport } from './routes/_authentica
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedBibliotecaRouteImport } from './routes/_authenticated/biblioteca'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedAlimentacaoRouteImport } from './routes/_authenticated/alimentacao'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedTreinarIdRouteImport } from './routes/_authenticated/treinar.$id'
 import { Route as AuthenticatedFichaIdRouteImport } from './routes/_authenticated/ficha.$id'
 import { Route as ApiPublicExerciseGifIdRouteImport } from './routes/api/public/exercise-gif.$id'
 import { Route as AuthenticatedFichaIdHistoricoRouteImport } from './routes/_authenticated/ficha.$id.historico'
@@ -40,11 +41,6 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedProgressoRoute = AuthenticatedProgressoRouteImport.update({
-  id: '/progresso',
-  path: '/progresso',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProfessorRoute = AuthenticatedProfessorRouteImport.update({
   id: '/professor',
@@ -82,6 +78,12 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAlimentacaoRoute =
+  AuthenticatedAlimentacaoRouteImport.update({
+    id: '/alimentacao',
+    path: '/alimentacao',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAgendaRoute = AuthenticatedAgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
@@ -90,6 +92,11 @@ const AuthenticatedAgendaRoute = AuthenticatedAgendaRouteImport.update({
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTreinarIdRoute = AuthenticatedTreinarIdRouteImport.update({
+  id: '/treinar/$id',
+  path: '/treinar/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFichaIdRoute = AuthenticatedFichaIdRouteImport.update({
@@ -120,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agenda': typeof AuthenticatedAgendaRoute
+  '/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/app': typeof AuthenticatedAppRoute
   '/biblioteca': typeof AuthenticatedBibliotecaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -127,8 +135,8 @@ export interface FileRoutesByFullPath {
   '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/professor': typeof AuthenticatedProfessorRoute
-  '/progresso': typeof AuthenticatedProgressoRoute
   '/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
+  '/treinar/$id': typeof AuthenticatedTreinarIdRoute
   '/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
   '/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
   '/api/public/exercise-gif/$id': typeof ApiPublicExerciseGifIdRoute
@@ -138,6 +146,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agenda': typeof AuthenticatedAgendaRoute
+  '/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/app': typeof AuthenticatedAppRoute
   '/biblioteca': typeof AuthenticatedBibliotecaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -145,8 +154,8 @@ export interface FileRoutesByTo {
   '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/professor': typeof AuthenticatedProfessorRoute
-  '/progresso': typeof AuthenticatedProgressoRoute
   '/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
+  '/treinar/$id': typeof AuthenticatedTreinarIdRoute
   '/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
   '/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
   '/api/public/exercise-gif/$id': typeof ApiPublicExerciseGifIdRoute
@@ -158,6 +167,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
+  '/_authenticated/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/biblioteca': typeof AuthenticatedBibliotecaRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -165,8 +175,8 @@ export interface FileRoutesById {
   '/_authenticated/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/professor': typeof AuthenticatedProfessorRoute
-  '/_authenticated/progresso': typeof AuthenticatedProgressoRoute
   '/_authenticated/ficha/$id': typeof AuthenticatedFichaIdRouteWithChildren
+  '/_authenticated/treinar/$id': typeof AuthenticatedTreinarIdRoute
   '/_authenticated/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
   '/_authenticated/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
   '/api/public/exercise-gif/$id': typeof ApiPublicExerciseGifIdRoute
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/agenda'
+    | '/alimentacao'
     | '/app'
     | '/biblioteca'
     | '/configuracoes'
@@ -185,8 +196,8 @@ export interface FileRouteTypes {
     | '/meu-treino'
     | '/perfil'
     | '/professor'
-    | '/progresso'
     | '/ficha/$id'
+    | '/treinar/$id'
     | '/ficha/$id/executar'
     | '/ficha/$id/historico'
     | '/api/public/exercise-gif/$id'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/agenda'
+    | '/alimentacao'
     | '/app'
     | '/biblioteca'
     | '/configuracoes'
@@ -203,8 +215,8 @@ export interface FileRouteTypes {
     | '/meu-treino'
     | '/perfil'
     | '/professor'
-    | '/progresso'
     | '/ficha/$id'
+    | '/treinar/$id'
     | '/ficha/$id/executar'
     | '/ficha/$id/historico'
     | '/api/public/exercise-gif/$id'
@@ -215,6 +227,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/agenda'
+    | '/_authenticated/alimentacao'
     | '/_authenticated/app'
     | '/_authenticated/biblioteca'
     | '/_authenticated/configuracoes'
@@ -222,8 +235,8 @@ export interface FileRouteTypes {
     | '/_authenticated/meu-treino'
     | '/_authenticated/perfil'
     | '/_authenticated/professor'
-    | '/_authenticated/progresso'
     | '/_authenticated/ficha/$id'
+    | '/_authenticated/treinar/$id'
     | '/_authenticated/ficha/$id/executar'
     | '/_authenticated/ficha/$id/historico'
     | '/api/public/exercise-gif/$id'
@@ -258,13 +271,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/progresso': {
-      id: '/_authenticated/progresso'
-      path: '/progresso'
-      fullPath: '/progresso'
-      preLoaderRoute: typeof AuthenticatedProgressoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/professor': {
       id: '/_authenticated/professor'
@@ -315,6 +321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/alimentacao': {
+      id: '/_authenticated/alimentacao'
+      path: '/alimentacao'
+      fullPath: '/alimentacao'
+      preLoaderRoute: typeof AuthenticatedAlimentacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/agenda': {
       id: '/_authenticated/agenda'
       path: '/agenda'
@@ -327,6 +340,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/treinar/$id': {
+      id: '/_authenticated/treinar/$id'
+      path: '/treinar/$id'
+      fullPath: '/treinar/$id'
+      preLoaderRoute: typeof AuthenticatedTreinarIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/ficha/$id': {
@@ -376,6 +396,7 @@ const AuthenticatedFichaIdRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
+  AuthenticatedAlimentacaoRoute: typeof AuthenticatedAlimentacaoRoute
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedBibliotecaRoute: typeof AuthenticatedBibliotecaRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -383,13 +404,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMeuTreinoRoute: typeof AuthenticatedMeuTreinoRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedProfessorRoute: typeof AuthenticatedProfessorRoute
-  AuthenticatedProgressoRoute: typeof AuthenticatedProgressoRoute
   AuthenticatedFichaIdRoute: typeof AuthenticatedFichaIdRouteWithChildren
+  AuthenticatedTreinarIdRoute: typeof AuthenticatedTreinarIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
+  AuthenticatedAlimentacaoRoute: AuthenticatedAlimentacaoRoute,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedBibliotecaRoute: AuthenticatedBibliotecaRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
@@ -397,8 +419,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMeuTreinoRoute: AuthenticatedMeuTreinoRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedProfessorRoute: AuthenticatedProfessorRoute,
-  AuthenticatedProgressoRoute: AuthenticatedProgressoRoute,
   AuthenticatedFichaIdRoute: AuthenticatedFichaIdRouteWithChildren,
+  AuthenticatedTreinarIdRoute: AuthenticatedTreinarIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
