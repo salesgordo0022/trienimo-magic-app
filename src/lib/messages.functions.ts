@@ -24,13 +24,14 @@ export type ConversationSummary = {
 export const listAvailableContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roles } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roles } = await supabaseAdmin
       .from("user_roles")
       .select("user_id, role")
       .in("role", ["admin", "professor"]);
     const adminIds = [...new Set((roles ?? []).map((r) => r.user_id))];
     if (!adminIds.length) return [];
-    const { data: profiles } = await context.supabase
+    const { data: profiles } = await supabaseAdmin
       .from("profiles")
       .select("id, nome")
       .in("id", adminIds);

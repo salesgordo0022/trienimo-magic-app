@@ -38,12 +38,12 @@ const contactsQO = () =>
 
 function Mensagens() {
   const { data: role } = useQuery(roleQO());
-  const { data: conversations, isLoading } = useQuery(conversationsQO());
-  const { data: contacts } = useQuery(contactsQO());
+  const { data: conversations, isLoading: convLoading } = useQuery(conversationsQO());
+  const { data: contacts, isLoading: contactsLoading } = useQuery(contactsQO());
   const [active, setActive] = useState<string | null>(null);
-  const [showContacts, setShowContacts] = useState(false);
 
   const isAluno = role?.role === "aluno";
+  const isLoading = convLoading || contactsLoading;
 
   const contactsNotInConversations = (contacts ?? []).filter(
     (c) => !(conversations ?? []).some((conv) => conv.partner_id === c.id),
