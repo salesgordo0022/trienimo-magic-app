@@ -20,23 +20,30 @@ export type ConversationSummary = {
   unread: number;
 };
 
-// --- Listar todos os contatos disponíveis para conversar ---
+async function getAdmin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+
+// --- Listar todos os contatos disponíveis ---
 export const listAvailableContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: profiles, error } = await context.supabase
+    const admin = await getAdmin();
+    const { data, error } = await admin
       .from("profiles")
       .select("id, nome")
       .neq("id", context.userId);
     if (error) throw new Error(error.message);
-    return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
+    return (data ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
   });
 
-// --- Conversas do usuário (derivado da tabela messages) ---
+// --- Conversas do usuário ---
 export const listMyConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: msgs, error } = await context.supabase
+    const admin = await getAdmin();
+    const { data: msgs, error } = await admin
       .from("messages")
       .select("sender_id, recipient_id, body, read_at, created_at")
       .or(`sender_id.eq.${context.userId},recipient_id.eq.${context.userId}`)
@@ -58,7 +65,7 @@ export const listMyConversations = createServerFn({ method: "GET" })
     const partnerIds = [...partnerMap.keys()];
     if (!partnerIds.length) return [] as ConversationSummary[];
 
-    const { data: profiles } = await context.supabase
+    const { data: profiles } = await admin
       .from("profiles")
       .select("id, nome")
       .in("id", partnerIds);
@@ -84,7 +91,8 @@ export const listConversation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { with: string }) => z.object({ with: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    const { data: rows, error } = await context.supabase
+    const admin = await getAdmin();
+    const { data: rows, error } = await admin
       .from("messages")
       .select("id, sender_id, recipient_id, body, read_at, created_at")
       .or(
@@ -98,7 +106,7 @@ export const listConversation = createServerFn({ method: "GET" })
       .filter((m) => m.recipient_id === context.userId && !m.read_at)
       .map((m) => m.id);
     if (unreadIds.length) {
-      await context.supabase
+      await admin
         .from("messages")
         .update({ read_at: new Date().toISOString() })
         .in("id", unreadIds);
@@ -113,10 +121,12 @@ export const sendMessage = createServerFn({ method: "POST" })
     z.object({ to: z.string().uuid(), body: z.string().trim().min(1).max(2000) }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { data: id, error } = await context.supabase.rpc("send_message", {
-      p_recipient_id: data.to,
-      p_body: data.body,
-    });
+    const admin = await getAdmin();
+    const { data: m, error } = await admin
+      .from("messages")
+      .insert({ sender_id: context.userId, recipient_id: data.to, body: data.body })
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
-    return { id };
+    return { id: m.id };
   });
