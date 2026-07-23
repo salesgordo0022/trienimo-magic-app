@@ -24,23 +24,15 @@ export type ConversationSummary = {
 export const listAvailableContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: profiles } = await supabaseAdmin
-        .from("profiles")
-        .select("id, nome")
-        .neq("id", context.userId);
-      return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
-    } catch {
-      const { data: profiles } = await context.supabase
-        .from("profiles")
-        .select("id, nome")
-        .neq("id", context.userId);
-      return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
-    }
+    const { data: profiles, error } = await context.supabase
+      .from("profiles")
+      .select("id, nome")
+      .neq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
   });
 
-// --- Conversas do usuário (derivado da tabela messages, sem depender de teacher_students) ---
+// --- Conversas do usuário (derivado da tabela messages) ---
 export const listMyConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -66,21 +58,11 @@ export const listMyConversations = createServerFn({ method: "GET" })
     const partnerIds = [...partnerMap.keys()];
     if (!partnerIds.length) return [] as ConversationSummary[];
 
-    let nameById = new Map<string, string | null>();
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: profiles } = await supabaseAdmin
-        .from("profiles")
-        .select("id, nome")
-        .in("id", partnerIds);
-      nameById = new Map((profiles ?? []).map((p) => [p.id, p.nome]));
-    } catch {
-      const { data: profiles } = await context.supabase
-        .from("profiles")
-        .select("id, nome")
-        .in("id", partnerIds);
-      nameById = new Map((profiles ?? []).map((p) => [p.id, p.nome]));
-    }
+    const { data: profiles } = await context.supabase
+      .from("profiles")
+      .select("id, nome")
+      .in("id", partnerIds);
+    const nameById = new Map((profiles ?? []).map((p) => [p.id, p.nome]));
 
     return partnerIds
       .map((pid) => {
@@ -97,79 +79,45 @@ export const listMyConversations = createServerFn({ method: "GET" })
       .sort((a, b) => (b.last_at ?? "").localeCompare(a.last_at ?? "")) as ConversationSummary[];
   });
 
-// --- Histórico de uma conversa com uma pessoa específica (e marca como lidas as recebidas) ---
+// --- Histórico de uma conversa ---
 export const listConversation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { with: string }) => z.object({ with: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    let rows: MessageRow[] = [];
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: r, error } = await supabaseAdmin
-        .from("messages")
-        .select("id, sender_id, recipient_id, body, read_at, created_at")
-        .or(
-          `and(sender_id.eq.${context.userId},recipient_id.eq.${data.with}),and(sender_id.eq.${data.with},recipient_id.eq.${context.userId})`,
-        )
-        .order("created_at", { ascending: true })
-        .limit(200);
-      if (error) throw new Error(error.message);
-      rows = (r ?? []) as MessageRow[];
-    } catch {
-      const { data: r, error } = await context.supabase
-        .from("messages")
-        .select("id, sender_id, recipient_id, body, read_at, created_at")
-        .or(
-          `and(sender_id.eq.${context.userId},recipient_id.eq.${data.with}),and(sender_id.eq.${data.with},recipient_id.eq.${context.userId})`,
-        )
-        .order("created_at", { ascending: true })
-        .limit(200);
-      if (error) throw new Error(error.message);
-      rows = (r ?? []) as MessageRow[];
-    }
+    const { data: rows, error } = await context.supabase
+      .from("messages")
+      .select("id, sender_id, recipient_id, body, read_at, created_at")
+      .or(
+        `and(sender_id.eq.${context.userId},recipient_id.eq.${data.with}),and(sender_id.eq.${data.with},recipient_id.eq.${context.userId})`,
+      )
+      .order("created_at", { ascending: true })
+      .limit(200);
+    if (error) throw new Error(error.message);
 
-    const unreadIds = rows
+    const unreadIds = (rows ?? [])
       .filter((m) => m.recipient_id === context.userId && !m.read_at)
       .map((m) => m.id);
     if (unreadIds.length) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin
-          .from("messages")
-          .update({ read_at: new Date().toISOString() })
-          .in("id", unreadIds);
-      } catch {
-        await context.supabase
-          .from("messages")
-          .update({ read_at: new Date().toISOString() })
-          .in("id", unreadIds);
-      }
+      await context.supabase
+        .from("messages")
+        .update({ read_at: new Date().toISOString() })
+        .in("id", unreadIds);
     }
-    return rows;
+    return (rows ?? []) as MessageRow[];
   });
 
+// --- Enviar mensagem ---
 export const sendMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { to: string; body: string }) =>
     z.object({ to: z.string().uuid(), body: z.string().trim().min(1).max(2000) }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: m, error } = await supabaseAdmin
-        .from("messages")
-        .insert({ sender_id: context.userId, recipient_id: data.to, body: data.body })
-        .select("id")
-        .single();
-      if (error) throw new Error(error.message);
-      return { id: m.id };
-    } catch {
-      const { data: m, error } = await context.supabase
-        .from("messages")
-        .insert({ sender_id: context.userId, recipient_id: data.to, body: data.body })
-        .select("id")
-        .single();
-      if (error) throw new Error(error.message);
-      return { id: m.id };
-    }
+    const { data: m, error } = await context.supabase
+      .from("messages")
+      .insert({ sender_id: context.userId, recipient_id: data.to, body: data.body })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: m.id };
   });
