@@ -20,37 +20,16 @@ export type ConversationSummary = {
   unread: number;
 };
 
-// --- Listar todos os admins/professores disponíveis para conversar ---
+// --- Listar todos os contatos disponíveis para conversar ---
 export const listAvailableContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data: roles, error: rolesErr } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id, role")
-      .in("role", ["admin", "professor"]);
-
-    if (rolesErr) {
-      console.error("[listAvailableContacts] user_roles error:", rolesErr.message);
-    }
-
-    const adminIds = [...new Set((roles ?? []).map((r) => r.user_id))];
-
-    if (!adminIds.length) {
-      console.warn("[listAvailableContacts] no admin/professor found in user_roles, falling back to profiles");
-      const { data: allProfiles } = await supabaseAdmin
-        .from("profiles")
-        .select("id, nome")
-        .neq("id", context.userId);
-      return (allProfiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Admin" }));
-    }
-
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
       .select("id, nome")
-      .in("id", adminIds);
-    return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Admin" }));
+      .neq("id", context.userId);
+    return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
   });
 
 // --- Pessoas com quem posso conversar (meu professor/admin, se eu for aluno; meus alunos, se eu for professor) ---
