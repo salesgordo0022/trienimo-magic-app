@@ -26,47 +26,31 @@ export const listAvailableContacts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: roles } = await supabaseAdmin
+    const { data: roles, error: rolesErr } = await supabaseAdmin
       .from("user_roles")
       .select("user_id, role")
       .in("role", ["admin", "professor"]);
+
+    if (rolesErr) {
+      console.error("[listAvailableContacts] user_roles error:", rolesErr.message);
+    }
+
     const adminIds = [...new Set((roles ?? []).map((r) => r.user_id))];
 
-    if (adminIds.length) {
-      const { data: profiles } = await supabaseAdmin
+    if (!adminIds.length) {
+      console.warn("[listAvailableContacts] no admin/professor found in user_roles, falling back to profiles");
+      const { data: allProfiles } = await supabaseAdmin
         .from("profiles")
         .select("id, nome")
-        .in("id", adminIds);
-      if (profiles?.length) {
-        return profiles.map((p) => ({ id: p.id, nome: p.nome ?? "Admin" }));
-      }
+        .neq("id", context.userId);
+      return (allProfiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Admin" }));
     }
 
-    const { data: allProfiles } = await supabaseAdmin
+    const { data: profiles } = await supabaseAdmin
       .from("profiles")
       .select("id, nome")
-      .neq("id", context.userId);
-    if (!allProfiles?.length) return [];
-
-    const contacts: { id: string; nome: string }[] = [];
-    for (const p of allProfiles) {
-      const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
-        _user_id: p.id,
-        _role: "admin",
-      });
-      if (isAdmin) {
-        contacts.push({ id: p.id, nome: p.nome ?? "Admin" });
-        continue;
-      }
-      const { data: isProf } = await supabaseAdmin.rpc("has_role", {
-        _user_id: p.id,
-        _role: "professor",
-      });
-      if (isProf) {
-        contacts.push({ id: p.id, nome: p.nome ?? "Professor" });
-      }
-    }
-    return contacts;
+      .in("id", adminIds);
+    return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Admin" }));
   });
 
 // --- Pessoas com quem posso conversar (meu professor/admin, se eu for aluno; meus alunos, se eu for professor) ---
