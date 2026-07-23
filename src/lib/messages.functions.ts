@@ -24,34 +24,38 @@ export type ConversationSummary = {
 export const listAvailableContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profiles } = await supabaseAdmin
+    const { data: profiles, error } = await context.supabase
       .from("profiles")
       .select("id, nome")
       .neq("id", context.userId);
+    if (error) throw new Error(error.message);
     return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
   });
 
-// --- Pessoas com quem posso conversar (meu professor/admin, se eu for aluno; meus alunos, se eu for professor) ---
+// --- Conversas do usuário (derivado da tabela messages, sem depender de teacher_students) ---
 export const listMyConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: asStudent } = await context.supabase
-      .from("teacher_students")
-      .select("teacher_id")
-      .eq("student_id", context.userId);
-    const { data: asTeacher } = await context.supabase
-      .from("teacher_students")
-      .select("student_id")
-      .eq("teacher_id", context.userId);
+    const { data: msgs, error } = await context.supabase
+      .from("messages")
+      .select("sender_id, recipient_id, body, read_at, created_at")
+      .or(`sender_id.eq.${context.userId},recipient_id.eq.${context.userId}`)
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
 
-    const partnerIds = Array.from(
-      new Set([
-        ...(asStudent ?? []).map((r) => r.teacher_id),
-        ...(asTeacher ?? []).map((r) => r.student_id),
-      ]),
-    );
+    const partnerMap = new Map<string, { body: string | null; at: string | null; unread: number }>();
+    for (const m of msgs ?? []) {
+      const pid = m.sender_id === context.userId ? m.recipient_id : m.sender_id;
+      if (!partnerMap.has(pid)) {
+        const unread = (msgs ?? []).filter(
+          (x) => x.recipient_id === context.userId && x.sender_id === pid && !x.read_at,
+        ).length;
+        partnerMap.set(pid, { body: m.body, at: m.created_at, unread });
+      }
+    }
 
+    const partnerIds = [...partnerMap.keys()];
     if (!partnerIds.length) return [] as ConversationSummary[];
 
     const { data: profiles } = await context.supabase
@@ -60,27 +64,16 @@ export const listMyConversations = createServerFn({ method: "GET" })
       .in("id", partnerIds);
     const nameById = new Map((profiles ?? []).map((p) => [p.id, p.nome]));
 
-    const { data: msgs } = await context.supabase
-      .from("messages")
-      .select("sender_id, recipient_id, body, read_at, created_at")
-      .or(`sender_id.eq.${context.userId},recipient_id.eq.${context.userId}`)
-      .order("created_at", { ascending: false })
-      .limit(500);
-
     return partnerIds
       .map((pid) => {
-        const related = (msgs ?? []).filter((m) => m.sender_id === pid || m.recipient_id === pid);
-        const last = related[0];
-        const unread = related.filter(
-          (m) => m.recipient_id === context.userId && m.sender_id === pid && !m.read_at,
-        ).length;
+        const info = partnerMap.get(pid)!;
         return {
           partner_id: pid,
           partner_nome: nameById.get(pid) ?? null,
           partner_role: null,
-          last_body: last?.body ?? null,
-          last_at: last?.created_at ?? null,
-          unread,
+          last_body: info.body,
+          last_at: info.at,
+          unread: info.unread,
         };
       })
       .sort((a, b) => (b.last_at ?? "").localeCompare(a.last_at ?? "")) as ConversationSummary[];
