@@ -7,17 +7,6 @@ export const Route = createFileRoute("/api/public/exercise-gif/$id")({
         const id = params.id.replace(/[^0-9a-zA-Z]/g, "").slice(0, 8);
         if (!id) return new Response("bad id", { status: 400 });
 
-        const SUPABASE_URL = process.env.SUPABASE_URL;
-        if (SUPABASE_URL) {
-          return new Response(null, {
-            status: 302,
-            headers: {
-              location: `${SUPABASE_URL}/storage/v1/object/public/exercise-gifs/${id}.gif`,
-              "cache-control": "public, max-age=31536000, immutable",
-            },
-          });
-        }
-
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const dl = await supabaseAdmin.storage.from("exercise-gifs").download(`${id}.gif`);
@@ -33,6 +22,7 @@ export const Route = createFileRoute("/api/public/exercise-gif/$id")({
             });
           }
         } catch {}
+
         return new Response("not found", { status: 404 });
       },
     },

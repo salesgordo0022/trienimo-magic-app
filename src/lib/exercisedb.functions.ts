@@ -16,8 +16,6 @@ export type Exercise = {
 };
 
 export function exerciseGifUrl(id: string): string {
-  const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || "";
-  if (supabaseUrl) return `${supabaseUrl}/storage/v1/object/public/exercise-gifs/${id}.gif`;
   return `/api/public/exercise-gif/${id}`;
 }
 
