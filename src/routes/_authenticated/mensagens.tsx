@@ -3,13 +3,14 @@ import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/r
 import { useServerFn } from "@tanstack/react-start";
 import {
   listMyConversations,
+  listAvailableContacts,
   listConversation,
   sendMessage,
   type MessageRow,
 } from "@/lib/messages.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageSquare, Send, ArrowLeft, Loader2 } from "lucide-react";
+import { MessageSquare, Send, ArrowLeft, Loader2, UserPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/mensagens")({
@@ -29,16 +30,36 @@ const conversationsQO = () =>
     queryFn: () => listMyConversations(),
     refetchInterval: 6000,
   });
+const contactsQO = () =>
+  queryOptions({
+    queryKey: ["availableContacts"],
+    queryFn: () => listAvailableContacts(),
+  });
 
 function Mensagens() {
   const { data: role } = useQuery(roleQO());
   const { data: conversations, isLoading } = useQuery(conversationsQO());
+  const { data: contacts } = useQuery(contactsQO());
   const [active, setActive] = useState<string | null>(null);
+  const [showContacts, setShowContacts] = useState(false);
 
   const isAluno = role?.role === "aluno";
-  useEffect(() => {
-    if (isAluno && role?.teacher_id && !active) setActive(role.teacher_id);
-  }, [isAluno, role, active]);
+
+  const contactsNotInConversations = (contacts ?? []).filter(
+    (c) => !(conversations ?? []).some((conv) => conv.partner_id === c.id),
+  );
+
+  const allConversations = [
+    ...(conversations ?? []),
+    ...contactsNotInConversations.map((c) => ({
+      partner_id: c.id,
+      partner_nome: c.nome,
+      partner_role: "admin" as string,
+      last_body: null,
+      last_at: null,
+      unread: 0,
+    })),
+  ].sort((a, b) => (b.last_at ?? "").localeCompare(a.last_at ?? ""));
 
   if (isLoading) {
     return (
@@ -49,7 +70,7 @@ function Mensagens() {
     );
   }
 
-  if (!conversations?.length) {
+  if (!conversations?.length && !contacts?.length) {
     return (
       <div className="p-4 sm:p-6 max-w-2xl mx-auto text-center py-16">
         <div className="w-14 h-14 mx-auto rounded-2xl bg-[var(--lime)]/15 text-[var(--lime)] flex items-center justify-center mb-4">
@@ -58,33 +79,36 @@ function Mensagens() {
         <h1 className="text-xl font-black text-white mb-1">Mensagens</h1>
         <p className="text-sm text-zinc-500">
           {isAluno
-            ? "Você ainda não tem um professor vinculado."
+            ? "Você ainda não tem um professor ou admin vinculado."
             : "Você ainda não tem alunos vinculados."}
         </p>
       </div>
     );
   }
 
-  const activeConv = active ? conversations.find((c) => c.partner_id === active) : undefined;
-  const showList = !isAluno || conversations.length > 1;
+  const activeConv = active ? allConversations.find((c) => c.partner_id === active) : undefined;
+  const showList = !isAluno || allConversations.length > 1;
 
   return (
     <div className="p-4 sm:p-6 max-w-2xl mx-auto">
       {!active ? (
         <div className="space-y-4">
-          <header className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-[var(--lime)]/15 text-[var(--lime)] flex items-center justify-center">
-              <MessageSquare className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black leading-tight">Mensagens</h1>
-              <p className="text-xs text-zinc-500">
-                Converse com {isAluno ? "seu professor" : "seus alunos"}
-              </p>
+          <header className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-[var(--lime)]/15 text-[var(--lime)] flex items-center justify-center">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black leading-tight">Mensagens</h1>
+                <p className="text-xs text-zinc-500">
+                  Converse com {isAluno ? "seu professor ou admin" : "seus alunos"}
+                </p>
+              </div>
             </div>
           </header>
+
           <div className="rounded-2xl border border-white/10 bg-[#111112] divide-y divide-white/5 overflow-hidden">
-            {conversations.map((c) => (
+            {allConversations.map((c) => (
               <button
                 key={c.partner_id}
                 onClick={() => setActive(c.partner_id)}
@@ -98,7 +122,7 @@ function Mensagens() {
                     {c.partner_nome ?? "Sem nome"}
                   </div>
                   <div className="text-xs text-zinc-500 truncate">
-                    {c.last_body ?? "Nenhuma mensagem ainda"}
+                    {c.last_body ?? "Clique para conversar"}
                   </div>
                 </div>
                 {c.unread > 0 && (
