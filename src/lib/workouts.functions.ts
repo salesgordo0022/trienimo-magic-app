@@ -773,3 +773,21 @@ export const getAllSessions = createServerFn({ method: "GET" })
         })),
     })) as AllSessionHistory[];
   });
+
+export const hasCompletedToday = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { workout_id: string }) =>
+    z.object({ workout_id: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: sessions } = await context.supabase
+      .from("sessions")
+      .select("id, ended_at")
+      .eq("workout_id", data.workout_id)
+      .eq("user_id", context.userId)
+      .gte("started_at", today)
+      .not("ended_at", "is", null)
+      .limit(1);
+    return { done: (sessions?.length ?? 0) > 0 };
+  });

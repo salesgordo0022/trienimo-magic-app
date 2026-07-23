@@ -538,7 +538,4 @@ export const analisarRefeicao = createServerFn({ method: "POST" })
       },
     };
     return result;
-  });
-/ /   r e b u i l d   t r i g g e r  
- / /   r e b u i l d  
- 
+  });

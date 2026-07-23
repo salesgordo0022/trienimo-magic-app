@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQueryClient, queryOptions, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout } from "@/lib/workouts.functions";
+import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout, hasCompletedToday } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents, searchUserByEmail, linkStudent } from "@/lib/roles.functions";
 import { searchExercises, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, type Exercise } from "@/lib/exercisedb.functions";
 import { toast } from "sonner";
@@ -115,7 +115,13 @@ function Inicio() {
 
   const currentExercise = exerciseList[exerciseIndex] ?? null;
 
-  const primary = assigned[0] ?? workouts[0];
+  const primary = isTeacher ? (assigned[0] ?? workouts[0]) : assigned[0];
+
+  const { data: completedToday } = useQuery({
+    queryKey: ["completedToday", primary?.id],
+    queryFn: () => hasCompletedToday({ data: { workout_id: primary!.id } }),
+    enabled: !!primary,
+  });
 
   const create = useMutation({
     mutationFn: useServerFn(createWorkout),
@@ -135,6 +141,26 @@ function Inicio() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
       {/* Hero — Meu Treino */}
+      {!isTeacher && completedToday?.done ? (
+        <section className="relative overflow-hidden rounded-3xl border border-[var(--lime)]/30 bg-black p-6 sm:p-8 min-h-[200px]">
+          <img
+            src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+          <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[var(--lime)] flex items-center justify-center shrink-0 shadow-2xl">
+              <Flag className="w-8 h-8 sm:w-10 sm:h-10 text-black"/>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-[var(--lime)]">Treino de hoje</div>
+              <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mt-1">Treino Concluido!</h2>
+              <p className="text-sm text-zinc-400 mt-1">Voce ja completou seu treino de hoje. Amanha tem mais!</p>
+            </div>
+          </div>
+        </section>
+      ) : (
       <section className="relative overflow-hidden rounded-3xl border border-[var(--lime)]/30 bg-black p-6 sm:p-8 min-h-[200px]">
         <img
           src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80"
@@ -163,10 +189,11 @@ function Inicio() {
           )}
         </div>
       </section>
+      )}
 
       {/* Modal Meu Treino */}
       {meuTreinoModal && (() => {
-        const w = [...workouts, ...assigned].find(x => x.id === meuTreinoModal);
+        const w = isTeacher ? [...workouts, ...assigned].find(x => x.id === meuTreinoModal) : assigned.find(x => x.id === meuTreinoModal);
         return (
           <div className="fixed inset-0 z-50 flex flex-col overflow-hidden" style={{ background: "#0a0a0a" }}>
             <div className="fixed inset-0 z-0 pointer-events-none">
@@ -349,7 +376,8 @@ function Inicio() {
         <VincularAlunoSection studentsQO={studentsQO} />
       )}
 
-      {/* Criar novo treino */}
+      {/* Criar novo treino - professor/admin only */}
+      {isTeacher && (
       <button
         onClick={openNovoTreino}
         className="w-full relative overflow-hidden rounded-2xl border border-white/10 p-0 text-left group"
@@ -371,8 +399,10 @@ function Inicio() {
           <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-[var(--lime)] transition-colors" />
         </div>
       </button>
+      )}
 
-      {/* Lista de fichas */}
+      {/* Lista de fichas - professor/admin */}
+      {isTeacher && (
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
           <div className="w-1 h-5 rounded-full bg-[var(--lime)]"/>
@@ -416,33 +446,6 @@ function Inicio() {
           </div>
         )}
       </section>
-
-      {assigned.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-4 px-1">
-            <div className="w-1 h-5 rounded-full bg-[var(--lime)]"/>
-            <h3 className="text-sm font-black uppercase tracking-wide">Fichas do seu Professor</h3>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {assigned.map(w => (
-              <div key={w.id} className="rounded-2xl border border-[var(--lime)]/30 bg-[#111112] flex overflow-hidden">
-                <Link to="/ficha/$id" params={{ id: w.id }} className="w-20 sm:w-24 bg-black text-[var(--lime)] font-black text-4xl sm:text-5xl flex items-center justify-center border-r border-[var(--lime)]/20">
-                  {w.letra}
-                </Link>
-                <div className="flex-1 p-4 min-w-0">
-                  <div className="font-bold text-sm">Treino {w.letra}</div>
-                  {w.nome && <div className="text-xs text-zinc-500 mt-0.5 truncate">{w.nome}</div>}
-                  {w.assigned_nome && <div className="text-[11px] text-zinc-600 mt-1">Prof: {w.assigned_nome}</div>}
-                  <div className="flex gap-1.5 mt-3">
-                    <Link to="/ficha/$id" params={{ id: w.id }} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--lime)] text-black px-3 py-1.5 text-xs font-bold">
-                      <Pencil className="w-3 h-3"/>Abrir ficha
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
       )}
 
       {novoTreinoModal && novoStep !== "exercise" && novoStep !== "completed" && novoStep !== "ficha" && (
