@@ -113,11 +113,10 @@ export const sendMessage = createServerFn({ method: "POST" })
     z.object({ to: z.string().uuid(), body: z.string().trim().min(1).max(2000) }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { data: m, error } = await context.supabase
-      .from("messages")
-      .insert({ sender_id: context.userId, recipient_id: data.to, body: data.body })
-      .select("id")
-      .single();
+    const { data: id, error } = await context.supabase.rpc("send_message", {
+      p_recipient_id: data.to,
+      p_body: data.body,
+    });
     if (error) throw new Error(error.message);
-    return { id: m.id };
+    return { id };
   });
