@@ -18,7 +18,7 @@ import {
   type ExerciseRow,
 } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents } from "@/lib/roles.functions";
-import { searchExercises, getExerciseById, type Exercise } from "@/lib/exercisedb.functions";
+import { searchExercises, getExerciseById, exerciseGifUrl, type Exercise } from "@/lib/exercisedb.functions";
 import {
   Plus,
   Minus,
@@ -721,7 +721,7 @@ function ExerciseRowEditor({
               trigger={
                 ex.exercise_db_id ? (
                   <img
-                    src={`/api/public/exercise-gif/${ex.exercise_db_id}`}
+                    src={exerciseGifUrl(ex.exercise_db_id!)}
                     alt=""
                     className="w-7 h-7 rounded-md object-contain bg-white shrink-0 cursor-pointer border border-white/10"
                   />
@@ -898,7 +898,7 @@ function ExerciseCardMobile({
           trigger={
             ex.exercise_db_id ? (
               <img
-                src={`/api/public/exercise-gif/${ex.exercise_db_id}`}
+                src={exerciseGifUrl(ex.exercise_db_id!)}
                 alt=""
                 className="w-8 h-8 rounded-md object-contain bg-white shrink-0 cursor-pointer border border-white/10"
               />

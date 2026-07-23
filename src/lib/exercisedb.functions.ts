@@ -15,6 +15,12 @@ export type Exercise = {
   category?: string;
 };
 
+export function exerciseGifUrl(id: string): string {
+  const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || "";
+  if (supabaseUrl) return `${supabaseUrl}/storage/v1/object/public/exercise-gifs/${id}.gif`;
+  return `/api/public/exercise-gif/${id}`;
+}
+
 const HOST = "exercisedb.p.rapidapi.com";
 const BASE = `https://${HOST}`;
 
@@ -546,7 +552,7 @@ function rowToExercise(r: any): Exercise {
     difficulty: r.difficulty ?? undefined,
     secondaryMuscles: r.secondary_muscles ?? undefined,
     instructions: r.instructions_pt ?? r.instructions ?? undefined,
-    gifUrl: `/api/public/exercise-gif/${r.id}`,
+    gifUrl: exerciseGifUrl(r.id),
   };
 }
 
@@ -644,7 +650,7 @@ export const searchExercises = createServerFn({ method: "GET" })
     }
     const items = await cachedJson<Exercise[]>(url);
     const translated = await Promise.all(items.map((e) => translateSummary(e)));
-    return translated.map((e) => ({ ...e, gifUrl: `/api/public/exercise-gif/${e.id}` }));
+    return translated.map((e) => ({ ...e, gifUrl: exerciseGifUrl(e.id) }));
   });
 
 export const getExerciseById = createServerFn({ method: "GET" })
@@ -674,5 +680,5 @@ export const getExerciseById = createServerFn({ method: "GET" })
       `${BASE}/exercises/exercise/${encodeURIComponent(data.id)}`,
     );
     const translated = await translateFull(ex);
-    return { ...translated, gifUrl: `/api/public/exercise-gif/${translated.id}` };
+    return { ...translated, gifUrl: exerciseGifUrl(translated.id) };
   });
