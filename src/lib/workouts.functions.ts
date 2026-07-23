@@ -232,6 +232,12 @@ export const deleteWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
+    const { data: workout } = await context.supabase
+      .from("workouts").select("user_id").eq("id", data.id).single();
+    const { data: roleData } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const isAdmin = !!roleData;
+    const isOwner = workout?.user_id === context.userId;
+    if (!isAdmin && !isOwner) throw new Error("Acesso negado");
     const { error } = await context.supabase.from("workouts").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -248,6 +254,12 @@ export const getFicha = createServerFn({ method: "GET" })
       .eq("id", data.id)
       .single();
     if (e1) throw new Error(e1.message);
+
+    const { data: roleData } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const isAdmin = !!roleData;
+    const isOwner = workout.user_id === context.userId;
+    const isAssigned = workout.assigned_to === context.userId;
+    if (!isAdmin && !isOwner && !isAssigned) throw new Error("Acesso negado");
 
     const { data: profile } = await context.supabase
       .from("profiles")
@@ -320,6 +332,12 @@ export const updateWorkout = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { id, ...rest } = data;
+    const { data: workout } = await context.supabase
+      .from("workouts").select("user_id").eq("id", id).single();
+    const { data: roleData } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const isAdmin = !!roleData;
+    const isOwner = workout?.user_id === context.userId;
+    if (!isAdmin && !isOwner) throw new Error("Acesso negado");
     const payload = { ...rest, ...(rest.letra ? { letra: rest.letra.toUpperCase() } : {}) };
     const { error } = await context.supabase.from("workouts").update(payload).eq("id", id);
     if (error) throw new Error(error.message);
@@ -356,6 +374,12 @@ export const deleteGroup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
+    const { data: group } = await context.supabase
+      .from("workout_groups").select("user_id").eq("id", data.id).single();
+    const { data: roleData } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const isAdmin = !!roleData;
+    const isOwner = group?.user_id === context.userId;
+    if (!isAdmin && !isOwner) throw new Error("Acesso negado");
     const { error } = await context.supabase.from("workout_groups").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -444,9 +468,14 @@ export const updateExercise = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { id, ...rest } = data;
+    const { data: ex } = await context.supabase
+      .from("exercises").select("user_id").eq("id", id).single();
+    const { data: roleData } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const isAdmin = !!roleData;
+    const isOwner = ex?.user_id === context.userId;
+    if (!isAdmin && !isOwner) throw new Error("Acesso negado");
     let { error } = await context.supabase.from("exercises").update(rest).eq("id", id);
     if (error?.code === "42703" || error?.code === "PGRST204") {
-      // exercise_db_id ainda não existe no banco (migration pendente) — atualiza sem ele.
       const { exercise_db_id, ...fallback } = rest;
       ({ error } = await context.supabase.from("exercises").update(fallback).eq("id", id));
     }
@@ -458,6 +487,12 @@ export const deleteExercise = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
+    const { data: ex } = await context.supabase
+      .from("exercises").select("user_id").eq("id", data.id).single();
+    const { data: roleData } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const isAdmin = !!roleData;
+    const isOwner = ex?.user_id === context.userId;
+    if (!isAdmin && !isOwner) throw new Error("Acesso negado");
     const { error } = await context.supabase.from("exercises").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
