@@ -24,12 +24,20 @@ export type ConversationSummary = {
 export const listAvailableContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: profiles, error } = await context.supabase
-      .from("profiles")
-      .select("id, nome")
-      .neq("id", context.userId);
-    if (error) throw new Error(error.message);
-    return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, nome")
+        .neq("id", context.userId);
+      return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
+    } catch {
+      const { data: profiles } = await context.supabase
+        .from("profiles")
+        .select("id, nome")
+        .neq("id", context.userId);
+      return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
+    }
   });
 
 // --- Conversas do usuário (derivado da tabela messages, sem depender de teacher_students) ---
@@ -58,11 +66,21 @@ export const listMyConversations = createServerFn({ method: "GET" })
     const partnerIds = [...partnerMap.keys()];
     if (!partnerIds.length) return [] as ConversationSummary[];
 
-    const { data: profiles } = await context.supabase
-      .from("profiles")
-      .select("id, nome")
-      .in("id", partnerIds);
-    const nameById = new Map((profiles ?? []).map((p) => [p.id, p.nome]));
+    let nameById = new Map<string, string | null>();
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, nome")
+        .in("id", partnerIds);
+      nameById = new Map((profiles ?? []).map((p) => [p.id, p.nome]));
+    } catch {
+      const { data: profiles } = await context.supabase
+        .from("profiles")
+        .select("id, nome")
+        .in("id", partnerIds);
+      nameById = new Map((profiles ?? []).map((p) => [p.id, p.nome]));
+    }
 
     return partnerIds
       .map((pid) => {
@@ -84,26 +102,50 @@ export const listConversation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { with: string }) => z.object({ with: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    const { data: rows, error } = await context.supabase
-      .from("messages")
-      .select("id, sender_id, recipient_id, body, read_at, created_at")
-      .or(
-        `and(sender_id.eq.${context.userId},recipient_id.eq.${data.with}),and(sender_id.eq.${data.with},recipient_id.eq.${context.userId})`,
-      )
-      .order("created_at", { ascending: true })
-      .limit(200);
-    if (error) throw new Error(error.message);
+    let rows: MessageRow[] = [];
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: r, error } = await supabaseAdmin
+        .from("messages")
+        .select("id, sender_id, recipient_id, body, read_at, created_at")
+        .or(
+          `and(sender_id.eq.${context.userId},recipient_id.eq.${data.with}),and(sender_id.eq.${data.with},recipient_id.eq.${context.userId})`,
+        )
+        .order("created_at", { ascending: true })
+        .limit(200);
+      if (error) throw new Error(error.message);
+      rows = (r ?? []) as MessageRow[];
+    } catch {
+      const { data: r, error } = await context.supabase
+        .from("messages")
+        .select("id, sender_id, recipient_id, body, read_at, created_at")
+        .or(
+          `and(sender_id.eq.${context.userId},recipient_id.eq.${data.with}),and(sender_id.eq.${data.with},recipient_id.eq.${context.userId})`,
+        )
+        .order("created_at", { ascending: true })
+        .limit(200);
+      if (error) throw new Error(error.message);
+      rows = (r ?? []) as MessageRow[];
+    }
 
-    const unreadIds = (rows ?? [])
+    const unreadIds = rows
       .filter((m) => m.recipient_id === context.userId && !m.read_at)
       .map((m) => m.id);
     if (unreadIds.length) {
-      await context.supabase
-        .from("messages")
-        .update({ read_at: new Date().toISOString() })
-        .in("id", unreadIds);
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        await supabaseAdmin
+          .from("messages")
+          .update({ read_at: new Date().toISOString() })
+          .in("id", unreadIds);
+      } catch {
+        await context.supabase
+          .from("messages")
+          .update({ read_at: new Date().toISOString() })
+          .in("id", unreadIds);
+      }
     }
-    return (rows ?? []) as MessageRow[];
+    return rows;
   });
 
 export const sendMessage = createServerFn({ method: "POST" })
@@ -112,11 +154,22 @@ export const sendMessage = createServerFn({ method: "POST" })
     z.object({ to: z.string().uuid(), body: z.string().trim().min(1).max(2000) }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { data: m, error } = await context.supabase
-      .from("messages")
-      .insert({ sender_id: context.userId, recipient_id: data.to, body: data.body })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return { id: m.id };
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: m, error } = await supabaseAdmin
+        .from("messages")
+        .insert({ sender_id: context.userId, recipient_id: data.to, body: data.body })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      return { id: m.id };
+    } catch {
+      const { data: m, error } = await context.supabase
+        .from("messages")
+        .insert({ sender_id: context.userId, recipient_id: data.to, body: data.body })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      return { id: m.id };
+    }
   });
