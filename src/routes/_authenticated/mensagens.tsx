@@ -10,7 +10,7 @@ import {
 } from "@/lib/messages.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageSquare, Send, ArrowLeft, Loader2, UserPlus } from "lucide-react";
+import { MessageSquare, Send, ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/mensagens")({
@@ -54,7 +54,7 @@ function Mensagens() {
     ...contactsNotInConversations.map((c) => ({
       partner_id: c.id,
       partner_nome: c.nome,
-      partner_role: "admin" as string,
+      partner_role: null,
       last_body: null,
       last_at: null,
       unread: 0,
@@ -63,83 +63,98 @@ function Mensagens() {
 
   if (isLoading) {
     return (
-      <div className="p-16 flex items-center justify-center text-zinc-500">
+      <div className="flex-1 flex items-center justify-center text-zinc-500">
         <Loader2 className="w-5 h-5 animate-spin mr-2" />
         Carregando...
       </div>
     );
   }
 
-  if (!conversations?.length && !contacts?.length) {
+  const activeConv = active ? allConversations.find((c) => c.partner_id === active) : undefined;
+
+  if (active && activeConv) {
     return (
-      <div className="p-4 sm:p-6 max-w-2xl mx-auto text-center py-16">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-[var(--lime)]/15 text-[var(--lime)] flex items-center justify-center mb-4">
-          <MessageSquare className="w-6 h-6" />
-        </div>
-        <h1 className="text-xl font-black text-white mb-1">Mensagens</h1>
-        <p className="text-sm text-zinc-500">
-          {isAluno
-            ? "Você ainda não tem um professor ou admin vinculado."
-            : "Você ainda não tem alunos vinculados."}
-        </p>
-      </div>
+      <Thread
+        partnerId={active}
+        partnerNome={activeConv.partner_nome ?? null}
+        onBack={() => setActive(null)}
+      />
     );
   }
 
-  const activeConv = active ? allConversations.find((c) => c.partner_id === active) : undefined;
-  const showList = !isAluno || allConversations.length > 1;
-
   return (
-    <div className="p-4 sm:p-6 max-w-2xl mx-auto">
-      {!active ? (
-        <div className="space-y-4">
-          <header className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-[var(--lime)]/15 text-[var(--lime)] flex items-center justify-center">
-                <MessageSquare className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-black leading-tight">Mensagens</h1>
-                <p className="text-xs text-zinc-500">
-                  Converse com {isAluno ? "seu professor ou admin" : "seus alunos"}
-                </p>
-              </div>
-            </div>
-          </header>
+    <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full">
+      <div className="px-4 pt-5 pb-3 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-[var(--lime)]/15 flex items-center justify-center">
+          <MessageSquare className="w-5 h-5 text-[var(--lime)]" />
+        </div>
+        <div>
+          <h1 className="text-lg font-black text-white leading-tight">Mensagens</h1>
+          <p className="text-[11px] text-zinc-500">
+            {isAluno ? "Converse com seu personal" : "Converse com seus alunos"}
+          </p>
+        </div>
+      </div>
 
-          <div className="rounded-2xl border border-white/10 bg-[#111112] divide-y divide-white/5 overflow-hidden">
-            {allConversations.map((c) => (
+      {allConversations.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center py-16 px-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+            <MessageSquare className="w-7 h-7 text-zinc-600" />
+          </div>
+          <p className="text-sm text-zinc-500 leading-relaxed">
+            {isAluno
+              ? "Nenhum personal encontrado. Aguarde seu professor ser vinculado."
+              : "Nenhum aluno vinculado ainda."}
+          </p>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto">
+          {allConversations.map((c) => {
+            const initials = (c.partner_nome ?? "?")
+              .split(" ")
+              .slice(0, 2)
+              .map((w) => w[0])
+              .join("")
+              .toUpperCase();
+            const time = c.last_at
+              ? new Date(c.last_at).toLocaleTimeString("pt-BR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "";
+            return (
               <button
                 key={c.partner_id}
                 onClick={() => setActive(c.partner_id)}
-                className="w-full text-left p-4 flex items-center gap-3 hover:bg-white/[0.03] transition-colors"
+                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.03] active:bg-white/[0.06] transition-colors"
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--lime)] to-[#88b800] flex items-center justify-center text-black font-black text-xs shrink-0">
-                  {(c.partner_nome ?? "?").slice(0, 2).toUpperCase()}
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--lime)] to-[#6a9c00] flex items-center justify-center text-black font-black text-sm shrink-0 shadow-lg shadow-[var(--lime)]/10">
+                  {initials}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-white truncate">
-                    {c.partner_nome ?? "Sem nome"}
+                <div className="flex-1 min-w-0 border-b border-white/5 pb-3">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-sm font-semibold text-white truncate">
+                      {c.partner_nome ?? "Sem nome"}
+                    </span>
+                    {time && (
+                      <span className="text-[10px] text-zinc-500 shrink-0 ml-2">{time}</span>
+                    )}
                   </div>
-                  <div className="text-xs text-zinc-500 truncate">
-                    {c.last_body ?? "Clique para conversar"}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-zinc-500 truncate">
+                      {c.last_body ?? "Toque para conversar"}
+                    </span>
+                    {c.unread > 0 && (
+                      <span className="ml-2 w-5 h-5 rounded-full bg-[var(--lime)] text-black text-[10px] font-black flex items-center justify-center shrink-0">
+                        {c.unread}
+                      </span>
+                    )}
                   </div>
                 </div>
-                {c.unread > 0 && (
-                  <div className="w-5 h-5 rounded-full bg-[var(--lime)] text-black text-[10px] font-black flex items-center justify-center shrink-0">
-                    {c.unread}
-                  </div>
-                )}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      ) : (
-        <Thread
-          partnerId={active}
-          partnerNome={activeConv?.partner_nome ?? null}
-          onBack={showList ? () => setActive(null) : undefined}
-        />
       )}
     </div>
   );
@@ -152,7 +167,7 @@ function Thread({
 }: {
   partnerId: string;
   partnerNome: string | null;
-  onBack?: () => void;
+  onBack: () => void;
 }) {
   const qc = useQueryClient();
   const { data: me } = useQuery(meQO());
@@ -175,52 +190,69 @@ function Thread({
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages?.length]);
 
+  const initials = (partnerNome ?? "?")
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
   return (
-    <div className="flex flex-col h-[calc(100vh-190px)]">
-      <header className="flex items-center gap-2 pb-3 border-b border-white/5 shrink-0">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-        )}
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--lime)] to-[#88b800] flex items-center justify-center text-black font-black text-xs shrink-0">
-          {(partnerNome ?? "?").slice(0, 2).toUpperCase()}
+    <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full">
+      <header className="px-3 py-3 flex items-center gap-3 border-b border-white/5 shrink-0">
+        <button
+          onClick={onBack}
+          className="p-2 -ml-2 rounded-full text-zinc-400 hover:text-white hover:bg-white/5"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--lime)] to-[#6a9c00] flex items-center justify-center text-black font-black text-xs shrink-0">
+          {initials}
         </div>
-        <div className="text-sm font-semibold text-white">{partnerNome ?? "Conversa"}</div>
+        <div>
+          <div className="text-sm font-bold text-white">{partnerNome ?? "Conversa"}</div>
+          <div className="text-[10px] text-zinc-500">online</div>
+        </div>
       </header>
-      <div className="flex-1 overflow-y-auto py-4 space-y-2">
+
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1.5">
         {(messages ?? []).length === 0 && (
-          <div className="text-center text-xs text-zinc-500 py-8">Envie a primeira mensagem.</div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+              <Send className="w-5 h-5 text-zinc-600" />
+            </div>
+            <p className="text-xs text-zinc-500">Envie a primeira mensagem</p>
+          </div>
         )}
         {(messages ?? []).map((m) => (
           <MessageBubble key={m.id} msg={m} isMine={m.sender_id === me} />
         ))}
         <div ref={endRef} />
       </div>
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
           if (!body.trim()) return;
           send.mutate({ data: { to: partnerId, body: body.trim() } });
         }}
-        className="flex gap-2 pt-2 border-t border-white/5 shrink-0"
+        className="px-3 py-3 border-t border-white/5 shrink-0"
       >
-        <input
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="Escreva uma mensagem..."
-          className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-[var(--lime)]/60"
-        />
-        <button
-          type="submit"
-          disabled={send.isPending || !body.trim()}
-          className="w-10 h-10 rounded-xl bg-[var(--lime)] text-black flex items-center justify-center disabled:opacity-50 shrink-0"
-        >
-          <Send className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <input
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Mensagem..."
+            className="flex-1 bg-white/[0.06] border border-white/10 rounded-full px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[var(--lime)]/50 transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={send.isPending || !body.trim()}
+            className="w-10 h-10 rounded-full bg-[var(--lime)] text-black flex items-center justify-center disabled:opacity-30 shrink-0 transition-opacity"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
       </form>
     </div>
   );
@@ -234,10 +266,14 @@ function MessageBubble({ msg, isMine }: { msg: MessageRow; isMine: boolean }) {
   return (
     <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${isMine ? "bg-[var(--lime)] text-black" : "bg-white/[0.06] text-white border border-white/10"}`}
+        className={`max-w-[75%] rounded-2xl px-3 py-2 ${
+          isMine
+            ? "bg-[var(--lime)] text-black rounded-br-md"
+            : "bg-white/[0.07] text-white border border-white/[0.06] rounded-bl-md"
+        }`}
       >
-        <div className="whitespace-pre-wrap break-words">{msg.body}</div>
-        <div className={`text-[10px] mt-0.5 ${isMine ? "text-black/50" : "text-zinc-500"}`}>
+        <div className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">{msg.body}</div>
+        <div className={`text-[9px] mt-0.5 text-right ${isMine ? "text-black/40" : "text-zinc-600"}`}>
           {time}
         </div>
       </div>
