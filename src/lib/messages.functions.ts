@@ -116,19 +116,23 @@ export const sendMessage = createServerFn({ method: "POST" })
     const payload = { sender_id: context.userId, recipient_id: data.to, body: data.body };
 
     // 1. Tenta RPC (bypassa RLS se a migration rodou)
-    const { data: rpcId, error: rpcErr } = await context.supabase.rpc("send_message", {
-      p_recipient_id: data.to,
-      p_body: data.body,
-    });
-    if (!rpcErr && rpcId) return { id: rpcId as string };
+    try {
+      const { data: rpcId, error: rpcErr } = await context.supabase.rpc("send_message", {
+        p_recipient_id: data.to,
+        p_body: data.body,
+      });
+      if (!rpcErr && rpcId) return { id: rpcId as string };
+    } catch {}
 
     // 2. Tenta insert direto (funciona se RLS foi atualizado)
-    const { data: m, error } = await context.supabase
-      .from("messages")
-      .insert(payload)
-      .select("id")
-      .single();
-    if (!error && m) return { id: m.id };
+    try {
+      const { data: m, error } = await context.supabase
+        .from("messages")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (!error && m) return { id: m.id };
+    } catch {}
 
     // 3. Fallback: supabaseAdmin bypassa RLS
     try {
@@ -141,5 +145,5 @@ export const sendMessage = createServerFn({ method: "POST" })
       if (!e2 && m2) return { id: m2.id };
     } catch {}
 
-    throw new Error("Falha ao enviar mensagem");
+    throw new Error("Não foi possível enviar a mensagem. Verifique se o chat está configurado no banco.");
   });

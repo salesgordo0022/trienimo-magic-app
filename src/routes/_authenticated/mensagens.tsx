@@ -12,6 +12,7 @@ import { getMyRole } from "@/lib/roles.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageSquare, Send, ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/mensagens")({
   component: Mensagens,
@@ -184,6 +185,7 @@ function Thread({
       qc.invalidateQueries({ queryKey: ["conversation", partnerId] });
       qc.invalidateQueries({ queryKey: ["conversations"] });
     },
+    onError: (e) => toast.error(e.message),
   });
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
