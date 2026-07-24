@@ -7,27 +7,30 @@ export const Route = createFileRoute("/api/public/exercise-gif/$id")({
         const id = params.id.replace(/[^0-9a-zA-Z]/g, "").slice(0, 8);
         if (!id) return new Response("bad id", { status: 400 });
 
-        // 1. Tenta servir do banco (base64)
-        try {
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data: row } = await supabaseAdmin
-            .from("exercises_catalog")
-            .select("gif_data")
-            .eq("id", id)
-            .maybeSingle();
+        const imageHeaders = {
+          "content-type": "image/gif",
+          "cache-control": "public, max-age=31536000, immutable",
+          "access-control-allow-origin": "*",
+        };
 
-          if (row?.gif_data) {
-            const buf = Buffer.from(row.gif_data, "base64");
-            return new Response(buf, {
-              status: 200,
-              headers: {
-                "content-type": "image/gif",
-                "cache-control": "public, max-age=31536000, immutable",
-                "access-control-allow-origin": "*",
-              },
-            });
-          }
-        } catch {}
+        const canUseCatalogDb = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+        // 1. Tenta servir do banco (base64)
+        if (canUseCatalogDb) {
+          try {
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            const { data: row } = await supabaseAdmin
+              .from("exercises_catalog")
+              .select("gif_data")
+              .eq("id", id)
+              .maybeSingle();
+
+            if (row?.gif_data) {
+              const buf = Buffer.from(row.gif_data, "base64");
+              return new Response(buf, { status: 200, headers: imageHeaders });
+            }
+          } catch {}
+        }
 
         // 2. Fallback: busca da RapidAPI e salva no banco pra próxima vez
         try {
@@ -49,25 +52,23 @@ export const Route = createFileRoute("/api/public/exercise-gif/$id")({
           const b64 = Buffer.from(buf).toString("base64");
 
           // Salva no banco pra próxima vez (fire and forget)
-          try {
-            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-            await supabaseAdmin
-              .from("exercises_catalog")
-              .update({ gif_data: b64 })
-              .eq("id", id);
-          } catch {}
+          if (canUseCatalogDb) {
+            try {
+              const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+              await supabaseAdmin
+                .from("exercises_catalog")
+                .update({ gif_data: b64 })
+                .eq("id", id);
+            } catch {}
+          }
 
-          return new Response(buf, {
-            status: 200,
-            headers: {
-              "content-type": "image/gif",
-              "cache-control": "public, max-age=31536000, immutable",
-              "access-control-allow-origin": "*",
-            },
-          });
+          return new Response(buf, { status: 200, headers: imageHeaders });
         } catch {}
 
-        return new Response("not found", { status: 404 });
+        return new Response("not found", {
+          status: 404,
+          headers: { "access-control-allow-origin": "*" },
+        });
       },
     },
   },
