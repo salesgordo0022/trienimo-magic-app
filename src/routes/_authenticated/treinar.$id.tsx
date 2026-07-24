@@ -2,7 +2,7 @@ import { onGifError } from "@/lib/exercise-gif-fallback";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { getFicha } from "@/lib/workouts.functions";
-import { getExerciseById, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, type Exercise } from "@/lib/exercisedb.functions";
+import { getExerciseById, exerciseGifUrl, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, type Exercise } from "@/lib/exercisedb.functions";
 import { ArrowLeft, X, Dumbbell, CheckCircle2, ChevronRight, ChevronLeft, Flag, Loader2 } from "lucide-react";
 import { useState, useMemo } from "react";
 
@@ -52,6 +52,9 @@ function TreinarPage() {
   const current = allExercises[currentIdx];
   const total = allExercises.length;
   const currentDetail = current?.exercise_db_id ? detailMap.get(current.exercise_db_id) : null;
+  const currentGifUrl = current?.exercise_db_id
+    ? currentDetail?.gifUrl ?? exerciseGifUrl(current.exercise_db_id)
+    : null;
   const reps = current?.sets_config?.[0]?.reps ?? "12";
 
   const goNext = () => {
@@ -165,11 +168,11 @@ function TreinarPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-4 min-h-0">
         <div className="w-full max-w-sm space-y-5" key={`exercise-${currentIdx}`}>
           {/* GIF */}
-          {currentDetail?.gifUrl ? (
+          {currentGifUrl ? (
             <div className="relative mx-auto w-full max-w-[260px]">
               <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-[var(--lime)]/10 via-transparent to-[var(--lime)]/5 blur-sm" />
               <div className="relative rounded-2xl bg-white/95 overflow-hidden">
-                <img src={currentDetail.gifUrl} alt={current.nome} className="w-full aspect-square object-contain"  onError={onGifError} />
+                <img src={currentGifUrl} alt={current.nome} className="w-full aspect-square object-contain"  onError={onGifError} />
               </div>
             </div>
           ) : (
