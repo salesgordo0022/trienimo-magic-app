@@ -533,40 +533,12 @@ async function dbClient() {
 }
 
 async function dbHasData(): Promise<boolean> {
-  const db = await dbClient();
-  const { count } = await db
-    .from("exercises_catalog")
-    .select("*", { count: "exact", head: true });
-  return (count ?? 0) > 0;
-}
-
-// Auto-importa metadados da RapidAPI quando o banco está vazio
-async function autoImportIfEmpty(): Promise<boolean> {
-  if (await dbHasData()) return true;
-  const key = process.env.RAPIDAPI_KEY;
-  if (!key) return false;
   try {
-    const r = await fetch(`${BASE}/exercises?limit=1500&offset=0`, {
-      headers: { "x-rapidapi-host": HOST, "x-rapidapi-key": key },
-    });
-    if (!r.ok) return false;
-    const items = (await r.json()) as Exercise[];
     const db = await dbClient();
-    const rows = items.map((e) => ({
-      id: String(e.id),
-      name: e.name ?? "",
-      body_part: e.bodyPart ?? null,
-      target: e.target ?? null,
-      equipment: e.equipment ?? null,
-      difficulty: e.difficulty ?? null,
-      secondaryMuscles: e.secondaryMuscles ?? null,
-      instructions: e.instructions ?? null,
-    }));
-    for (let i = 0; i < rows.length; i += 500) {
-      const chunk = rows.slice(i, i + 500);
-      await db.from("exercises_catalog").upsert(chunk, { onConflict: "id", ignoreDuplicates: false });
-    }
-    return true;
+    const { count } = await db
+      .from("exercises_catalog")
+      .select("*", { count: "exact", head: true });
+    return (count ?? 0) > 0;
   } catch {
     return false;
   }
@@ -587,7 +559,7 @@ function rowToExercise(r: any): Exercise {
 }
 
 export const listBodyParts = createServerFn({ method: "GET" }).handler(async () => {
-  if (await autoImportIfEmpty()) {
+  if (await dbHasData()) {
     const db = await dbClient();
     const { data } = await db.from("exercises_catalog").select("body_part").not("body_part", "is", null);
     return Array.from(new Set((data ?? []).map((r: any) => r.body_part))).sort();
@@ -596,7 +568,7 @@ export const listBodyParts = createServerFn({ method: "GET" }).handler(async () 
 });
 
 export const listTargets = createServerFn({ method: "GET" }).handler(async () => {
-  if (await autoImportIfEmpty()) {
+  if (await dbHasData()) {
     const db = await dbClient();
     const { data } = await db.from("exercises_catalog").select("target").not("target", "is", null);
     return Array.from(new Set((data ?? []).map((r: any) => r.target))).sort();
@@ -605,7 +577,7 @@ export const listTargets = createServerFn({ method: "GET" }).handler(async () =>
 });
 
 export const listEquipments = createServerFn({ method: "GET" }).handler(async () => {
-  if (await autoImportIfEmpty()) {
+  if (await dbHasData()) {
     const db = await dbClient();
     const { data } = await db.from("exercises_catalog").select("equipment").not("equipment", "is", null);
     return Array.from(new Set((data ?? []).map((r: any) => r.equipment))).sort();
@@ -640,7 +612,7 @@ export const searchExercises = createServerFn({ method: "GET" })
     let bodyPart = data.bodyPart?.toLowerCase();
     if (bodyPart && PT_BODYPART[bodyPart]) bodyPart = PT_BODYPART[bodyPart];
 
-    if (await autoImportIfEmpty()) {
+    if (await dbHasData()) {
       const db = await dbClient();
       let query = db.from("exercises_catalog").select("*");
       if (data.q && data.q.trim()) {
@@ -686,7 +658,7 @@ export const searchExercises = createServerFn({ method: "GET" })
 export const getExerciseById = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().min(1).max(10) }).parse(d))
   .handler(async ({ data }) => {
-    if (await autoImportIfEmpty()) {
+    if (await dbHasData()) {
       const db = await dbClient();
       const { data: row } = await db
         .from("exercises_catalog")
