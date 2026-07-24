@@ -58,8 +58,8 @@ export const Route = createFileRoute("/api/public/exercise-gif/$id")({
               await supabaseAdmin
                 .from("exercises_catalog")
                 .upsert(
-                  { id, gif_data: b64, synced_at: new Date().toISOString() },
-                  { onConflict: "id" },
+                  { id, name: "", gif_data: b64, synced_at: new Date().toISOString() } as any,
+                  { onConflict: "id", ignoreDuplicates: false },
                 );
             } catch {}
           }
