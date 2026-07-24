@@ -67,8 +67,7 @@ export const Route = createFileRoute("/api/public/exercise-gif/$id")({
               }
             } catch {}
           }
-            } catch {}
-          }
+
 
           return new Response(buf, { status: 200, headers: imageHeaders });
         } catch {}
