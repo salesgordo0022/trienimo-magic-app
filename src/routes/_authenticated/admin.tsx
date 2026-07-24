@@ -208,10 +208,10 @@ function FixRoleByEmail() {
   const [role, setRole] = useState<AppRole>("professor");
   const fix = useMutation({
     mutationFn: useServerFn(fixUserRoleByEmail),
-    onSuccess: (r) => {
+    onSuccess: (r: { email?: string; role?: string }) => {
       qc.invalidateQueries({ queryKey: ["allUsers"] });
       setEmail("");
-      toast.success(`${r.email} agora é ${r.role}`);
+      toast.success(`${r.email ?? ""} agora é ${r.role ?? ""}`);
     },
     onError: (e) => toast.error(e.message),
   });
