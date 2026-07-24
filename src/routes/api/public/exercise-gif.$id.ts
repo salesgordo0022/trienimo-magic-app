@@ -51,16 +51,23 @@ export const Route = createFileRoute("/api/public/exercise-gif/$id")({
           const buf = await gr.arrayBuffer();
           const b64 = Buffer.from(buf).toString("base64");
 
-          // Salva no banco pra próxima vez (fire and forget)
+          // Salva no banco pra próxima vez: update se já existe, insert caso contrário.
           if (canUseCatalogDb) {
             try {
               const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-              await supabaseAdmin
+              const { data: updated } = await supabaseAdmin
                 .from("exercises_catalog")
-                .update({ gif_data: b64 })
-                .eq("id", id);
+                .update({ gif_data: b64, synced_at: new Date().toISOString() })
+                .eq("id", id)
+                .select("id");
+              if (!updated || updated.length === 0) {
+                await supabaseAdmin
+                  .from("exercises_catalog")
+                  .insert({ id, name: "", gif_data: b64, synced_at: new Date().toISOString() } as any);
+              }
             } catch {}
           }
+
 
           return new Response(buf, { status: 200, headers: imageHeaders });
         } catch {}
