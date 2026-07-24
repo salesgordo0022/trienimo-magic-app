@@ -14,16 +14,457 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      exercises: {
+        Row: {
+          created_at: string
+          desc_segundos: number
+          exercise_db_id: string | null
+          group_id: string
+          id: string
+          nome: string
+          obs: string | null
+          ordem: number
+          series: number
+          sets_config: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          desc_segundos?: number
+          exercise_db_id?: string | null
+          group_id: string
+          id?: string
+          nome: string
+          obs?: string | null
+          ordem?: number
+          series?: number
+          sets_config?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          desc_segundos?: number
+          exercise_db_id?: string | null
+          group_id?: string
+          id?: string
+          nome?: string
+          obs?: string | null
+          ordem?: number
+          series?: number
+          sets_config?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercises_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "workout_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercises_catalog: {
+        Row: {
+          body_part: string | null
+          difficulty: string | null
+          equipment: string | null
+          gif_data: string | null
+          gif_path: string | null
+          id: string
+          instructions: string[] | null
+          instructions_pt: string[] | null
+          name: string
+          name_pt: string | null
+          secondary_muscles: string[] | null
+          synced_at: string
+          target: string | null
+        }
+        Insert: {
+          body_part?: string | null
+          difficulty?: string | null
+          equipment?: string | null
+          gif_data?: string | null
+          gif_path?: string | null
+          id: string
+          instructions?: string[] | null
+          instructions_pt?: string[] | null
+          name: string
+          name_pt?: string | null
+          secondary_muscles?: string[] | null
+          synced_at?: string
+          target?: string | null
+        }
+        Update: {
+          body_part?: string | null
+          difficulty?: string | null
+          equipment?: string | null
+          gif_data?: string | null
+          gif_path?: string | null
+          id?: string
+          instructions?: string[] | null
+          instructions_pt?: string[] | null
+          name?: string
+          name_pt?: string | null
+          secondary_muscles?: string[] | null
+          synced_at?: string
+          target?: string | null
+        }
+        Relationships: []
+      }
+      invites: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          dias_semana: string | null
+          id: string
+          logo_texto: string | null
+          nome: string | null
+          objetivo: string | null
+          observacao: string | null
+          personal_nome: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dias_semana?: string | null
+          id: string
+          logo_texto?: string | null
+          nome?: string | null
+          objetivo?: string | null
+          observacao?: string | null
+          personal_nome?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dias_semana?: string | null
+          id?: string
+          logo_texto?: string | null
+          nome?: string | null
+          objetivo?: string | null
+          observacao?: string | null
+          personal_nome?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      session_sets: {
+        Row: {
+          created_at: string
+          done: boolean
+          exercise_id: string
+          id: string
+          kg: number | null
+          reps: number | null
+          session_id: string
+          set_index: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          done?: boolean
+          exercise_id: string
+          id?: string
+          kg?: number | null
+          reps?: number | null
+          session_id: string
+          set_index: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          done?: boolean
+          exercise_id?: string
+          id?: string
+          kg?: number | null
+          reps?: number | null
+          session_id?: string
+          set_index?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_sets_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_sets_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          ended_at: string | null
+          id: string
+          started_at: string
+          user_id: string
+          workout_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id: string
+          workout_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teacher_students: {
+        Row: {
+          created_at: string
+          id: string
+          student_id: string
+          teacher_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          student_id: string
+          teacher_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          student_id?: string
+          teacher_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workout_groups: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          user_id: string
+          workout_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          user_id: string
+          workout_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          user_id?: string
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_groups_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workouts: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          data_inicio: string | null
+          id: string
+          letra: string
+          nome: string | null
+          observacao: string | null
+          ordem: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          data_inicio?: string | null
+          id?: string
+          letra?: string
+          nome?: string | null
+          observacao?: string | null
+          ordem?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          data_inicio?: string | null
+          id?: string
+          letra?: string
+          nome?: string | null
+          observacao?: string | null
+          ordem?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_my_roles: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      set_user_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "professor" | "aluno"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +591,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "professor", "aluno"],
+    },
   },
 } as const
