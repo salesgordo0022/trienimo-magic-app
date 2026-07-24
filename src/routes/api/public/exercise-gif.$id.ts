@@ -51,14 +51,16 @@ export const Route = createFileRoute("/api/public/exercise-gif/$id")({
           const buf = await gr.arrayBuffer();
           const b64 = Buffer.from(buf).toString("base64");
 
-          // Salva no banco pra próxima vez (fire and forget)
+          // Salva no banco pra próxima vez (upsert pra funcionar mesmo se a linha não existir)
           if (canUseCatalogDb) {
             try {
               const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
               await supabaseAdmin
                 .from("exercises_catalog")
-                .update({ gif_data: b64 })
-                .eq("id", id);
+                .upsert(
+                  { id, gif_data: b64, synced_at: new Date().toISOString() },
+                  { onConflict: "id" },
+                );
             } catch {}
           }
 
