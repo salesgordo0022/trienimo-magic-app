@@ -91,7 +91,7 @@ function Mensagens() {
         <div>
           <h1 className="text-lg font-black text-white leading-tight">Mensagens</h1>
           <p className="text-[11px] text-zinc-500">
-            {isAluno ? "Converse com seu personal" : "Converse com seus alunos"}
+            {isAluno ? "Converse com seus personais" : "Converse com seus alunos"}
           </p>
         </div>
       </div>
@@ -103,8 +103,8 @@ function Mensagens() {
           </div>
           <p className="text-sm text-zinc-500 leading-relaxed">
             {isAluno
-              ? "Nenhum personal encontrado. Aguarde seu professor ser vinculado."
-              : "Nenhum aluno vinculado ainda."}
+              ? "Nenhum personal encontrado no sistema."
+              : "Nenhum aluno encontrado no sistema."}
           </p>
         </div>
       ) : (
