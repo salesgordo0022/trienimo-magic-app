@@ -76,10 +76,10 @@ function Shell() {
 
   return (
     <div
-      className="min-h-screen bg-[#0a0a0a] text-white flex flex-col overflow-x-hidden"
+      className="h-dvh bg-[#0a0a0a] text-white flex flex-col overflow-hidden w-full"
       style={{ fontFamily: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif" }}
     >
-      <header className="sticky top-0 z-30 bg-[#0a0a0a]/85 backdrop-blur-xl border-b border-white/5 safe-top safe-x">
+      <header className="shrink-0 sticky top-0 z-30 bg-[#0a0a0a]/85 backdrop-blur-xl border-b border-white/5 safe-top safe-x">
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3">
           <Link to="/app" className="shrink-0">
             <img
@@ -129,14 +129,14 @@ function Shell() {
         </div>
       </header>
 
-      <main className="flex-1 min-w-0 pb-24 safe-x">
-        <div className="max-w-3xl mx-auto w-full">
+      <main className="flex-1 min-h-0 min-w-0 overflow-y-auto safe-x">
+        <div className="max-w-3xl mx-auto w-full pb-6">
           <Outlet />
         </div>
       </main>
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#0d0d0f]/95 backdrop-blur-xl border-t border-white/10 safe-bottom safe-x">
+      <nav className="shrink-0 fixed bottom-0 inset-x-0 z-40 bg-[#0d0d0f]/95 backdrop-blur-xl border-t border-white/10 safe-bottom safe-x">
         <div className="max-w-3xl mx-auto grid grid-cols-5 gap-1 px-2 py-2">
           {NAV.map((item) => {
             const active =

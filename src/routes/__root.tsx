@@ -54,7 +54,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
       { title: "Ficha de Treino — Personal" },
       { name: "description", content: "Crie fichas de treino (A, B, C), execute com timer de descanso e acompanhe sua evolução. Instalável no iPhone e PC." },
       { name: "theme-color", content: "#FFD400" },

@@ -94,17 +94,17 @@ function Mensagens() {
   }
 
   return (
-    <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full bg-[#0a0a0a]">
+    <div className="h-full flex flex-col bg-[#0a0a0a] overflow-hidden">
       {/* Header */}
-      <div className="px-5 pt-6 pb-4 bg-gradient-to-b from-[#0f0f0f] to-[#0a0a0a]">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-xl font-black text-white tracking-tight">Mensagens</h1>
+      <div className="shrink-0 px-4 pt-4 pb-3 bg-gradient-to-b from-[#0f0f0f] to-[#0a0a0a]">
+        <div className="flex items-center justify-between mb-3">
+          <div className="min-w-0">
+            <h1 className="text-lg font-black text-white tracking-tight">Mensagens</h1>
             <p className="text-[11px] text-zinc-500 mt-0.5">
               {allConversations.length} {allConversations.length === 1 ? "contato" : "contatos"} disponível{allConversations.length !== 1 ? "is" : ""}
             </p>
           </div>
-          <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center shrink-0">
             <MoreVertical className="w-4 h-4 text-zinc-400" />
           </div>
         </div>
@@ -123,9 +123,9 @@ function Mensagens() {
 
       {/* Conversation list */}
       {filtered.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-16 px-6 text-center">
-          <div className="w-20 h-20 rounded-full bg-white/[0.03] flex items-center justify-center mb-5 border border-white/[0.04]">
-            <svg className="w-8 h-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 text-center">
+          <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mb-4 border border-white/[0.04]">
+            <svg className="w-7 h-7 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
             </svg>
           </div>
@@ -146,13 +146,13 @@ function Mensagens() {
             return (
               <div key={c.partner_id}>
                 {showDate && date && (
-                  <div className="px-5 py-2">
+                  <div className="px-4 py-2">
                     <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">{date}</span>
                   </div>
                 )}
                 <button
                   onClick={() => setActive(c.partner_id)}
-                  className="w-full px-5 py-3.5 flex items-center gap-3.5 hover:bg-white/[0.02] active:bg-white/[0.04] transition-all duration-150"
+                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.02] active:bg-white/[0.04] transition-all duration-150"
                 >
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-black shrink-0 ${hasUnread ? 'bg-gradient-to-br from-[var(--lime)] to-[#8ab800] text-black shadow-lg shadow-[var(--lime)]/20' : 'bg-white/[0.06] text-zinc-400 border border-white/[0.06]'}`}>
                     {initials}
@@ -243,9 +243,9 @@ function Thread({
   }, [messages?.length]);
 
   return (
-    <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full bg-[#0a0a0a]">
+    <div className="h-full flex flex-col bg-[#0a0a0a] overflow-hidden">
       {/* Header */}
-      <header className="px-3 py-3 flex items-center gap-3 bg-[#0f0f0f] border-b border-white/[0.04] shrink-0">
+      <header className="shrink-0 px-3 py-3 flex items-center gap-3 bg-[#0f0f0f] border-b border-white/[0.04]">
         <button
           onClick={onBack}
           className="p-2 -ml-1 rounded-full text-zinc-400 hover:text-white hover:bg-white/5 active:bg-white/10 transition-colors"
@@ -265,14 +265,14 @@ function Thread({
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-3">
         {msgLoading ? (
-          <div className="flex flex-col items-center justify-center py-16">
+          <div className="flex flex-col items-center justify-center py-12">
             <div className="w-8 h-8 rounded-full border-2 border-[var(--lime)] border-t-transparent animate-spin" />
           </div>
         ) : (messages ?? []).length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mb-4 border border-white/[0.04]">
+          <div className="flex flex-col items-center justify-center py-12 px-4">
+            <div className="w-14 h-14 rounded-full bg-white/[0.03] flex items-center justify-center mb-3 border border-white/[0.04]">
               <svg className="w-7 h-7 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
               </svg>
@@ -306,10 +306,10 @@ function Thread({
           if (!body.trim() || send.isPending) return;
           send.mutate({ data: { to: partnerId, body: body.trim() } });
         }}
-        className="px-3 py-3 bg-[#0f0f0f] border-t border-white/[0.04] shrink-0"
+        className="shrink-0 px-3 py-2.5 bg-[#0f0f0f] border-t border-white/[0.04] safe-bottom"
       >
         <div className="flex items-end gap-2">
-          <div className="flex-1 relative">
+          <div className="flex-1 min-w-0 relative">
             <input
               ref={inputRef}
               value={body}
@@ -323,7 +323,7 @@ function Thread({
                 }
               }}
               placeholder="Digite sua mensagem..."
-              className="w-full bg-white/[0.04] border border-white/[0.06] rounded-2xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[var(--lime)]/30 transition-colors resize-none"
+              className="w-full bg-white/[0.04] border border-white/[0.06] rounded-2xl px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[var(--lime)]/30 transition-colors"
             />
           </div>
           <button
@@ -351,13 +351,13 @@ function MessageBubble({ msg, isMine }: { msg: MessageRow; isMine: boolean }) {
   return (
     <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[78%] px-3.5 py-2.5 ${
+        className={`max-w-[85%] px-3 py-2 ${
           isMine
             ? "bg-[var(--lime)] text-black rounded-2xl rounded-br-md"
             : "bg-white/[0.06] text-white border border-white/[0.06] rounded-2xl rounded-bl-md"
         }`}
       >
-        <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">{msg.body}</p>
+        <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words word-break-all">{msg.body}</p>
         <div className={`flex items-center justify-end gap-1 mt-0.5 ${isMine ? "text-black/30" : "text-zinc-600"}`}>
           <span className="text-[9px]">{time}</span>
           {isMine && <CheckCheck className="w-3 h-3" />}
