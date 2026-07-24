@@ -37,13 +37,14 @@ async function getUserRole(userId: string): Promise<"admin" | "professor" | "alu
   return "aluno";
 }
 
-async function getProfessorIds(): Promise<string[]> {
+async function getStaffIds(): Promise<string[]> {
   const admin = await getAdmin();
   const { data } = await admin
     .from("user_roles")
-    .select("user_id")
-    .eq("role", "professor");
-  return (data ?? []).map((r) => r.user_id);
+    .select("user_id, role")
+    .in("role", ["professor", "admin"]);
+  const unique = [...new Set((data ?? []).map((r) => r.user_id))];
+  return unique;
 }
 
 async function getLinkedStudentIds(teacherId: string): Promise<string[]> {
@@ -75,9 +76,8 @@ export const listAvailableContacts = createServerFn({ method: "GET" })
       // Professor vê seus alunos vinculados
       targetIds = await getLinkedStudentIds(context.userId);
     } else {
-      // Aluno vê TODOS os professores do sistema
-      targetIds = await getProfessorIds();
-      // Remove a si mesmo da lista
+      // Aluno vê TODOS os professores e admins do sistema
+      targetIds = await getStaffIds();
       targetIds = targetIds.filter((id) => id !== context.userId);
     }
 
@@ -106,9 +106,9 @@ export const listMyConversations = createServerFn({ method: "GET" })
       const studentIds = await getLinkedStudentIds(context.userId);
       validContactIds = new Set(studentIds);
     } else {
-      // Aluno: conversas com QUALQUER professor
-      const profIds = await getProfessorIds();
-      validContactIds = new Set(profIds);
+      // Aluno: conversas com QUALQUER professor ou admin
+      const staffIds = await getStaffIds();
+      validContactIds = new Set(staffIds);
     }
 
     const { data: msgs, error } = await admin
