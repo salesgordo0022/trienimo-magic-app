@@ -468,16 +468,26 @@ async function dbClient() {
   return supabaseAdmin;
 }
 
+function canUseCatalogDb(): boolean {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 async function dbHasData(): Promise<boolean> {
-  const db = await dbClient();
-  const { count } = await db
-    .from("exercises_catalog")
-    .select("*", { count: "exact", head: true });
-  return (count ?? 0) > 0;
+  if (!canUseCatalogDb()) return false;
+  try {
+    const db = await dbClient();
+    const { count } = await db
+      .from("exercises_catalog")
+      .select("*", { count: "exact", head: true });
+    return (count ?? 0) > 0;
+  } catch {
+    return false;
+  }
 }
 
 // Auto-importa metadados da RapidAPI quando o banco está vazio
 async function autoImportIfEmpty(): Promise<boolean> {
+  if (!canUseCatalogDb()) return false;
   if (await dbHasData()) return true;
   const key = process.env.RAPIDAPI_KEY;
   if (!key) return false;

@@ -1,9 +1,9 @@
 import { onGifError } from "@/lib/exercise-gif-fallback";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { getFicha } from "@/lib/workouts.functions";
-import { getExerciseById, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, type Exercise } from "@/lib/exercisedb.functions";
-import { ArrowLeft, X, Dumbbell, CheckCircle2, ChevronRight, ChevronLeft, Flag, Loader2 } from "lucide-react";
+import { exerciseGifUrl } from "@/lib/exercisedb.functions";
+import { ArrowLeft, X, Dumbbell, CheckCircle2, ChevronRight, ChevronLeft, Flag } from "lucide-react";
 import { useState, useMemo } from "react";
 
 const fichaQO = (id: string) =>
@@ -23,35 +23,12 @@ function TreinarPage() {
     [ficha.groups],
   );
 
-  const dbIds = useMemo(
-    () => allExercises.filter((e) => e.exercise_db_id).map((e) => e.exercise_db_id!),
-    [allExercises],
-  );
-
-  const exerciseDetails = useQuery({
-    queryKey: ["ex", "details", dbIds],
-    queryFn: async () => {
-      const results = await Promise.all(
-        dbIds.map((eid) => getExerciseById({ data: { id: eid } }).catch(() => null)),
-      );
-      return results.filter(Boolean) as Exercise[];
-    },
-    enabled: dbIds.length > 0,
-    staleTime: 1000 * 60 * 60,
-  });
-
-  const detailMap = useMemo(() => {
-    const m = new Map<string, Exercise>();
-    (exerciseDetails.data ?? []).forEach((ex) => m.set(ex.id, ex));
-    return m;
-  }, [exerciseDetails.data]);
-
   const [currentIdx, setCurrentIdx] = useState(0);
   const [finished, setFinished] = useState(false);
 
   const current = allExercises[currentIdx];
   const total = allExercises.length;
-  const currentDetail = current?.exercise_db_id ? detailMap.get(current.exercise_db_id) : null;
+  const currentGifUrl = current?.exercise_db_id ? exerciseGifUrl(current.exercise_db_id) : null;
   const reps = current?.sets_config?.[0]?.reps ?? "12";
 
   const goNext = () => {
@@ -165,11 +142,11 @@ function TreinarPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-4 min-h-0">
         <div className="w-full max-w-sm space-y-5" key={`exercise-${currentIdx}`}>
           {/* GIF */}
-          {currentDetail?.gifUrl ? (
+          {currentGifUrl ? (
             <div className="relative mx-auto w-full max-w-[260px]">
               <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-[var(--lime)]/10 via-transparent to-[var(--lime)]/5 blur-sm" />
               <div className="relative rounded-2xl bg-white/95 overflow-hidden">
-                <img src={currentDetail.gifUrl} alt={current.nome} className="w-full aspect-square object-contain"  onError={onGifError} />
+                <img src={currentGifUrl} alt={current.nome} className="w-full aspect-square object-contain"  onError={onGifError} />
               </div>
             </div>
           ) : (
@@ -183,20 +160,6 @@ function TreinarPage() {
           {/* Name + tags */}
           <div className="text-center">
             <h3 className="text-xl font-black text-white capitalize">{current.nome}</h3>
-            {currentDetail && (
-              <div className="flex justify-center flex-wrap gap-2 mt-2">
-                {currentDetail.target && (
-                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--lime)]/12 text-[var(--lime)] border border-[var(--lime)]/20">
-                    {ptTerm(TARGET_PT, currentDetail.target) ?? currentDetail.target}
-                  </span>
-                )}
-                {currentDetail.equipment && (
-                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-white/5 text-zinc-400 border border-white/10">
-                    {ptTerm(EQUIPMENT_PT, currentDetail.equipment) ?? currentDetail.equipment}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Series x Reps summary */}
