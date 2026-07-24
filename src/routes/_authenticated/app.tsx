@@ -945,7 +945,7 @@ function Inicio() {
                 Voltar ao Inicio
               </button>
               <button
-                onClick={() => { setNovoStep("bodyparts"); setExerciseIndex(0); setCurrentSet(1); setCompletedExercises(new Set()); setRestTimer({ active: false, seconds: 0, total: 0 }); }}
+                onClick={() => { setNovoStep("bodyparts"); setExerciseIndex(0); setCompletedExercises(new Set()); }}
                 className="rounded-2xl px-5 py-4 font-black text-sm text-white bg-white/5 border border-white/8 hover:bg-white/10 active:scale-[0.97] transition-all"
               >
                 <RotateCcw className="w-5 h-5" />
