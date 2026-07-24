@@ -415,69 +415,15 @@ const EXERCISE_INSTRUCTION_PT: Record<string, string> = {
   "don't let your hips sag": "não deixe o quadril cair",
 };
 
-// Tenta traduzir via LibreTranslate (fallback grátis, sem chave)
-async function translateLibre(text: string): Promise<string | null> {
-  for (const host of ["https://libretranslate.de", "https://translate.argosopentech.com"]) {
-    try {
-      const r = await fetch(`${host}/translate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: text, source: "en", target: "pt" }),
-      });
-      if (!r.ok) continue;
-      const json = (await r.json()) as { translatedText?: string };
-      if (json.translatedText) return json.translatedText;
-    } catch {
-      continue;
-    }
-  }
-  return null;
-}
-
-// Tradução de texto livre (nome, instruções, descrição):
-// 1º dicionário estático, 2º MyMemory API, 3º LibreTranslate
-export async function translateEN(text: string): Promise<string> {
+// Tradução via dicionário estático apenas (sem APIs externas).
+// Se não estiver no dicionário, retorna o texto original.
+export function translateEN(text: string): string {
   const trimmed = text.trim();
   if (!trimmed) return text;
   const lower = trimmed.toLowerCase();
-  const dict = EXERCISE_NAME_PT[lower] ?? EXERCISE_INSTRUCTION_PT[lower];
-  if (dict) return dict;
-  const key = `tr:${trimmed}`;
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < TTL) return hit.data as string;
-  let result = text;
-  try {
-    // Tenta MyMemory primeiro
-    const r = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|pt-BR`,
-    );
-    if (r.ok) {
-      const json = (await r.json()) as {
-        responseData?: { translatedText?: string };
-        responseStatus?: number;
-      };
-      const translated = json.responseData?.translatedText;
-      if (json.responseStatus === 200 && translated && !/MYMEMORY WARNING/i.test(translated)) {
-        result = translated;
-      }
-    }
-    // Se MyMemory falhou ou deu warning, tenta LibreTranslate
-    if (result === text) {
-      const libre = await translateLibre(trimmed);
-      if (libre) result = libre;
-    }
-  } catch {
-    // Fallback: tenta LibreTranslate direto
-    try {
-      const libre = await translateLibre(trimmed);
-      if (libre) result = libre;
-    } catch {
-      // mantém texto original
-    }
-  }
-  cache.set(key, { at: Date.now(), data: result });
-  return result;
+  return EXERCISE_NAME_PT[lower] ?? EXERCISE_INSTRUCTION_PT[lower] ?? text;
 }
+
 
 function translateDict(e: Exercise): Exercise {
   return {
@@ -489,38 +435,28 @@ function translateDict(e: Exercise): Exercise {
   };
 }
 
-// Músculo secundário: usa o dicionário fixo; se não constar (ex: "hip flexors"), traduz via API.
-async function translateMuscle(m: string): Promise<string> {
-  const dict = ptTerm(MUSCLE_PT, m);
-  if (dict && dict !== m) return dict;
-  return translateEN(m);
+function translateMuscle(m: string): string {
+  return ptTerm(MUSCLE_PT, m) ?? m;
 }
 
-// Tradução "leve": nome + músculos secundários via API (usado nas listas de busca)
-async function translateSummary(e: Exercise): Promise<Exercise> {
-  const [name, secondaryMuscles] = await Promise.all([
-    translateEN(e.name),
-    e.secondaryMuscles
-      ? Promise.all(e.secondaryMuscles.map(translateMuscle))
-      : Promise.resolve(e.secondaryMuscles),
-  ]);
-  return { ...translateDict(e), name, secondaryMuscles };
+function translateSummary(e: Exercise): Exercise {
+  return {
+    ...translateDict(e),
+    name: translateEN(e.name),
+    secondaryMuscles: e.secondaryMuscles?.map(translateMuscle),
+  };
 }
 
-// Tradução completa (nome + instruções + descrição + músculos secundários), usada na tela de detalhe de 1 exercício por vez
-async function translateFull(e: Exercise): Promise<Exercise> {
-  const [name, description, instructions, secondaryMuscles] = await Promise.all([
-    translateEN(e.name),
-    e.description ? translateEN(e.description) : Promise.resolve(e.description),
-    e.instructions
-      ? Promise.all(e.instructions.map((s) => translateEN(s)))
-      : Promise.resolve(e.instructions),
-    e.secondaryMuscles
-      ? Promise.all(e.secondaryMuscles.map(translateMuscle))
-      : Promise.resolve(e.secondaryMuscles),
-  ]);
-  return { ...translateDict(e), name, description, instructions, secondaryMuscles };
+function translateFull(e: Exercise): Exercise {
+  return {
+    ...translateDict(e),
+    name: translateEN(e.name),
+    description: e.description ? translateEN(e.description) : e.description,
+    instructions: e.instructions?.map((s) => translateEN(s)),
+    secondaryMuscles: e.secondaryMuscles?.map(translateMuscle),
+  };
 }
+
 
 export const translateBodyPart = createServerFn({ method: "GET" })
   .inputValidator((d: { term: string }) => z.object({ term: z.string() }).parse(d))
@@ -559,7 +495,7 @@ async function autoImportIfEmpty(): Promise<boolean> {
       target: e.target ?? null,
       equipment: e.equipment ?? null,
       difficulty: e.difficulty ?? null,
-      secondaryMuscles: e.secondaryMuscles ?? null,
+      secondary_muscles: e.secondaryMuscles ?? null,
       instructions: e.instructions ?? null,
     }));
     for (let i = 0; i < rows.length; i += 500) {
@@ -655,15 +591,9 @@ export const searchExercises = createServerFn({ method: "GET" })
         .range(offset, offset + limit - 1);
       const rows2 = rows ?? [];
       const items = rows2.map(rowToExercise);
-      const translated = await Promise.all(items.map((e) => translateSummary(e)));
-      for (const t of translated) {
-        const orig = rows2.find((r: any) => r.id === t.id);
-        if (orig && t.name !== orig.name) {
-          await db.from("exercises_catalog").update({ name_pt: t.name }).eq("id", t.id);
-        }
-      }
-      return translated;
+      return items.map(translateSummary);
     }
+
 
     // fallback API
     let url: string;
@@ -679,8 +609,7 @@ export const searchExercises = createServerFn({ method: "GET" })
       url = `${BASE}/exercises?limit=${limit}&offset=${offset}`;
     }
     const items = await cachedJson<Exercise[]>(url);
-    const translated = await Promise.all(items.map((e) => translateSummary(e)));
-    return translated.map((e) => ({ ...e, gifUrl: exerciseGifUrl(e.id) }));
+    return items.map((e) => ({ ...translateSummary(e), gifUrl: exerciseGifUrl(e.id) }));
   });
 
 export const getExerciseById = createServerFn({ method: "GET" })
@@ -694,21 +623,11 @@ export const getExerciseById = createServerFn({ method: "GET" })
         .eq("id", data.id)
         .maybeSingle();
       if (row) {
-        const ex = rowToExercise(row);
-        const translated = await translateFull(ex);
-        const db2 = await dbClient();
-        if (translated.name !== row.name) {
-          await db2.from("exercises_catalog").update({ name_pt: translated.name }).eq("id", row.id);
-        }
-        if (translated.instructions && JSON.stringify(translated.instructions) !== JSON.stringify(row.instructions)) {
-          await db2.from("exercises_catalog").update({ instructions_pt: translated.instructions }).eq("id", row.id);
-        }
-        return translated;
+        return translateFull(rowToExercise(row));
       }
     }
     const ex = await cachedJson<Exercise>(
       `${BASE}/exercises/exercise/${encodeURIComponent(data.id)}`,
     );
-    const translated = await translateFull(ex);
-    return { ...translated, gifUrl: exerciseGifUrl(translated.id) };
+    return { ...translateFull(ex), gifUrl: exerciseGifUrl(ex.id) };
   });

@@ -1,3 +1,4 @@
+import { onGifError } from "@/lib/exercise-gif-fallback";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { getFicha } from "@/lib/workouts.functions";
@@ -168,7 +169,7 @@ function TreinarPage() {
             <div className="relative mx-auto w-full max-w-[260px]">
               <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-[var(--lime)]/10 via-transparent to-[var(--lime)]/5 blur-sm" />
               <div className="relative rounded-2xl bg-white/95 overflow-hidden">
-                <img src={currentDetail.gifUrl} alt={current.nome} className="w-full aspect-square object-contain" />
+                <img src={currentDetail.gifUrl} alt={current.nome} className="w-full aspect-square object-contain"  onError={onGifError} />
               </div>
             </div>
           ) : (

@@ -1,3 +1,4 @@
+import { onGifError } from "@/lib/exercise-gif-fallback";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   useSuspenseQuery,
@@ -724,7 +725,7 @@ function ExerciseRowEditor({
                     src={exerciseGifUrl(ex.exercise_db_id!)}
                     alt=""
                     className="w-7 h-7 rounded-md object-contain bg-white shrink-0 cursor-pointer border border-white/10"
-                  />
+                   onError={onGifError} />
                 ) : (
                   <div
                     className="w-7 h-7 rounded-md bg-white/5 border border-white/10 text-zinc-500 flex items-center justify-center shrink-0 cursor-pointer hover:text-[var(--lime)]"
@@ -901,7 +902,7 @@ function ExerciseCardMobile({
                 src={exerciseGifUrl(ex.exercise_db_id!)}
                 alt=""
                 className="w-8 h-8 rounded-md object-contain bg-white shrink-0 cursor-pointer border border-white/10"
-              />
+               onError={onGifError} />
             ) : (
               <div
                 className="w-8 h-8 rounded-md bg-white/5 border border-white/10 text-zinc-500 flex items-center justify-center shrink-0 cursor-pointer hover:text-[var(--lime)]"

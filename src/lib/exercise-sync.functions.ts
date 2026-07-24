@@ -164,20 +164,18 @@ async function translatePending(admin: any) {
   const { translateEN } = await import("./exercisedb.functions");
   for (const ex of toTranslate) {
     try {
-      const ptName = await translateEN(ex.name);
+      const ptName = translateEN(ex.name);
       const upd: any = { name_pt: ptName };
       if (ex.instructions?.length) {
-        upd.instructions_pt = await Promise.all(
-          (ex.instructions as string[]).map((s: string) => translateEN(s)),
-        );
+        upd.instructions_pt = (ex.instructions as string[]).map((s) => translateEN(s));
       }
       await admin.from("exercises_catalog").update(upd).eq("id", ex.id);
-      await new Promise((r) => setTimeout(r, 500));
     } catch {
       // continua
     }
   }
 }
+
 
 // Fase 1: importa metadados de todos os exercícios da API (sem GIFs) e já traduz para pt-BR
 export const importExerciseMetadata = createServerFn({ method: "POST" })
@@ -217,20 +215,18 @@ export const importExerciseMetadata = createServerFn({ method: "POST" })
     if (toTranslate?.length) {
       for (const ex of toTranslate) {
         try {
-          const ptName = await translateEN(ex.name);
+          const ptName = translateEN(ex.name);
           if (ptName !== ex.name) {
             const upd: any = { name_pt: ptName };
             if (ex.instructions?.length) {
-              upd.instructions_pt = await Promise.all(
-                (ex.instructions as string[]).map((s: string) => translateEN(s)),
-              );
+              upd.instructions_pt = (ex.instructions as string[]).map((s) => translateEN(s));
             }
             await admin.from("exercises_catalog").update(upd).eq("id", ex.id);
           }
-          await new Promise((r) => setTimeout(r, 500));
         } catch {}
       }
     }
+
     return { imported: rows.length };
   });
 
@@ -316,10 +312,10 @@ export const batchTranslateExercises = createServerFn({ method: "POST" })
     let processed = 0;
     for (const row of pending) {
       try {
-        const ptName = await translateEN(row.name);
+        const ptName = translateEN(row.name);
         let ptInstructions: string[] | null = null;
         if (row.instructions?.length) {
-          ptInstructions = await Promise.all(row.instructions.map((s: string) => translateEN(s)));
+          ptInstructions = row.instructions.map((s: string) => translateEN(s));
         }
         const upd: any = { name_pt: ptName };
         if (ptInstructions) upd.instructions_pt = ptInstructions;
@@ -328,9 +324,9 @@ export const batchTranslateExercises = createServerFn({ method: "POST" })
           .update(upd)
           .eq("id", row.id);
         if (!updErr) processed++;
-        await new Promise((r) => setTimeout(r, 600));
       } catch {}
     }
+
 
     const remaining = await admin
       .from("exercises_catalog")
