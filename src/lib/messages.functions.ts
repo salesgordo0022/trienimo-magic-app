@@ -25,44 +25,60 @@ async function getAdmin() {
   return supabaseAdmin;
 }
 
+async function getUserRole(userId: string): Promise<"admin" | "professor" | "aluno"> {
+  const admin = await getAdmin();
+  const { data } = await admin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+  const roles = (data ?? []).map((r) => r.role);
+  if (roles.includes("admin")) return "admin";
+  if (roles.includes("professor")) return "professor";
+  return "aluno";
+}
+
+async function getProfessorIds(): Promise<string[]> {
+  const admin = await getAdmin();
+  const { data } = await admin
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "professor");
+  return (data ?? []).map((r) => r.user_id);
+}
+
+async function getLinkedStudentIds(teacherId: string): Promise<string[]> {
+  const admin = await getAdmin();
+  const { data } = await admin
+    .from("teacher_students")
+    .select("student_id")
+    .eq("teacher_id", teacherId);
+  return (data ?? []).map((l) => l.student_id);
+}
+
 // --- Listar contatos disponíveis (por papel) ---
 export const listAvailableContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = await getAdmin();
-
-    // 1. Descobrir o papel do usuário
-    const { data: roleRows } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    const roles = (roleRows ?? []).map((r) => r.role);
-    const isAdmin = roles.includes("admin");
-    const isProf = roles.includes("professor");
-
-    // 2. Buscar teacher_students
-    const { data: links } = await admin
-      .from("teacher_students")
-      .select("student_id, teacher_id");
+    const role = await getUserRole(context.userId);
 
     let targetIds: string[] = [];
 
-    if (isAdmin) {
+    if (role === "admin") {
       // Admin vê todos os profiles (exceto ele mesmo)
       const { data: all } = await admin
         .from("profiles")
         .select("id")
         .neq("id", context.userId);
       targetIds = (all ?? []).map((p) => p.id);
-    } else if (isProf) {
+    } else if (role === "professor") {
       // Professor vê seus alunos vinculados
-      targetIds = (links ?? [])
-        .filter((l) => l.teacher_id === context.userId)
-        .map((l) => l.student_id);
+      targetIds = await getLinkedStudentIds(context.userId);
     } else {
-      // Aluno vê seu professor vinculado
-      const teacherId = (links ?? []).find((l) => l.student_id === context.userId)?.teacher_id;
-      if (teacherId) targetIds = [teacherId];
+      // Aluno vê TODOS os professores do sistema
+      targetIds = await getProfessorIds();
+      // Remove a si mesmo da lista
+      targetIds = targetIds.filter((id) => id !== context.userId);
     }
 
     if (!targetIds.length) return [];
@@ -80,32 +96,19 @@ export const listMyConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = await getAdmin();
-
-    // Descobrir o papel
-    const { data: roleRows } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    const roles = (roleRows ?? []).map((r) => r.role);
-    const isAdmin = roles.includes("admin");
-    const isProf = roles.includes("professor");
-
-    // Buscar teacher_students
-    const { data: links } = await admin
-      .from("teacher_students")
-      .select("student_id, teacher_id");
+    const role = await getUserRole(context.userId);
 
     // IDs de contatos válidos
     let validContactIds: Set<string> | null = null;
-    if (isAdmin) {
+    if (role === "admin") {
       validContactIds = null; // null = sem filtro, admin vê todos
-    } else if (isProf) {
-      validContactIds = new Set(
-        (links ?? []).filter((l) => l.teacher_id === context.userId).map((l) => l.student_id),
-      );
+    } else if (role === "professor") {
+      const studentIds = await getLinkedStudentIds(context.userId);
+      validContactIds = new Set(studentIds);
     } else {
-      const teacherId = (links ?? []).find((l) => l.student_id === context.userId)?.teacher_id;
-      validContactIds = teacherId ? new Set([teacherId]) : new Set();
+      // Aluno: conversas com QUALQUER professor
+      const profIds = await getProfessorIds();
+      validContactIds = new Set(profIds);
     }
 
     const { data: msgs, error } = await admin
