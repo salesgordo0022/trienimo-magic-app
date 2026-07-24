@@ -631,10 +631,3 @@ export const getExerciseById = createServerFn({ method: "GET" })
     );
     return { ...translateFull(ex), gifUrl: exerciseGifUrl(ex.id) };
   });
-
-    const ex = await cachedJson<Exercise>(
-      `${BASE}/exercises/exercise/${encodeURIComponent(data.id)}`,
-    );
-    const translated = await translateFull(ex);
-    return { ...translated, gifUrl: exerciseGifUrl(translated.id) };
-  });
