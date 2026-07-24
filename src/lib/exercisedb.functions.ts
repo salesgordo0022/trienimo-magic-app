@@ -591,15 +591,9 @@ export const searchExercises = createServerFn({ method: "GET" })
         .range(offset, offset + limit - 1);
       const rows2 = rows ?? [];
       const items = rows2.map(rowToExercise);
-      const translated = await Promise.all(items.map((e) => translateSummary(e)));
-      for (const t of translated) {
-        const orig = rows2.find((r: any) => r.id === t.id);
-        if (orig && t.name !== orig.name) {
-          await db.from("exercises_catalog").update({ name_pt: t.name }).eq("id", t.id);
-        }
-      }
-      return translated;
+      return items.map(translateSummary);
     }
+
 
     // fallback API
     let url: string;
