@@ -609,8 +609,7 @@ export const searchExercises = createServerFn({ method: "GET" })
       url = `${BASE}/exercises?limit=${limit}&offset=${offset}`;
     }
     const items = await cachedJson<Exercise[]>(url);
-    const translated = await Promise.all(items.map((e) => translateSummary(e)));
-    return translated.map((e) => ({ ...e, gifUrl: exerciseGifUrl(e.id) }));
+    return items.map((e) => ({ ...translateSummary(e), gifUrl: exerciseGifUrl(e.id) }));
   });
 
 export const getExerciseById = createServerFn({ method: "GET" })
@@ -624,18 +623,15 @@ export const getExerciseById = createServerFn({ method: "GET" })
         .eq("id", data.id)
         .maybeSingle();
       if (row) {
-        const ex = rowToExercise(row);
-        const translated = await translateFull(ex);
-        const db2 = await dbClient();
-        if (translated.name !== row.name) {
-          await db2.from("exercises_catalog").update({ name_pt: translated.name }).eq("id", row.id);
-        }
-        if (translated.instructions && JSON.stringify(translated.instructions) !== JSON.stringify(row.instructions)) {
-          await db2.from("exercises_catalog").update({ instructions_pt: translated.instructions }).eq("id", row.id);
-        }
-        return translated;
+        return translateFull(rowToExercise(row));
       }
     }
+    const ex = await cachedJson<Exercise>(
+      `${BASE}/exercises/exercise/${encodeURIComponent(data.id)}`,
+    );
+    return { ...translateFull(ex), gifUrl: exerciseGifUrl(ex.id) };
+  });
+
     const ex = await cachedJson<Exercise>(
       `${BASE}/exercises/exercise/${encodeURIComponent(data.id)}`,
     );
