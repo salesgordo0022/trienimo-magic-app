@@ -495,7 +495,7 @@ async function autoImportIfEmpty(): Promise<boolean> {
       target: e.target ?? null,
       equipment: e.equipment ?? null,
       difficulty: e.difficulty ?? null,
-      secondaryMuscles: e.secondaryMuscles ?? null,
+      secondary_muscles: e.secondaryMuscles ?? null,
       instructions: e.instructions ?? null,
     }));
     for (let i = 0; i < rows.length; i += 500) {
