@@ -25,24 +25,89 @@ async function getAdmin() {
   return supabaseAdmin;
 }
 
-// --- Listar todos os contatos disponíveis ---
+// --- Listar contatos disponíveis (por papel) ---
 export const listAvailableContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = await getAdmin();
-    const { data, error } = await admin
+
+    // 1. Descobrir o papel do usuário
+    const { data: roleRows } = await admin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    const roles = (roleRows ?? []).map((r) => r.role);
+    const isAdmin = roles.includes("admin");
+    const isProf = roles.includes("professor");
+
+    // 2. Buscar teacher_students
+    const { data: links } = await admin
+      .from("teacher_students")
+      .select("student_id, teacher_id");
+
+    let targetIds: string[] = [];
+
+    if (isAdmin) {
+      // Admin vê todos os profiles (exceto ele mesmo)
+      const { data: all } = await admin
+        .from("profiles")
+        .select("id")
+        .neq("id", context.userId);
+      targetIds = (all ?? []).map((p) => p.id);
+    } else if (isProf) {
+      // Professor vê seus alunos vinculados
+      targetIds = (links ?? [])
+        .filter((l) => l.teacher_id === context.userId)
+        .map((l) => l.student_id);
+    } else {
+      // Aluno vê seu professor vinculado
+      const teacherId = (links ?? []).find((l) => l.student_id === context.userId)?.teacher_id;
+      if (teacherId) targetIds = [teacherId];
+    }
+
+    if (!targetIds.length) return [];
+
+    const { data: profiles, error } = await admin
       .from("profiles")
       .select("id, nome")
-      .neq("id", context.userId);
+      .in("id", targetIds);
     if (error) throw new Error(error.message);
-    return (data ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
+    return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
   });
 
-// --- Conversas do usuário ---
+// --- Conversas do usuário (filtradas por papel) ---
 export const listMyConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = await getAdmin();
+
+    // Descobrir o papel
+    const { data: roleRows } = await admin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    const roles = (roleRows ?? []).map((r) => r.role);
+    const isAdmin = roles.includes("admin");
+    const isProf = roles.includes("professor");
+
+    // Buscar teacher_students
+    const { data: links } = await admin
+      .from("teacher_students")
+      .select("student_id, teacher_id");
+
+    // IDs de contatos válidos
+    let validContactIds: Set<string> | null = null;
+    if (isAdmin) {
+      validContactIds = null; // null = sem filtro, admin vê todos
+    } else if (isProf) {
+      validContactIds = new Set(
+        (links ?? []).filter((l) => l.teacher_id === context.userId).map((l) => l.student_id),
+      );
+    } else {
+      const teacherId = (links ?? []).find((l) => l.student_id === context.userId)?.teacher_id;
+      validContactIds = teacherId ? new Set([teacherId]) : new Set();
+    }
+
     const { data: msgs, error } = await admin
       .from("messages")
       .select("sender_id, recipient_id, body, read_at, created_at")
@@ -54,6 +119,8 @@ export const listMyConversations = createServerFn({ method: "GET" })
     const partnerMap = new Map<string, { body: string | null; at: string | null; unread: number }>();
     for (const m of msgs ?? []) {
       const pid = m.sender_id === context.userId ? m.recipient_id : m.sender_id;
+      // Filtrar: só mostrar contatos do papel certo
+      if (validContactIds && !validContactIds.has(pid)) continue;
       if (!partnerMap.has(pid)) {
         const unread = (msgs ?? []).filter(
           (x) => x.recipient_id === context.userId && x.sender_id === pid && !x.read_at,
