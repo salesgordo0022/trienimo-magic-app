@@ -312,10 +312,10 @@ export const batchTranslateExercises = createServerFn({ method: "POST" })
     let processed = 0;
     for (const row of pending) {
       try {
-        const ptName = await translateEN(row.name);
+        const ptName = translateEN(row.name);
         let ptInstructions: string[] | null = null;
         if (row.instructions?.length) {
-          ptInstructions = await Promise.all(row.instructions.map((s: string) => translateEN(s)));
+          ptInstructions = row.instructions.map((s: string) => translateEN(s));
         }
         const upd: any = { name_pt: ptName };
         if (ptInstructions) upd.instructions_pt = ptInstructions;
@@ -324,9 +324,9 @@ export const batchTranslateExercises = createServerFn({ method: "POST" })
           .update(upd)
           .eq("id", row.id);
         if (!updErr) processed++;
-        await new Promise((r) => setTimeout(r, 600));
       } catch {}
     }
+
 
     const remaining = await admin
       .from("exercises_catalog")
