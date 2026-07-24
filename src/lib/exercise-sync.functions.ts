@@ -312,10 +312,10 @@ export const batchTranslateExercises = createServerFn({ method: "POST" })
     let processed = 0;
     for (const row of pending) {
       try {
-        const ptName = translateEN(row.name);
+        const ptName = await translateEN(row.name);
         let ptInstructions: string[] | null = null;
         if (row.instructions?.length) {
-          ptInstructions = row.instructions.map((s: string) => translateEN(s));
+          ptInstructions = await Promise.all(row.instructions.map((s: string) => translateEN(s)));
         }
         const upd: any = { name_pt: ptName };
         if (ptInstructions) upd.instructions_pt = ptInstructions;
