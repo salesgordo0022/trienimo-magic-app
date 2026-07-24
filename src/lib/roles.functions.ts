@@ -198,6 +198,25 @@ export const listMyStudents = createServerFn({ method: "GET" })
     return (profiles ?? []) as Array<{ id: string; nome: string | null }>;
   });
 
+// --- Fix user role by email (admin) ---
+export const fixUserRoleByEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { email: string; role: AppRole }) =>
+    z.object({ email: z.string().trim().email().max(255), role: z.enum(["admin","professor","aluno"]) }).parse(d))
+  .handler(async ({ context, data }) => {
+    await requireRole(context.supabase, context.userId, "admin");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: users, error } = await supabaseAdmin.auth.admin.listUsers();
+    if (error) throw new Error(error.message);
+    const user = users.users.find(u => u.email?.toLowerCase() === data.email.toLowerCase());
+    if (!user) throw new Error("Usuario nao encontrado com este email");
+    const { error: delErr } = await supabaseAdmin.from("user_roles").delete().eq("user_id", user.id);
+    if (delErr) throw new Error(delErr.message);
+    const { error: insErr } = await supabaseAdmin.from("user_roles").insert({ user_id: user.id, role: data.role });
+    if (insErr) throw new Error(insErr.message);
+    return { id: user.id, email: user.email, role: data.role };
+  });
+
 // --- Search user by email (for professor to link existing student) ---
 export const searchUserByEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

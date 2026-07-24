@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-ro
 import { queryOptions, useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { listAllUsers, setUserRole, assignStudent, createInvite, listInvites, deleteInvite, getMyRole, createStudent, type AppRole } from "@/lib/roles.functions";
+import { listAllUsers, setUserRole, assignStudent, createInvite, listInvites, deleteInvite, getMyRole, createStudent, fixUserRoleByEmail, type AppRole } from "@/lib/roles.functions";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -94,6 +94,8 @@ function AdminPage() {
       </div>
 
       <main className="max-w-5xl mx-auto p-3 sm:p-4">
+        <FixRoleByEmail />
+
         {tab === "professores" && (
           <div className="bg-white border border-black/10">
             <div className="bg-[var(--yellow)] px-3 py-2 font-display font-black uppercase text-sm">Professores e Administradores</div>
@@ -198,6 +200,37 @@ function Badge({ role }: { role: AppRole }) {
   const map: Record<AppRole, string> = { admin: "bg-red-600 text-white", professor: "bg-black text-[var(--yellow)]", aluno: "bg-gray-200 text-black" };
   const label: Record<AppRole, string> = { admin: "administrador", professor: "professor", aluno: "aluno" };
   return <span className={`px-2 py-0.5 text-[10px] font-bold uppercase ${map[role]}`}>{label[role]}</span>;
+}
+
+function FixRoleByEmail() {
+  const qc = useQueryClient();
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<AppRole>("professor");
+  const fix = useMutation({
+    mutationFn: useServerFn(fixUserRoleByEmail),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["allUsers"] });
+      setEmail("");
+      toast.success(`${r.email} agora é ${r.role}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <div className="bg-white border border-black/10 mb-3">
+      <div className="bg-black px-3 py-2 font-display font-black uppercase text-sm text-[var(--yellow)] flex items-center gap-2">
+        Corrigir papel por email
+      </div>
+      <form onSubmit={e => { e.preventDefault(); if (!email) return; fix.mutate({ data: { email, role } }); }} className="p-3 flex flex-wrap gap-2 items-end">
+        <Input placeholder="Email do usuario" type="email" value={email} onChange={e => setEmail(e.target.value)} className="flex-1 min-w-[200px]" />
+        <select className="border px-2 py-2 text-xs" value={role} onChange={e => setRole(e.target.value as AppRole)}>
+          <option value="professor">professor</option>
+          <option value="admin">administrador</option>
+          <option value="aluno">aluno</option>
+        </select>
+        <Button type="submit" disabled={fix.isPending || !email} className="bg-[var(--yellow)] text-black font-bold uppercase text-xs">Corrigir</Button>
+      </form>
+    </div>
+  );
 }
 
 function AdminNewStudent() {
