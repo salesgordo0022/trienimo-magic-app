@@ -1,3 +1,4 @@
+import { onGifError } from "@/lib/exercise-gif-fallback";
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import {
   queryOptions,
@@ -795,7 +796,7 @@ function LibExerciseCard({
         className="text-left rounded-2xl border border-white/10 bg-[#111112] overflow-hidden hover:border-[var(--lime)]/40 transition-all group"
       >
         <div className="aspect-square bg-white overflow-hidden">
-          <img src={exercise.gifUrl} alt={exercise.name} loading="lazy" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+          <img src={exercise.gifUrl} alt={exercise.name} loading="lazy" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"  onError={onGifError} />
         </div>
         <div className="p-3">
           <div className="text-xs font-bold text-white capitalize line-clamp-2 leading-tight">{exercise.name}</div>
@@ -839,7 +840,7 @@ function LibExerciseDetail({
     <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-lg bg-[#111112] border border-white/10 rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90vh] overflow-y-auto">
         <div className="relative bg-white">
-          <img src={exercise.gifUrl} alt={exercise.name} className="w-full aspect-square object-contain" />
+          <img src={exercise.gifUrl} alt={exercise.name} className="w-full aspect-square object-contain"  onError={onGifError} />
           <button onClick={onClose} className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/70 text-white flex items-center justify-center">
             <X className="w-4 h-4" />
           </button>

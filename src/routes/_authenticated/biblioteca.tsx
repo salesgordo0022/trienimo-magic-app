@@ -1,3 +1,4 @@
+import { onGifError } from "@/lib/exercise-gif-fallback";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, queryOptions } from "@tanstack/react-query";
 import {
@@ -299,7 +300,7 @@ function ExerciseCard({
           alt={exercise.name}
           loading="lazy"
           className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-        />
+         onError={onGifError} />
       </div>
       <div className="p-3">
         <div className="text-xs font-bold text-white capitalize line-clamp-2 leading-tight">
@@ -341,7 +342,7 @@ function ExerciseDetail({
             src={exercise.gifUrl}
             alt={exercise.name}
             className="w-full aspect-square object-contain"
-          />
+           onError={onGifError} />
           <button
             onClick={onClose}
             className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/70 text-white flex items-center justify-center"
