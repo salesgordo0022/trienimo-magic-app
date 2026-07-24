@@ -69,6 +69,7 @@ export type Database = {
           body_part: string | null
           difficulty: string | null
           equipment: string | null
+          gif_data: string | null
           gif_path: string | null
           id: string
           instructions: string[] | null
@@ -83,6 +84,7 @@ export type Database = {
           body_part?: string | null
           difficulty?: string | null
           equipment?: string | null
+          gif_data?: string | null
           gif_path?: string | null
           id: string
           instructions?: string[] | null
@@ -97,6 +99,7 @@ export type Database = {
           body_part?: string | null
           difficulty?: string | null
           equipment?: string | null
+          gif_data?: string | null
           gif_path?: string | null
           id?: string
           instructions?: string[] | null

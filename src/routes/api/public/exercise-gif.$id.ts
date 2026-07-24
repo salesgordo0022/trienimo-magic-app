@@ -9,9 +9,14 @@ export const Route = createFileRoute("/api/public/exercise-gif/$id")({
 
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const dl = await supabaseAdmin.storage.from("exercise-gifs").download(`${id}.gif`);
-          if (dl.data) {
-            const buf = await dl.data.arrayBuffer();
+          const { data: row } = await supabaseAdmin
+            .from("exercises_catalog")
+            .select("gif_data")
+            .eq("id", id)
+            .maybeSingle();
+
+          if (row?.gif_data) {
+            const buf = Buffer.from(row.gif_data, "base64");
             return new Response(buf, {
               status: 200,
               headers: {
