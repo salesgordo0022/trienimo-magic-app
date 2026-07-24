@@ -453,6 +453,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      send_message: {
+        Args: { p_body: string; p_recipient_id: string }
+        Returns: string
+      }
       set_user_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

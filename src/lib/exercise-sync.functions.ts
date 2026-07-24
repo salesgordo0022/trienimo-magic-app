@@ -215,11 +215,11 @@ export const importExerciseMetadata = createServerFn({ method: "POST" })
     if (toTranslate?.length) {
       for (const ex of toTranslate) {
         try {
-          const ptName = translateEN(ex.name);
+          const ptName = await translateEN(ex.name);
           if (ptName !== ex.name) {
             const upd: any = { name_pt: ptName };
             if (ex.instructions?.length) {
-              upd.instructions_pt = (ex.instructions as string[]).map((s) => translateEN(s));
+              upd.instructions_pt = await Promise.all((ex.instructions as string[]).map((s) => translateEN(s)));
             }
             await admin.from("exercises_catalog").update(upd).eq("id", ex.id);
           }
@@ -312,10 +312,10 @@ export const batchTranslateExercises = createServerFn({ method: "POST" })
     let processed = 0;
     for (const row of pending) {
       try {
-        const ptName = translateEN(row.name);
+        const ptName = await translateEN(row.name);
         let ptInstructions: string[] | null = null;
         if (row.instructions?.length) {
-          ptInstructions = row.instructions.map((s: string) => translateEN(s));
+          ptInstructions = await Promise.all(row.instructions.map((s: string) => translateEN(s)));
         }
         const upd: any = { name_pt: ptName };
         if (ptInstructions) upd.instructions_pt = ptInstructions;
