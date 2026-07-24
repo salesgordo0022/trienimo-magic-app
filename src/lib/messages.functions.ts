@@ -113,31 +113,19 @@ export const sendMessage = createServerFn({ method: "POST" })
     z.object({ to: z.string().uuid(), body: z.string().trim().min(1).max(2000) }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    let m: { id: string } | null = null;
-    let sendError: string | null = null;
+    // Tenta via RPC (bypassa RLS)
+    const { data: rpcId, error: rpcErr } = await context.supabase.rpc("send_message", {
+      p_recipient_id: data.to,
+      p_body: data.body,
+    });
+    if (!rpcErr && rpcId) return { id: rpcId as string };
 
-    // Tenta com o client do usuário primeiro
-    const { data: result, error } = await context.supabase
+    // Fallback: insert direto
+    const { data: m, error } = await context.supabase
       .from("messages")
       .insert({ sender_id: context.userId, recipient_id: data.to, body: data.body })
       .select("id")
       .single();
-    if (error) sendError = error.message;
-    else m = result;
-
-    // Se falhou (RLS bloqueando), tenta com supabaseAdmin
-    if (!m) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: result2, error: err2 } = await supabaseAdmin
-          .from("messages")
-          .insert({ sender_id: context.userId, recipient_id: data.to, body: data.body })
-          .select("id")
-          .single();
-        if (!err2 && result2) m = result2;
-      } catch {}
-    }
-
-    if (!m) throw new Error(sendError ?? "Falha ao enviar mensagem");
+    if (error) throw new Error(error.message);
     return { id: m.id };
   });
