@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { getFicha } from "@/lib/workouts.functions";
 import { exerciseGifUrl } from "@/lib/exercisedb.functions";
-import { ArrowLeft, X, Dumbbell, CheckCircle2, ChevronRight, ChevronLeft, Flag, Loader2 } from "lucide-react";
+import { ArrowLeft, X, Dumbbell, CheckCircle2, ChevronRight, ChevronLeft, Flag } from "lucide-react";
 import { useState, useMemo } from "react";
 
 const fichaQO = (id: string) =>
