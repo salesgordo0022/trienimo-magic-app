@@ -435,38 +435,28 @@ function translateDict(e: Exercise): Exercise {
   };
 }
 
-// Músculo secundário: usa o dicionário fixo; se não constar (ex: "hip flexors"), traduz via API.
-async function translateMuscle(m: string): Promise<string> {
-  const dict = ptTerm(MUSCLE_PT, m);
-  if (dict && dict !== m) return dict;
-  return translateEN(m);
+function translateMuscle(m: string): string {
+  return ptTerm(MUSCLE_PT, m) ?? m;
 }
 
-// Tradução "leve": nome + músculos secundários via API (usado nas listas de busca)
-async function translateSummary(e: Exercise): Promise<Exercise> {
-  const [name, secondaryMuscles] = await Promise.all([
-    translateEN(e.name),
-    e.secondaryMuscles
-      ? Promise.all(e.secondaryMuscles.map(translateMuscle))
-      : Promise.resolve(e.secondaryMuscles),
-  ]);
-  return { ...translateDict(e), name, secondaryMuscles };
+function translateSummary(e: Exercise): Exercise {
+  return {
+    ...translateDict(e),
+    name: translateEN(e.name),
+    secondaryMuscles: e.secondaryMuscles?.map(translateMuscle),
+  };
 }
 
-// Tradução completa (nome + instruções + descrição + músculos secundários), usada na tela de detalhe de 1 exercício por vez
-async function translateFull(e: Exercise): Promise<Exercise> {
-  const [name, description, instructions, secondaryMuscles] = await Promise.all([
-    translateEN(e.name),
-    e.description ? translateEN(e.description) : Promise.resolve(e.description),
-    e.instructions
-      ? Promise.all(e.instructions.map((s) => translateEN(s)))
-      : Promise.resolve(e.instructions),
-    e.secondaryMuscles
-      ? Promise.all(e.secondaryMuscles.map(translateMuscle))
-      : Promise.resolve(e.secondaryMuscles),
-  ]);
-  return { ...translateDict(e), name, description, instructions, secondaryMuscles };
+function translateFull(e: Exercise): Exercise {
+  return {
+    ...translateDict(e),
+    name: translateEN(e.name),
+    description: e.description ? translateEN(e.description) : e.description,
+    instructions: e.instructions?.map((s) => translateEN(s)),
+    secondaryMuscles: e.secondaryMuscles?.map(translateMuscle),
+  };
 }
+
 
 export const translateBodyPart = createServerFn({ method: "GET" })
   .inputValidator((d: { term: string }) => z.object({ term: z.string() }).parse(d))
