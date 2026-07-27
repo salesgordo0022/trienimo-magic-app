@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Trash2, Play, Users, Dumbbell, Search,
   UserPlus, ChevronRight, Pencil, BookOpen, CheckCircle2, X,
-  Loader2, Flag, RotateCcw, TrendingUp,
+  FileText, ListChecks, Loader2, Flag, RotateCcw, TrendingUp,
   Flame, Check,
 } from "lucide-react";
 
@@ -259,13 +259,15 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
     queryFn: () => listWorkoutsForStudent({ data: { student_id: studentId } }),
   });
   const [showAssign, setShowAssign] = useState(false);
-  const [assignStep, setAssignStep] = useState<"biblioteca" | "review" | "completed">("biblioteca");
+  const [assignStep, setAssignStep] = useState<"choice" | "ficha" | "biblioteca" | "review" | "completed">("choice");
   const [libQuery, setLibQuery] = useState("");
   const [libBodyPart, setLibBodyPart] = useState("");
   const [libEquipment, setLibEquipment] = useState("");
   const [selectedExercises, setSelectedExercises] = useState<Array<{ exercise: Exercise; sets: number; reps: number }>>([]);
   const [passoLetra, setPassoLetra] = useState("");
   const [passoNome, setPassoNome] = useState("");
+  const [fichaLetra, setFichaLetra] = useState("");
+  const [fichaNome, setFichaNome] = useState("");
 
   const createPasso = useMutation({
     mutationFn: useServerFn(createWorkoutWithExercises),
@@ -274,6 +276,17 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
       qc.invalidateQueries({ queryKey: ["workouts"] });
       const r = data as { id: string; letra: string };
       toast.success(`Treino ${r.letra} criado e atribuido a ${studentName}!`);
+      setAssignStep("completed");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const createFicha = useMutation({
+    mutationFn: useServerFn(createWorkout),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["studentWorkouts", studentId] });
+      qc.invalidateQueries({ queryKey: ["workouts"] });
+      toast.success(`Ficha criada e atribuida a ${studentName}!`);
       setAssignStep("completed");
     },
     onError: (e) => toast.error(e.message),
@@ -307,13 +320,15 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
 
   const openAssign = () => {
     setShowAssign(true);
-    setAssignStep("biblioteca");
+    setAssignStep("choice");
     setLibQuery("");
     setLibBodyPart("");
     setLibEquipment("");
     setSelectedExercises([]);
     setPassoLetra("");
     setPassoNome("");
+    setFichaLetra("");
+    setFichaNome("");
   };
 
   const libIsSearching = !!(libQuery || libBodyPart || libEquipment);
@@ -404,22 +419,121 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
           {/* Header */}
           <div className="relative z-10 shrink-0 px-5 pt-5 pb-2 safe-top">
             <div className="flex items-center justify-between mb-1">
-              {assignStep !== "completed" ? (
+              {assignStep !== "choice" && assignStep !== "completed" ? (
                 <button
-                  onClick={() => setAssignStep("biblioteca")}
+                  onClick={() => setAssignStep(assignStep === "biblioteca" || assignStep === "review" ? "choice" : assignStep === "ficha" ? "choice" : "biblioteca")}
                   className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               ) : <div />}
               <button
-                onClick={() => { setShowAssign(false); setAssignStep("biblioteca"); }}
+                onClick={() => { setShowAssign(false); setAssignStep("choice"); }}
                 className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
           </div>
+
+          {/* Step: Choice */}
+          {assignStep === "choice" && (
+            <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-8">
+              <div className="relative mb-8">
+                <div className="absolute inset-0 rounded-full bg-[var(--lime)]/10 blur-[40px]" />
+                <div className="relative w-20 h-20 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(204,255,0,0.15), rgba(204,255,0,0.05))", border: "1px solid rgba(204,255,0,0.15)" }}>
+                  <Dumbbell className="w-9 h-9 text-[var(--lime)]" />
+                </div>
+              </div>
+              <div className="text-center mb-8 space-y-2">
+                <h1 className="text-3xl font-black text-white">Atribuir Treino</h1>
+                <p className="text-sm text-zinc-500 max-w-[260px] mx-auto">Como quer atribuir o treino para {studentName}?</p>
+              </div>
+              <div className="w-full max-w-sm space-y-3">
+                <button
+                  onClick={() => setAssignStep("ficha")}
+                  className="w-full group relative overflow-hidden rounded-2xl border border-white/8 p-0 text-left transition-all hover:border-white/15 active:scale-[0.98]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
+                  <div className="relative flex items-center gap-4 p-5">
+                    <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/15 transition-colors">
+                      <FileText className="w-6 h-6 text-zinc-300 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-base font-black text-white mb-0.5">Ficha</div>
+                      <div className="text-xs text-zinc-400 leading-relaxed">Crie uma ficha nova e atribua ao aluno</div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setAssignStep("biblioteca")}
+                  className="w-full group relative overflow-hidden rounded-2xl border border-[var(--lime)]/15 p-0 text-left transition-all hover:border-[var(--lime)]/30 active:scale-[0.98]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
+                  <div className="relative flex items-center gap-4 p-5">
+                    <div className="w-14 h-14 rounded-2xl bg-[var(--lime)]/10 border border-[var(--lime)]/15 flex items-center justify-center shrink-0 group-hover:bg-[var(--lime)]/15 transition-colors">
+                      <ListChecks className="w-6 h-6 text-[var(--lime)]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-base font-black text-white mb-0.5">Passo a Passo</div>
+                      <div className="text-xs text-zinc-400 leading-relaxed">Biblioteca completa - escolha qualquer exercicio</div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-[var(--lime)] group-hover:translate-x-0.5 transition-all shrink-0" />
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step: Ficha - create and assign */}
+          {assignStep === "ficha" && (
+            <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-8">
+              <div className="w-full max-w-sm space-y-5">
+                <div className="text-center space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                    <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Nova Ficha</span>
+                  </div>
+                  <h2 className="text-2xl font-black text-white">Criar Ficha</h2>
+                  <p className="text-sm text-zinc-500">Atribua uma ficha para {studentName}</p>
+                </div>
+                <div className="space-y-3">
+                  <input
+                    value={fichaLetra}
+                    onChange={(e) => setFichaLetra(e.target.value.slice(0, 3))}
+                    placeholder="Letra do treino (A, B, C...)"
+                    maxLength={3}
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors uppercase"
+                  />
+                  <input
+                    value={fichaNome}
+                    onChange={(e) => setFichaNome(e.target.value.slice(0, 80))}
+                    placeholder="Nome (opcional)"
+                    maxLength={80}
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors"
+                  />
+                  <button
+                    onClick={() => {
+                      if (!fichaLetra.trim()) { toast.error("Digite a letra do treino"); return; }
+                      createFicha.mutate({
+                        data: {
+                          letra: fichaLetra.trim(),
+                          nome: fichaNome.trim() || undefined,
+                          assigned_to: studentId,
+                        },
+                      });
+                    }}
+                    disabled={createFicha.isPending || !fichaLetra.trim()}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black px-5 py-3 font-bold text-sm hover:brightness-110 disabled:opacity-40 transition-all active:scale-[0.98]"
+                  >
+                    {createFicha.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Criando...</> : <><Check className="w-4 h-4" /> Criar e Atribuir</>}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Step: Biblioteca - full exercise library */}
           {assignStep === "biblioteca" && (
