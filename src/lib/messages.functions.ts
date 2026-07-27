@@ -24,20 +24,19 @@ export type ConversationSummary = {
 export const listAvailableContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: profiles, error } = await supabaseAdmin
+    const fetchWith = async (client: typeof context.supabase) => {
+      const { data: profiles, error } = await client
         .from("profiles")
         .select("id, nome")
         .neq("id", context.userId);
       if (error) throw error;
       return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
+    };
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      return await fetchWith(supabaseAdmin);
     } catch {
-      const { data: profiles } = await context.supabase
-        .from("profiles")
-        .select("id, nome")
-        .neq("id", context.userId);
-      return (profiles ?? []).map((p) => ({ id: p.id, nome: p.nome ?? "Contato" }));
+      return await fetchWith(context.supabase);
     }
   });
 
@@ -45,9 +44,8 @@ export const listAvailableContacts = createServerFn({ method: "GET" })
 export const listMyConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: msgs, error } = await supabaseAdmin
+    const fetchMessages = async (client: typeof context.supabase) => {
+      const { data: msgs, error } = await client
         .from("messages")
         .select("sender_id, recipient_id, body, read_at, created_at")
         .or(`sender_id.eq.${context.userId},recipient_id.eq.${context.userId}`)
@@ -69,7 +67,7 @@ export const listMyConversations = createServerFn({ method: "GET" })
       const partnerIds = [...partnerMap.keys()];
       if (!partnerIds.length) return [] as ConversationSummary[];
 
-      const { data: profiles } = await supabaseAdmin
+      const { data: profiles } = await client
         .from("profiles")
         .select("id, nome")
         .in("id", partnerIds);
@@ -88,8 +86,13 @@ export const listMyConversations = createServerFn({ method: "GET" })
           };
         })
         .sort((a, b) => (b.last_at ?? "").localeCompare(a.last_at ?? "")) as ConversationSummary[];
+    };
+
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      return await fetchMessages(supabaseAdmin);
     } catch {
-      return [] as ConversationSummary[];
+      return await fetchMessages(context.supabase);
     }
   });
 
@@ -98,9 +101,8 @@ export const listConversation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { with: string }) => z.object({ with: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: rows, error } = await supabaseAdmin
+    const fetchThread = async (client: typeof context.supabase) => {
+      const { data: rows, error } = await client
         .from("messages")
         .select("id, sender_id, recipient_id, body, read_at, created_at")
         .or(
@@ -114,14 +116,19 @@ export const listConversation = createServerFn({ method: "GET" })
         .filter((m) => m.recipient_id === context.userId && !m.read_at)
         .map((m) => m.id);
       if (unreadIds.length) {
-        await supabaseAdmin
+        await client
           .from("messages")
           .update({ read_at: new Date().toISOString() })
           .in("id", unreadIds);
       }
       return (rows ?? []) as MessageRow[];
+    };
+
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      return await fetchThread(supabaseAdmin);
     } catch {
-      return [] as MessageRow[];
+      return await fetchThread(context.supabase);
     }
   });
 
