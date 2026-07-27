@@ -504,34 +504,54 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
 
           {/* Step: Ficha - list existing workouts */}
           {assignStep === "ficha" && (
-            <div className="relative z-10 flex-1 overflow-y-auto px-6 pb-8">
-              <h2 className="text-xl font-black text-white text-center mb-6">Selecione uma ficha</h2>
+            <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-8 pt-2">
+              <div className="text-center mb-5">
+                <h2 className="text-xl font-black text-white">Selecione uma ficha</h2>
+                <p className="text-xs text-zinc-500 mt-1">Toque para atribuir ao aluno</p>
+              </div>
               {!allWorkouts || allWorkouts.length === 0 ? (
-                <div className="text-center py-12 text-zinc-500 text-sm">Nenhuma ficha encontrada. Crie uma primeiro.</div>
+                <div className="rounded-2xl border border-white/10 bg-[#111112] p-10 text-center">
+                  <FileText className="w-10 h-10 text-zinc-700 mx-auto mb-2" />
+                  <p className="text-sm text-zinc-500">Nenhuma ficha encontrada.</p>
+                  <p className="text-xs text-zinc-600 mt-1">Crie uma primeiro no painel.</p>
+                </div>
               ) : (
-                <div className="max-w-sm mx-auto space-y-2">
-                  {allWorkouts.map((w) => (
-                    <div key={w.id} className="rounded-2xl border border-white/10 bg-[#111112] flex items-center gap-3 p-4 overflow-hidden group hover:border-[var(--lime)]/40 transition-all">
-                      <div className="w-12 h-12 rounded-2xl bg-[var(--lime)] text-black font-black text-xl flex items-center justify-center shrink-0">
-                        {w.letra}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-bold text-sm text-white">Treino {w.letra}</div>
-                        {w.nome && <div className="text-xs text-zinc-500 truncate">{w.nome}</div>}
-                        <div className="text-[11px] text-zinc-600">
-                          {w.assigned_nome ? `Atribuido a: ${w.assigned_nome}` : "Pessoal"}
+                <div className="space-y-2">
+                  {allWorkouts.map((w) => {
+                    const isAssigned = w.assigned_to === studentId;
+                    return (
+                      <div key={w.id} className={`rounded-2xl border bg-[#111112] flex items-center gap-3 p-4 overflow-hidden transition-all ${
+                        isAssigned ? "border-[var(--lime)]/40 bg-[var(--lime)]/5" : "border-white/10 hover:border-white/15"
+                      }`}>
+                        <div className={`w-12 h-12 rounded-2xl font-black text-xl flex items-center justify-center shrink-0 ${
+                          isAssigned ? "bg-[var(--lime)] text-black" : "bg-white/[0.06] text-zinc-400 border border-white/[0.06]"
+                        }`}>
+                          {w.letra}
                         </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-sm text-white">Treino {w.letra}</div>
+                          {w.nome && <div className="text-xs text-zinc-500 truncate">{w.nome}</div>}
+                          <div className="text-[11px] text-zinc-600">
+                            {w.assigned_nome ? `Atribuido a: ${w.assigned_nome}` : "Pessoal"}
+                          </div>
+                        </div>
+                        {isAssigned ? (
+                          <span className="inline-flex items-center gap-1 rounded-xl bg-[var(--lime)]/10 text-[var(--lime)] px-3 py-2 text-xs font-bold shrink-0">
+                            <Check className="w-3 h-3" /> Atribuido
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => assignWorkout.mutate({ data: { id: w.id, assigned_to: studentId } })}
+                            disabled={assignWorkout.isPending}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--lime)] text-black px-3 py-2 text-xs font-bold hover:brightness-110 disabled:opacity-60 transition-all shrink-0"
+                          >
+                            {assignWorkout.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                            Atribuir
+                          </button>
+                        )}
                       </div>
-                      <button
-                        onClick={() => assignWorkout.mutate({ data: { id: w.id, assigned_to: studentId } })}
-                        disabled={assignWorkout.isPending}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--lime)] text-black px-3 py-2 text-xs font-bold hover:brightness-110 disabled:opacity-60 transition-all shrink-0"
-                      >
-                        {assignWorkout.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                        Atribuir
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -540,37 +560,102 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
           {/* Step: Biblioteca - full exercise library */}
           {assignStep === "biblioteca" && (
             <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
-              <div className="overflow-y-auto px-5 pb-36 pt-2 space-y-4">
+              <div className="overflow-y-auto px-4 pb-36 pt-3 space-y-4">
                 {/* Search + Filters */}
                 <div className="space-y-3">
+                  {/* Search */}
                   <div className="relative">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
                     <input
                       value={libQuery}
                       onChange={(e) => setLibQuery(e.target.value)}
                       placeholder="Buscar exercicio por nome..."
-                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white outline-none focus:border-[var(--lime)]/60 focus:ring-2 focus:ring-[var(--lime)]/20 placeholder:text-zinc-600"
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors"
                     />
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <select value={libBodyPart} onChange={(e) => setLibBodyPart(e.target.value)} className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[var(--lime)]/60 capitalize">
-                      <option value="">Todos grupos</option>
-                      {activeBodyParts.map((b) => (
-                        <option key={b} value={b}>{BODYPART_PT[b] ?? b}</option>
-                      ))}
-                    </select>
-                    <select value={libEquipment} onChange={(e) => setLibEquipment(e.target.value)} className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[var(--lime)]/60 capitalize">
-                      <option value="">Todos equipamentos</option>
-                      {(equipments.data ?? []).map((b) => (
-                        <option key={b} value={b}>{EQUIPMENT_PT[b] ?? b}</option>
-                      ))}
-                    </select>
-                    {libIsSearching && (
-                      <button onClick={() => { setLibQuery(""); setLibBodyPart(""); setLibEquipment(""); }} className="inline-flex items-center gap-1.5 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-xs text-zinc-400 hover:text-white hover:bg-white/10 transition-all">
-                        <X className="w-3 h-3" /> Limpar
+                    {libQuery && (
+                      <button onClick={() => setLibQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full bg-white/5 text-zinc-400 hover:text-white">
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
+
+                  {/* Body Part Chips */}
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2 px-1">Grupo Muscular</div>
+                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+                      <button
+                        onClick={() => setLibBodyPart("")}
+                        className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                          !libBodyPart
+                            ? "bg-[var(--lime)] text-black border-[var(--lime)]"
+                            : "bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/15"
+                        }`}
+                      >
+                        Todos
+                      </button>
+                      {activeBodyParts.map((b) => (
+                        <button
+                          key={b}
+                          onClick={() => setLibBodyPart(libBodyPart === b ? "" : b)}
+                          className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                            libBodyPart === b
+                              ? "bg-[var(--lime)] text-black border-[var(--lime)]"
+                              : "bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/15"
+                          }`}
+                        >
+                          {BODYPART_PT[b] ?? b}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Equipment Chips */}
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2 px-1">Equipamento</div>
+                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+                      <button
+                        onClick={() => setLibEquipment("")}
+                        className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                          !libEquipment
+                            ? "bg-[var(--lime)] text-black border-[var(--lime)]"
+                            : "bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/15"
+                        }`}
+                      >
+                        Todos
+                      </button>
+                      {(equipments.data ?? []).map((b) => (
+                        <button
+                          key={b}
+                          onClick={() => setLibEquipment(libEquipment === b ? "" : b)}
+                          className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                            libEquipment === b
+                              ? "bg-[var(--lime)] text-black border-[var(--lime)]"
+                              : "bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/15"
+                          }`}
+                        >
+                          {EQUIPMENT_PT[b] ?? b}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Active filters summary */}
+                  {libIsSearching && (
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-[11px] text-zinc-500">
+                        {libResults.data?.length ?? 0} resultado{(libResults.data?.length ?? 0) !== 1 ? "s" : ""}
+                        {(libBodyPart || libEquipment || libQuery) && " para"}
+                        {libBodyPart && <span className="text-[var(--lime)] font-bold"> {(BODYPART_PT[libBodyPart] ?? libBodyPart)}</span>}
+                        {libEquipment && <span className="text-[var(--lime)] font-bold"> {(EQUIPMENT_PT[libEquipment] ?? libEquipment)}</span>}
+                      </span>
+                      <button
+                        onClick={() => { setLibQuery(""); setLibBodyPart(""); setLibEquipment(""); }}
+                        className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-[var(--lime)] transition-colors"
+                      >
+                        <X className="w-3 h-3" /> Limpar filtros
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Results */}
@@ -599,21 +684,21 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
               </div>
 
               {/* Bottom bar: selected count + finalizar */}
-              <div className="absolute bottom-0 left-0 right-0 z-20 border-t border-white/10 bg-[#0a0a0a]/95 backdrop-blur-xl p-4">
-                <div className="max-w-sm mx-auto flex items-center gap-3">
+              <div className="absolute bottom-0 left-0 right-0 z-20 border-t border-white/10 bg-[#0d0d0f]/95 backdrop-blur-xl safe-bottom px-4 py-3">
+                <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     {selectedExercises.length > 0 ? (
                       <div className="text-sm text-zinc-300">
-                        <span className="font-black text-[var(--lime)]">{selectedExercises.length}</span> exercicio{selectedExercises.length !== 1 ? "s" : ""} selecionado{selectedExercises.length !== 1 ? "s" : ""}
+                        <span className="font-black text-[var(--lime)]">{selectedExercises.length}</span> exercicio{selectedExercises.length !== 1 ? "s" : ""}
                       </div>
                     ) : (
-                      <div className="text-sm text-zinc-500">Nenhum exercicio selecionado</div>
+                      <div className="text-sm text-zinc-500">Selecione exercicios</div>
                     )}
                   </div>
                   <button
                     onClick={() => setAssignStep("review")}
                     disabled={selectedExercises.length === 0}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[var(--lime)] text-black px-5 py-3 font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[var(--lime)] text-black px-5 py-3 font-bold text-sm hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all shrink-0 active:scale-[0.97]"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     Finalizar
@@ -625,18 +710,18 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
 
           {/* Step: Review */}
           {assignStep === "review" && (
-            <div className="relative z-10 flex-1 overflow-y-auto px-6 pb-8">
-              <div className="max-w-sm mx-auto space-y-5">
-                <div className="text-center space-y-2">
-                  <h2 className="text-2xl font-black text-white">Revisar Exercicios</h2>
-                  <p className="text-sm text-zinc-500">{selectedExercises.length} exercicio{selectedExercises.length !== 1 ? "s" : ""} selecionado{selectedExercises.length !== 1 ? "s" : ""}</p>
+            <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-8 pt-2">
+              <div className="space-y-5">
+                <div className="text-center space-y-1">
+                  <h2 className="text-xl font-black text-white">Revisar Exercicios</h2>
+                  <p className="text-xs text-zinc-500">{selectedExercises.length} exercicio{selectedExercises.length !== 1 ? "s" : ""} selecionado{selectedExercises.length !== 1 ? "s" : ""}</p>
                 </div>
 
                 {/* Selected exercises list */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {selectedExercises.map((item, i) => (
-                    <div key={i} className="rounded-xl border border-white/10 bg-[#111112] p-3 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-[var(--lime)]/10 flex items-center justify-center text-[var(--lime)] font-black text-sm shrink-0">
+                    <div key={i} className="rounded-xl border border-white/[0.06] bg-[#111112] p-3 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[var(--lime)]/10 flex items-center justify-center text-[var(--lime)] font-black text-xs shrink-0">
                         {i + 1}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -645,7 +730,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                       </div>
                       <button
                         onClick={() => removeSelectedExercise(i)}
-                        className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"
+                        className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -656,32 +741,32 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                 {/* Voltar para adicionar mais */}
                 <button
                   onClick={() => setAssignStep("biblioteca")}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 text-zinc-400 px-4 py-3 text-sm font-bold hover:border-[var(--lime)]/40 hover:text-[var(--lime)] transition-all"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 text-zinc-400 px-4 py-3 text-sm font-bold hover:border-[var(--lime)]/30 hover:text-[var(--lime)] transition-all"
                 >
-                  <Plus className="w-4 h-4" /> Adicionar mais exercicios
+                  <Plus className="w-4 h-4" /> Adicionar mais
                 </button>
 
                 {/* Letra + Nome */}
-                <div className="space-y-3 rounded-2xl border border-white/10 bg-[#111112] p-4">
-                  <div className="text-xs font-black text-zinc-400 uppercase tracking-widest">Dados da Ficha</div>
+                <div className="space-y-3 rounded-2xl border border-white/[0.06] bg-[#111112] p-4">
+                  <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Dados da Ficha</div>
                   <input
                     placeholder="Letra do treino (A, B, C...)"
                     value={passoLetra}
                     onChange={e => setPassoLetra(e.target.value.slice(0, 3))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm uppercase outline-none focus:border-[var(--lime)]/60 focus:ring-2 focus:ring-[var(--lime)]/20"
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm uppercase text-white placeholder:text-zinc-600 outline-none focus:border-[var(--lime)]/30 transition-colors"
                   />
                   <input
                     placeholder="Nome (opcional)"
                     value={passoNome}
                     onChange={e => setPassoNome(e.target.value.slice(0, 80))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--lime)]/60 focus:ring-2 focus:ring-[var(--lime)]/20"
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[var(--lime)]/30 transition-colors"
                   />
                 </div>
 
                 <button
                   onClick={finishPasso}
                   disabled={createPasso.isPending || !passoLetra.trim() || selectedExercises.length === 0}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black px-5 py-3 font-bold text-sm hover:brightness-110 disabled:opacity-60 transition-all"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black px-5 py-3.5 font-bold text-sm hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                 >
                   {createPasso.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
