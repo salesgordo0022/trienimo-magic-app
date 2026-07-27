@@ -121,7 +121,7 @@ function Inicio() {
 
   const currentExercise = exerciseList[exerciseIndex] ?? null;
 
-  const primary = isTeacher ? (activeAssigned[0] ?? workouts[0]) : activeAssigned[0];
+  const primary = activeAssigned[0];
 
   const { data: completedToday } = useQuery({
     queryKey: ["completedToday", primary?.id],
