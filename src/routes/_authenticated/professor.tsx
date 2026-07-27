@@ -11,7 +11,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { listMyStudents, getMyRole, createStudent, searchUserByEmail, linkStudent } from "@/lib/roles.functions";
 import {
-  listWorkoutsForStudent, createWorkout,
+  listWorkoutsForStudent,
   createWorkoutWithExercises,
 } from "@/lib/workouts.functions";
 import { searchExercises, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, listBodyParts, listEquipments, type Exercise } from "@/lib/exercisedb.functions";
@@ -263,7 +263,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
   const [libQuery, setLibQuery] = useState("");
   const [libBodyPart, setLibBodyPart] = useState("");
   const [libEquipment, setLibEquipment] = useState("");
-  const [selectedExercises, setSelectedExercises] = useState<Array<{ exercise: Exercise; sets: number; reps: number }>>([]);
+  const [selectedExercises, setSelectedExercises] = useState<Array<{ exercise: Exercise; sets: number; reps: number; kg: number }>>([]);
   const [passoLetra, setPassoLetra] = useState("");
   const [passoNome, setPassoNome] = useState("");
   const [fichaLetra, setFichaLetra] = useState("");
@@ -281,19 +281,8 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
     onError: (e) => toast.error(e.message),
   });
 
-  const createFicha = useMutation({
-    mutationFn: useServerFn(createWorkout),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["studentWorkouts", studentId] });
-      qc.invalidateQueries({ queryKey: ["workouts"] });
-      toast.success(`Ficha criada e atribuida a ${studentName}!`);
-      setAssignStep("completed");
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const addExerciseToWorkout = (exercise: Exercise, sets: number, reps: number) => {
-    setSelectedExercises(prev => [...prev, { exercise, sets, reps }]);
+  const addExerciseToWorkout = (exercise: Exercise, sets: number, reps: number, kg: number) => {
+    setSelectedExercises(prev => [...prev, { exercise, sets, reps, kg }]);
   };
 
   const removeSelectedExercise = (idx: number) => {
@@ -301,18 +290,21 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
   };
 
   const finishPasso = () => {
-    if (!passoLetra.trim()) { toast.error("Digite a letra do treino"); return; }
+    const letraFinal = fichaLetra.trim() || passoLetra.trim();
+    const nomeFinal = fichaNome.trim() || passoNome.trim();
+    if (!letraFinal) { toast.error("Digite a letra do treino"); return; }
     if (selectedExercises.length === 0) { toast.error("Selecione pelo menos um exercicio"); return; }
     createPasso.mutate({
       data: {
-        letra: passoLetra.trim(),
-        nome: passoNome.trim() || undefined,
+        letra: letraFinal,
+        nome: nomeFinal || undefined,
         assigned_to: studentId,
         exercises: selectedExercises.map(ex => ({
           exercise_db_id: ex.exercise.id.toString(),
           nome: ex.exercise.name,
           sets: ex.sets,
           reps: ex.reps,
+          kg: ex.kg || undefined,
         })),
       },
     });
@@ -517,18 +509,12 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                   <button
                     onClick={() => {
                       if (!fichaLetra.trim()) { toast.error("Digite a letra do treino"); return; }
-                      createFicha.mutate({
-                        data: {
-                          letra: fichaLetra.trim(),
-                          nome: fichaNome.trim() || undefined,
-                          assigned_to: studentId,
-                        },
-                      });
+                      setAssignStep("biblioteca");
                     }}
-                    disabled={createFicha.isPending || !fichaLetra.trim()}
+                    disabled={!fichaLetra.trim()}
                     className="w-full flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black px-5 py-3 font-bold text-sm hover:brightness-110 disabled:opacity-40 transition-all active:scale-[0.98]"
                   >
-                    {createFicha.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Criando...</> : <><Check className="w-4 h-4" /> Criar e Atribuir</>}
+                    Proximo <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -653,7 +639,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                       <LibExerciseCard
                         key={ex.id}
                         exercise={ex}
-                        onAdd={(sets, reps) => addExerciseToWorkout(ex, sets, reps)}
+                        onAdd={(sets, reps, kg) => addExerciseToWorkout(ex, sets, reps, kg)}
                         added={selectedExercises.some((s) => s.exercise.id === ex.id)}
                       />
                     ))}
@@ -704,7 +690,10 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold text-white truncate capitalize">{item.exercise.name}</div>
-                        <div className="text-[11px] text-zinc-500">{item.sets}x{item.reps} repeticoes</div>
+                        <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+                          <span>{item.sets}x{item.reps}</span>
+                          {item.kg > 0 && <span className="text-orange-400">{item.kg}kg</span>}
+                        </div>
                       </div>
                       <button
                         onClick={() => removeSelectedExercise(i)}
@@ -727,18 +716,27 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                 {/* Letra + Nome */}
                 <div className="space-y-3 rounded-2xl border border-white/[0.06] bg-[#111112] p-4">
                   <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Dados da Ficha</div>
-                  <input
-                    placeholder="Letra do treino (A, B, C...)"
-                    value={passoLetra}
-                    onChange={e => setPassoLetra(e.target.value.slice(0, 3))}
-                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm uppercase text-white placeholder:text-zinc-600 outline-none focus:border-[var(--lime)]/30 transition-colors"
-                  />
-                  <input
-                    placeholder="Nome (opcional)"
-                    value={passoNome}
-                    onChange={e => setPassoNome(e.target.value.slice(0, 80))}
-                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[var(--lime)]/30 transition-colors"
-                  />
+                  {fichaLetra.trim() ? (
+                    <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--lime)]/5 border border-[var(--lime)]/15">
+                      <span className="text-sm font-black text-[var(--lime)]">{fichaLetra.trim()}</span>
+                      {fichaNome.trim() && <span className="text-sm text-zinc-400">— {fichaNome.trim()}</span>}
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        placeholder="Letra do treino (A, B, C...)"
+                        value={passoLetra}
+                        onChange={e => setPassoLetra(e.target.value.slice(0, 3))}
+                        className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm uppercase text-white placeholder:text-zinc-600 outline-none focus:border-[var(--lime)]/30 transition-colors"
+                      />
+                      <input
+                        placeholder="Nome (opcional)"
+                        value={passoNome}
+                        onChange={e => setPassoNome(e.target.value.slice(0, 80))}
+                        className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[var(--lime)]/30 transition-colors"
+                      />
+                    </>
+                  )}
                 </div>
 
                 <button
@@ -847,7 +845,7 @@ function LibExerciseCard({
   added,
 }: {
   exercise: Exercise;
-  onAdd: (sets: number, reps: number) => void;
+  onAdd: (sets: number, reps: number, kg: number) => void;
   added: boolean;
 }) {
   const [showDetail, setShowDetail] = useState(false);
@@ -890,7 +888,7 @@ function LibExerciseDetail({
   onClose,
 }: {
   exercise: Exercise;
-  onAdd: (sets: number, reps: number) => void;
+  onAdd: (sets: number, reps: number, kg: number) => void;
   added: boolean;
   onClose: () => void;
 }) {
@@ -898,6 +896,7 @@ function LibExerciseDetail({
   const isLegs = exercise.bodyPart === "upper legs" || exercise.bodyPart === "lower legs";
   const [sets, setSets] = useState(isCardio ? 1 : isLegs ? 4 : 3);
   const [reps, setReps] = useState(isCardio ? 1 : isLegs ? 10 : 12);
+  const [kg, setKg] = useState(0);
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
@@ -940,8 +939,21 @@ function LibExerciseDetail({
             </div>
           </div>
 
+          {/* KG config */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] py-3 px-4 text-center">
+            <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Carga (kg)</div>
+            <div className="flex items-center justify-center gap-2">
+              <button onClick={() => setKg(Math.max(0, kg - 2.5))} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center">-</button>
+              <div className="text-center min-w-[60px]">
+                <span className="text-2xl font-black text-orange-400">{kg}</span>
+                <span className="text-xs text-zinc-400 ml-1">kg</span>
+              </div>
+              <button onClick={() => setKg(kg + 2.5)} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center">+</button>
+            </div>
+          </div>
+
           <button
-            onClick={() => { onAdd(sets, reps); onClose(); }}
+            onClick={() => { onAdd(sets, reps, kg); onClose(); }}
             disabled={added}
             className={`w-full inline-flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all ${
               added

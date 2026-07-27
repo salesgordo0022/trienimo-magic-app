@@ -506,7 +506,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
       letra: string;
       nome?: string;
       assigned_to: string;
-      exercises: Array<{ exercise_db_id: string; nome: string; sets: number; reps: number }>;
+      exercises: Array<{ exercise_db_id: string; nome: string; sets: number; reps: number; kg?: number }>;
       body_part_label?: string;
     }) =>
       z.object({
@@ -520,6 +520,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
               nome: z.string().min(1).max(120),
               sets: z.number().int().min(1).max(20),
               reps: z.number().int().min(1).max(200),
+              kg: z.number().min(0).max(999).optional(),
             }),
           )
           .min(1)
@@ -558,7 +559,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
 
     for (let i = 0; i < data.exercises.length; i++) {
       const ex = data.exercises[i];
-      const setsConfig = Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), kg: "" }));
+      const setsConfig = Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), kg: ex.kg != null ? String(ex.kg) : "" }));
       const payload = {
         group_id: group.id,
         user_id: context.userId,
