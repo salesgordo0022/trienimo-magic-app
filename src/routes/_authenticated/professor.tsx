@@ -269,6 +269,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
   const [passoNome, setPassoNome] = useState("");
   const [fichaLetra, setFichaLetra] = useState("");
   const [fichaNome, setFichaNome] = useState("");
+  const [tipoAtual, setTipoAtual] = useState<"ficha" | "passo">("ficha");
 
   const createPasso = useMutation({
     mutationFn: useServerFn(createWorkoutWithExercises),
@@ -310,6 +311,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
         letra: letraFinal,
         nome: nomeFinal || undefined,
         assigned_to: studentId,
+        tipo: tipoAtual,
         exercises: selectedExercises.map(ex => ({
           exercise_db_id: ex.exercise.id.toString(),
           nome: ex.exercise.name,
@@ -454,7 +456,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
               </div>
               <div className="w-full max-w-sm space-y-3">
                 <button
-                  onClick={() => setAssignStep("ficha")}
+                  onClick={() => { setTipoAtual("ficha"); setAssignStep("ficha"); }}
                   className="w-full group relative overflow-hidden rounded-2xl border border-white/8 p-0 text-left transition-all hover:border-white/15 active:scale-[0.98]"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
@@ -471,7 +473,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                 </button>
 
                 <button
-                  onClick={() => setAssignStep("biblioteca")}
+                  onClick={() => { setTipoAtual("passo"); setAssignStep("biblioteca"); }}
                   className="w-full group relative overflow-hidden rounded-2xl border border-[var(--lime)]/15 p-0 text-left transition-all hover:border-[var(--lime)]/30 active:scale-[0.98]"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />

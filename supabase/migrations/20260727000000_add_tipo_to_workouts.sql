@@ -1,0 +1,1 @@
+ALTER TABLE public.workouts ADD COLUMN IF NOT EXISTS tipo TEXT NOT NULL DEFAULT 'ficha';

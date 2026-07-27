@@ -12,6 +12,7 @@ export type WorkoutRow = {
   user_id?: string;
   assigned_to?: string | null;
   assigned_nome?: string | null;
+  tipo?: string | null;
 };
 
 export type ExerciseRow = {
@@ -52,7 +53,7 @@ export const listWorkouts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to, tipo")
       .eq("user_id", context.userId)
       .order("ordem", { ascending: true })
       .order("letra", { ascending: true });
@@ -86,7 +87,7 @@ export const listAssignedToMe = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to, tipo")
       .eq("assigned_to", context.userId)
       .order("ordem", { ascending: true });
     if (error) throw new Error(error.message);
@@ -111,7 +112,7 @@ export const listWorkoutsForStudent = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const { data: rows, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to, tipo")
       .eq("user_id", context.userId)
       .eq("assigned_to", data.student_id)
       .order("ordem", { ascending: true });
@@ -250,7 +251,7 @@ export const getFicha = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const { data: workout, error: e1 } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem, assigned_to, user_id")
+      .select("id, letra, nome, data_inicio, observacao, ordem, assigned_to, user_id, tipo")
       .eq("id", data.id)
       .single();
     if (e1) throw new Error(e1.message);
@@ -506,6 +507,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
       letra: string;
       nome?: string;
       assigned_to: string;
+      tipo?: string;
       exercises: Array<{ exercise_db_id: string; nome: string; sets: number; reps: number; kg?: number }>;
       body_part_label?: string;
     }) =>
@@ -513,6 +515,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         letra: z.string().min(1).max(3),
         nome: z.string().max(80).optional(),
         assigned_to: z.string().uuid(),
+        tipo: z.string().max(20).optional(),
         exercises: z
           .array(
             z.object({
@@ -542,6 +545,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         assigned_to: data.assigned_to,
         letra: data.letra.toUpperCase(),
         nome: data.nome ?? null,
+        tipo: data.tipo ?? "ficha",
         ordem,
         data_inicio: new Date().toISOString().slice(0, 10),
       })

@@ -117,54 +117,56 @@ function MeuTreino() {
             </div>
 
             <div className="w-full max-w-sm space-y-3">
-              <Link
-                to="/treinar/$id"
-                params={{ id: selectedWorkout }}
-                onClick={() => setSelectedWorkout(null)}
-                className="w-full group relative overflow-hidden rounded-2xl border border-[var(--lime)]/15 p-0 text-left transition-all hover:border-[var(--lime)]/30 active:scale-[0.98] block"
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80"
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
-                <div className="relative flex items-center gap-4 p-5">
-                  <div className="w-14 h-14 rounded-2xl bg-[var(--lime)]/10 border border-[var(--lime)]/15 flex items-center justify-center shrink-0">
-                    <ListChecks className="w-6 h-6 text-[var(--lime)]" />
+              {selectedW.tipo === "ficha" ? (
+                <Link
+                  to="/ficha/$id"
+                  params={{ id: selectedWorkout }}
+                  search={{ tab: "ficha" }}
+                  onClick={() => setSelectedWorkout(null)}
+                  className="w-full group relative overflow-hidden rounded-2xl border border-white/8 p-0 text-left transition-all hover:border-white/15 active:scale-[0.98] block"
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80"
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
+                  <div className="relative flex items-center gap-4 p-5">
+                    <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
+                      <FileText className="w-6 h-6 text-zinc-300 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-base font-black text-white mb-0.5">Ver Ficha</div>
+                      <div className="text-xs text-zinc-400 leading-relaxed">Veja todos os exercicios, series e cargas do seu treino</div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all shrink-0" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-base font-black text-white mb-0.5">Passo a Passo</div>
-                    <div className="text-xs text-zinc-400 leading-relaxed">Exercicio por exercicio com series e progresso</div>
+                </Link>
+              ) : (
+                <Link
+                  to="/treinar/$id"
+                  params={{ id: selectedWorkout }}
+                  onClick={() => setSelectedWorkout(null)}
+                  className="w-full group relative overflow-hidden rounded-2xl border border-[var(--lime)]/15 p-0 text-left transition-all hover:border-[var(--lime)]/30 active:scale-[0.98] block"
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80"
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
+                  <div className="relative flex items-center gap-4 p-5">
+                    <div className="w-14 h-14 rounded-2xl bg-[var(--lime)]/10 border border-[var(--lime)]/15 flex items-center justify-center shrink-0">
+                      <ListChecks className="w-6 h-6 text-[var(--lime)]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-base font-black text-white mb-0.5">Passo a Passo</div>
+                      <div className="text-xs text-zinc-400 leading-relaxed">Exercicio por exercicio com series e progresso</div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-[var(--lime)] group-hover:translate-x-0.5 transition-all shrink-0" />
                   </div>
-                  <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-[var(--lime)] group-hover:translate-x-0.5 transition-all shrink-0" />
-                </div>
-              </Link>
-
-              <Link
-                to="/ficha/$id"
-                params={{ id: selectedWorkout }}
-                search={{ tab: "ficha" }}
-                onClick={() => setSelectedWorkout(null)}
-                className="w-full group relative overflow-hidden rounded-2xl border border-white/8 p-0 text-left transition-all hover:border-white/15 active:scale-[0.98] block"
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80"
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
-                <div className="relative flex items-center gap-4 p-5">
-                  <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
-                    <FileText className="w-6 h-6 text-zinc-300 group-hover:text-white transition-colors" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-base font-black text-white mb-0.5">Ver Ficha</div>
-                    <div className="text-xs text-zinc-400 leading-relaxed">Veja todos os exercicios, series e cargas do seu treino</div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-                </div>
-              </Link>
+                </Link>
+              )}
             </div>
           </div>
         </div>
