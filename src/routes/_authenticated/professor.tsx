@@ -13,6 +13,7 @@ import { listMyStudents, getMyRole, createStudent, searchUserByEmail, linkStuden
 import {
   listWorkoutsForStudent,
   createWorkoutWithExercises,
+  deleteWorkout,
 } from "@/lib/workouts.functions";
 import { searchExercises, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, listBodyParts, listEquipments, type Exercise } from "@/lib/exercisedb.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -277,6 +278,16 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
       const r = data as { id: string; letra: string };
       toast.success(`Treino ${r.letra} criado e atribuido a ${studentName}!`);
       setAssignStep("completed");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: useServerFn(deleteWorkout),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["studentWorkouts", studentId] });
+      qc.invalidateQueries({ queryKey: ["workouts"] });
+      toast.success("Treino excluido!");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -741,7 +752,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
 
                 <button
                   onClick={finishPasso}
-                  disabled={createPasso.isPending || !passoLetra.trim() || selectedExercises.length === 0}
+                  disabled={createPasso.isPending || selectedExercises.length === 0}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black px-5 py-3.5 font-bold text-sm hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                 >
                   {createPasso.isPending ? (
