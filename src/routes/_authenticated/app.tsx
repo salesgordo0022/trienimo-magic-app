@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient, queryOptions, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout, hasCompletedToday, listCompletedWorkoutIds } from "@/lib/workouts.functions";
-import { getMyRole, listMyStudents, searchUserByEmail, linkStudent } from "@/lib/roles.functions";
+import { getMyRole, listMyStudents } from "@/lib/roles.functions";
 import { searchExercises, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, type Exercise } from "@/lib/exercisedb.functions";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
@@ -253,11 +253,6 @@ function Inicio() {
           <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-orange-400 transition-colors"/>
         </div>
       </Link>
-
-      {/* Vincular Aluno (professor only) */}
-      {isTeacher && (
-        <VincularAlunoSection studentsQO={studentsQO} />
-      )}
 
       {/* Criar novo treino - professor/admin only */}
       {isTeacher && (
@@ -865,114 +860,6 @@ function Inicio() {
           `}</style>
         </div>
       )}
-    </div>
-  );
-}
-
-function VincularAlunoSection({ studentsQO }: { studentsQO: () => any }) {
-  const qc = useQueryClient();
-  const { data: myStudents } = useSuspenseQuery(studentsQO()) as { data: Array<{ id: string; nome: string | null }> };
-  const [email, setEmail] = useState("");
-  const [searchResult, setSearchResult] = useState<{ id: string; nome: string | null } | null>(null);
-  const [searching, setSearching] = useState(false);
-
-  const search = useMutation({
-    mutationFn: useServerFn(searchUserByEmail),
-    onSuccess: (data) => { setSearchResult(data as { id: string; nome: string | null }); setSearching(false); },
-    onError: (e) => { toast.error(e.message); setSearching(false); setSearchResult(null); },
-  });
-
-  const link = useMutation({
-    mutationFn: useServerFn(linkStudent),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["myStudents"] });
-      toast.success("Aluno vinculado com sucesso!");
-      setEmail("");
-      setSearchResult(null);
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const handleSearch = () => {
-    if (!email.trim()) return;
-    setSearching(true);
-    setSearchResult(null);
-    search.mutate({ data: { email: email.trim() } });
-  };
-
-  const alreadyLinked = searchResult ? myStudents.some((s: any) => s.id === searchResult.id) : false;
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#111112] p-5 sm:p-6">
-      <img
-        src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover opacity-10"
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/95 to-[#111112]/80" />
-      <div className="relative">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="w-4 h-4 text-[var(--lime)]" />
-          <h2 className="text-sm font-black text-white uppercase tracking-widest">Vincular Aluno</h2>
-        </div>
-
-        <p className="text-xs text-zinc-500 mb-3">
-          Ja tem um aluno cadastrado? Vincule pelo email para criar fichas para ele.
-        </p>
-
-        <div className="flex gap-2">
-          <input
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleSearch()}
-            placeholder="Email do aluno"
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-[var(--lime)]/60 focus:ring-2 focus:ring-[var(--lime)]/20 placeholder:text-zinc-600"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={searching || !email.trim()}
-            className="inline-flex items-center gap-2 rounded-xl bg-[var(--lime)] text-black px-4 py-2.5 font-bold text-sm hover:brightness-110 disabled:opacity-60 transition-all shrink-0"
-          >
-            {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            Buscar
-          </button>
-        </div>
-
-        {searchResult && (
-          <div className="mt-3 p-3 rounded-xl border border-white/10 bg-white/[0.03] flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-white truncate">{searchResult.nome ?? "(sem nome)"}</div>
-              <div className="text-[11px] text-zinc-500">{email}</div>
-            </div>
-            {alreadyLinked ? (
-              <span className="text-[11px] font-bold text-[var(--lime)] bg-[var(--lime)]/10 px-3 py-1 rounded-lg">Ja vinculado</span>
-            ) : (
-              <button
-                onClick={() => link.mutate({ data: { student_id: searchResult.id } })}
-                disabled={link.isPending}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--lime)] text-black px-3 py-1.5 text-xs font-bold hover:brightness-110 disabled:opacity-60 transition-all"
-              >
-                {link.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-                Vincular
-              </button>
-            )}
-          </div>
-        )}
-
-        {myStudents.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-white/5">
-            <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Alunos vinculados</div>
-            <div className="flex flex-wrap gap-2">
-              {myStudents.map((s: any) => (
-                <div key={s.id} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--lime)]/10 border border-[var(--lime)]/20 px-3 py-1.5 text-xs font-semibold text-[var(--lime)]">
-                  <Users className="w-3 h-3" />
-                  {s.nome ?? "(sem nome)"}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
