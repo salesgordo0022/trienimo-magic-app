@@ -38,7 +38,6 @@ function Inicio() {
 
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [meuTreinoModal, setMeuTreinoModal] = useState<string | null>(null);
   const [novoTreinoModal, setNovoTreinoModal] = useState(false);
   const [novoStep, setNovoStep] = useState<"choice" | "ficha" | "bodyparts" | "exercise" | "completed">("choice");
   const [letra, setLetra] = useState("");
@@ -148,161 +147,38 @@ function Inicio() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
       {/* Hero — Meu Treino */}
-      {!isTeacher && completedToday?.done ? (
-        <section className="relative overflow-hidden rounded-3xl border border-[var(--lime)]/30 bg-black p-6 sm:p-8 min-h-[200px]">
+      <Link to="/meu-treino" className="block">
+        <section className="relative overflow-hidden rounded-3xl border border-[var(--lime)]/30 bg-black p-6 sm:p-8 min-h-[200px] group hover:border-[var(--lime)]/50 transition-all">
           <img
             src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80"
             alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-40"
+            className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
           <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[var(--lime)] flex items-center justify-center shrink-0 shadow-2xl">
-              <Flag className="w-8 h-8 sm:w-10 sm:h-10 text-black"/>
+              {completedToday?.done ? <Flag className="w-8 h-8 sm:w-10 sm:h-10 text-black"/> : <Dumbbell className="w-8 h-8 sm:w-10 sm:h-10 text-black"/>}
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-black uppercase tracking-[0.2em] text-[var(--lime)]">Treino de hoje</div>
-              <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mt-1">Treino Concluido!</h2>
-              <p className="text-sm text-zinc-400 mt-1">Voce ja completou seu treino de hoje. Amanha tem mais!</p>
+              {completedToday?.done ? (
+                <>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mt-1">Treino Concluido!</h2>
+                  <p className="text-sm text-zinc-400 mt-1">Voce ja completou seu treino de hoje. Amanha tem mais!</p>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mt-1">Meu Treino</h2>
+                  <p className="text-sm text-zinc-400 mt-1">
+                    {primary ? `Acessar treino ${primary.letra}${primary.nome ? " — " + primary.nome : ""}` : "Nenhum treino disponivel ainda."}
+                  </p>
+                </>
+              )}
             </div>
+            <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-[var(--lime)] transition-colors shrink-0" />
           </div>
         </section>
-      ) : (
-      <section className="relative overflow-hidden rounded-3xl border border-[var(--lime)]/30 bg-black p-6 sm:p-8 min-h-[200px]">
-        <img
-          src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-40"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[var(--lime)] flex items-center justify-center shrink-0 shadow-2xl">
-            <Dumbbell className="w-8 h-8 sm:w-10 sm:h-10 text-black"/>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-[var(--lime)]">Treino de hoje</div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mt-1">Meu Treino</h2>
-            <p className="text-sm text-zinc-400 mt-1">
-              {primary ? `Acessar treino ${primary.letra}${primary.nome ? " — " + primary.nome : ""}` : "Nenhum treino disponivel ainda."}
-            </p>
-          </div>
-          {primary && (
-            <button
-              onClick={() => setMeuTreinoModal(primary.id)}
-              className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-[var(--lime)] text-black px-5 py-3 font-bold text-sm hover:brightness-110 transition-all"
-            >
-              Acessar <ChevronRight className="w-4 h-4"/>
-            </button>
-          )}
-        </div>
-      </section>
-      )}
-
-      {/* Modal Meu Treino */}
-      {meuTreinoModal && (() => {
-        const w = isTeacher ? [...workouts, ...activeAssigned].find(x => x.id === meuTreinoModal) : activeAssigned.find(x => x.id === meuTreinoModal);
-        return (
-          <div className="fixed inset-0 z-50 flex flex-col overflow-hidden" style={{ background: "#0a0a0a" }}>
-            <div className="fixed inset-0 z-0 pointer-events-none">
-              <img
-                src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&q=80"
-                alt=""
-                className="w-full h-full object-cover opacity-15"
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a]/80 to-[#0a0a0a]" />
-            </div>
-
-            <div className="relative z-10 shrink-0 px-5 pt-5 pb-2 safe-top">
-              <div className="flex items-center justify-between mb-1">
-                <div />
-                <button onClick={() => setMeuTreinoModal(null)} className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-8">
-              <div className="relative mb-6">
-                <div className="absolute inset-0 rounded-full bg-[var(--lime)]/10 blur-[40px]" />
-                <div
-                  className="relative w-24 h-24 rounded-3xl flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, var(--lime), #a8d400)",
-                    boxShadow: "0 20px 50px -10px rgba(204,255,0,0.3)",
-                  }}
-                >
-                  <span className="text-5xl font-black text-black">{w?.letra ?? "?"}</span>
-                </div>
-              </div>
-
-              <div className="text-center mb-8 space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/15 mb-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--lime)] animate-pulse" />
-                  <span className="text-[10px] font-black text-[var(--lime)] uppercase tracking-widest">Seu Treino</span>
-                </div>
-                <h1 className="text-3xl font-black text-white">Treino {w?.letra ?? ""}</h1>
-                {w?.nome && <p className="text-sm text-zinc-400">{w.nome}</p>}
-                {w?.assigned_nome && (
-                  <p className="text-xs text-zinc-500">
-                    Prescrito por <span className="font-bold text-zinc-400">{w.assigned_nome}</span>
-                  </p>
-                )}
-              </div>
-
-              <div className="w-full max-w-sm space-y-3">
-                <Link
-                  to="/treinar/$id"
-                  params={{ id: meuTreinoModal }}
-                  onClick={() => setMeuTreinoModal(null)}
-                  className="w-full group relative overflow-hidden rounded-2xl border border-[var(--lime)]/15 p-0 text-left transition-all hover:border-[var(--lime)]/30 active:scale-[0.98] block"
-                >
-                  <img
-                    src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80"
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
-                  <div className="relative flex items-center gap-4 p-5">
-                    <div className="w-14 h-14 rounded-2xl bg-[var(--lime)]/10 border border-[var(--lime)]/15 flex items-center justify-center shrink-0">
-                      <ListChecks className="w-6 h-6 text-[var(--lime)]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-base font-black text-white mb-0.5">Passo a Passo</div>
-                      <div className="text-xs text-zinc-400 leading-relaxed">Exercicio por exercicio com series e progresso</div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-[var(--lime)] group-hover:translate-x-0.5 transition-all shrink-0" />
-                  </div>
-                </Link>
-
-                <Link
-                  to="/ficha/$id"
-                  params={{ id: meuTreinoModal }}
-                  search={{ tab: "ficha" }}
-                  onClick={() => setMeuTreinoModal(null)}
-                  className="w-full group relative overflow-hidden rounded-2xl border border-white/8 p-0 text-left transition-all hover:border-white/15 active:scale-[0.98] block"
-                >
-                  <img
-                    src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80"
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
-                  <div className="relative flex items-center gap-4 p-5">
-                    <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
-                      <FileText className="w-6 h-6 text-zinc-300 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-base font-black text-white mb-0.5">Ver Ficha</div>
-                      <div className="text-xs text-zinc-400 leading-relaxed">Veja todos os exercicios, series e cargas do seu treino</div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-                  </div>
-                </Link>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      </Link>
 
       {/* Stats chips */}
       <section className="grid grid-cols-2 gap-3 sm:gap-4">
