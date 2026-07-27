@@ -1,27 +1,41 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, queryOptions } from "@tanstack/react-query";
 import { listAssignedToMe, listCompletedWorkoutIds } from "@/lib/workouts.functions";
-import { Dumbbell, ChevronRight, X, FileText, ListChecks, Flag } from "lucide-react";
+import { ChevronRight, X, FileText, ListChecks, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
 const completedIdsQO = () => queryOptions({ queryKey: ["completedWorkoutIds"], queryFn: () => listCompletedWorkoutIds() });
 
 export const Route = createFileRoute("/_authenticated/meu-treino")({
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(assignedQO());
-    context.queryClient.ensureQueryData(completedIdsQO());
-  },
+  ssr: false,
   component: MeuTreino,
 });
 
 function MeuTreino() {
-  const { data: assigned } = useSuspenseQuery(assignedQO());
-  const { data: completedIds } = useSuspenseQuery(completedIdsQO());
+  const { data: assigned, isLoading: loadingAssigned } = useQuery(assignedQO());
+  const { data: completedIds, isLoading: loadingCompleted } = useQuery(completedIdsQO());
   const [selectedWorkout, setSelectedWorkout] = useState<string | null>(null);
 
-  const activeAssigned = assigned.filter(w => !completedIds.includes(w.id));
+  const isLoading = loadingAssigned || loadingCompleted;
+  const all = assigned ?? [];
+  const ids = completedIds ?? [];
+  const activeAssigned = all.filter(w => !ids.includes(w.id));
   const selectedW = activeAssigned.find(x => x.id === selectedWorkout);
+
+  if (isLoading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-black">Meu Treino</h1>
+          <p className="text-sm text-zinc-500 mt-1">Selecione a ficha para comecar.</p>
+        </div>
+        <div className="flex items-center justify-center py-16 text-zinc-500">
+          <Loader2 className="w-5 h-5 animate-spin mr-2" /> Carregando...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
