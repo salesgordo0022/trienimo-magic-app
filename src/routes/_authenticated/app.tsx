@@ -2,7 +2,7 @@ import { onGifError } from "@/lib/exercise-gif-fallback";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient, queryOptions, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout, hasCompletedToday } from "@/lib/workouts.functions";
+import { listWorkouts, listAssignedToMe, createWorkout, deleteWorkout, hasCompletedToday, listCompletedWorkoutIds } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents, searchUserByEmail, linkStudent } from "@/lib/roles.functions";
 import { searchExercises, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, type Exercise } from "@/lib/exercisedb.functions";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => l
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
 const roleQO = () => queryOptions({ queryKey: ["myRole"], queryFn: () => getMyRole() });
 const studentsQO = () => queryOptions({ queryKey: ["myStudents"], queryFn: () => listMyStudents() });
+const completedIdsQO = () => queryOptions({ queryKey: ["completedWorkoutIds"], queryFn: () => listCompletedWorkoutIds() });
 
 export const Route = createFileRoute("/_authenticated/app")({
   loader: ({ context }) => {
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/app")({
     context.queryClient.ensureQueryData(assignedQO());
     context.queryClient.ensureQueryData(roleQO());
     context.queryClient.ensureQueryData(studentsQO());
+    context.queryClient.ensureQueryData(completedIdsQO());
   },
   component: Inicio,
 });
@@ -29,7 +31,11 @@ function Inicio() {
   const { data: assigned } = useSuspenseQuery(assignedQO());
   const { data: myRole } = useSuspenseQuery(roleQO());
   const { data: myStudents } = useSuspenseQuery(studentsQO());
+  const { data: completedIds } = useSuspenseQuery(completedIdsQO());
   const isTeacher = myRole.role === "admin" || myRole.role === "professor";
+
+  const activeAssigned = assigned.filter(w => !completedIds.includes(w.id));
+
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [meuTreinoModal, setMeuTreinoModal] = useState<string | null>(null);
@@ -116,7 +122,7 @@ function Inicio() {
 
   const currentExercise = exerciseList[exerciseIndex] ?? null;
 
-  const primary = isTeacher ? (assigned[0] ?? workouts[0]) : assigned[0];
+  const primary = isTeacher ? (activeAssigned[0] ?? workouts[0]) : activeAssigned[0];
 
   const { data: completedToday } = useQuery({
     queryKey: ["completedToday", primary?.id],
@@ -194,7 +200,7 @@ function Inicio() {
 
       {/* Modal Meu Treino */}
       {meuTreinoModal && (() => {
-        const w = isTeacher ? [...workouts, ...assigned].find(x => x.id === meuTreinoModal) : assigned.find(x => x.id === meuTreinoModal);
+        const w = isTeacher ? [...workouts, ...activeAssigned].find(x => x.id === meuTreinoModal) : activeAssigned.find(x => x.id === meuTreinoModal);
         return (
           <div className="fixed inset-0 z-50 flex flex-col overflow-hidden" style={{ background: "#0a0a0a" }}>
             <div className="fixed inset-0 z-0 pointer-events-none">

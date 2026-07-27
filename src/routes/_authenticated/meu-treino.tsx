@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { listWorkouts, listAssignedToMe } from "@/lib/workouts.functions";
+import { listWorkouts, listAssignedToMe, listCompletedWorkoutIds } from "@/lib/workouts.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { Dumbbell, ChevronRight, X, FileText, ListChecks, Flag } from "lucide-react";
 import { useState } from "react";
@@ -8,12 +8,14 @@ import { useState } from "react";
 const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => listWorkouts() });
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
 const roleQO = () => queryOptions({ queryKey: ["myRole"], queryFn: () => getMyRole() });
+const completedIdsQO = () => queryOptions({ queryKey: ["completedWorkoutIds"], queryFn: () => listCompletedWorkoutIds() });
 
 export const Route = createFileRoute("/_authenticated/meu-treino")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(workoutsQO());
     context.queryClient.ensureQueryData(assignedQO());
     context.queryClient.ensureQueryData(roleQO());
+    context.queryClient.ensureQueryData(completedIdsQO());
   },
   component: MeuTreino,
 });
@@ -22,10 +24,12 @@ function MeuTreino() {
   const { data: workouts } = useSuspenseQuery(workoutsQO());
   const { data: assigned } = useSuspenseQuery(assignedQO());
   const { data: myRole } = useSuspenseQuery(roleQO());
+  const { data: completedIds } = useSuspenseQuery(completedIdsQO());
   const isTeacher = myRole.role === "admin" || myRole.role === "professor";
   const [selectedWorkout, setSelectedWorkout] = useState<string | null>(null);
 
-  const all = isTeacher ? [...assigned, ...workouts] : assigned;
+  const activeAssigned = assigned.filter(w => !completedIds.includes(w.id));
+  const all = isTeacher ? [...activeAssigned, ...workouts] : activeAssigned;
   const selectedW = all.find(x => x.id === selectedWorkout);
 
   return (

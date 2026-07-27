@@ -11,8 +11,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { listMyStudents, getMyRole, createStudent, searchUserByEmail, linkStudent } from "@/lib/roles.functions";
 import {
-  listWorkoutsForStudent, createWorkout, deleteWorkout, updateWorkout,
-  listWorkouts, createWorkoutWithExercises, getFicha,
+  listWorkoutsForStudent, createWorkout,
+  createWorkoutWithExercises,
 } from "@/lib/workouts.functions";
 import { searchExercises, BODYPART_PT, TARGET_PT, EQUIPMENT_PT, ptTerm, listBodyParts, listEquipments, type Exercise } from "@/lib/exercisedb.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Trash2, Play, Users, Dumbbell, Search,
   UserPlus, ChevronRight, Pencil, BookOpen, CheckCircle2, X,
-  FileText, ListChecks, Loader2, Flag, RotateCcw, TrendingUp,
+  Loader2, Flag, RotateCcw, TrendingUp,
   Flame, Check,
 } from "lucide-react";
 
@@ -259,34 +259,13 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
     queryFn: () => listWorkoutsForStudent({ data: { student_id: studentId } }),
   });
   const [showAssign, setShowAssign] = useState(false);
-  const [assignStep, setAssignStep] = useState<"choice" | "ficha" | "biblioteca" | "review" | "completed">("choice");
+  const [assignStep, setAssignStep] = useState<"biblioteca" | "review" | "completed">("biblioteca");
   const [libQuery, setLibQuery] = useState("");
   const [libBodyPart, setLibBodyPart] = useState("");
   const [libEquipment, setLibEquipment] = useState("");
   const [selectedExercises, setSelectedExercises] = useState<Array<{ exercise: Exercise; sets: number; reps: number }>>([]);
   const [passoLetra, setPassoLetra] = useState("");
   const [passoNome, setPassoNome] = useState("");
-  const [expandedFicha, setExpandedFicha] = useState<string | null>(null);
-
-  const del = useMutation({
-    mutationFn: useServerFn(deleteWorkout),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["studentWorkouts", studentId] });
-      qc.invalidateQueries({ queryKey: ["workouts"] });
-      toast.success("Ficha excluida");
-    },
-  });
-
-  const assignWorkout = useMutation({
-    mutationFn: useServerFn(updateWorkout),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["studentWorkouts", studentId] });
-      qc.invalidateQueries({ queryKey: ["workouts"] });
-      toast.success("Ficha atribuida com sucesso!");
-      setShowAssign(false);
-    },
-    onError: (e) => toast.error(e.message),
-  });
 
   const createPasso = useMutation({
     mutationFn: useServerFn(createWorkoutWithExercises),
@@ -299,14 +278,6 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
     },
     onError: (e) => toast.error(e.message),
   });
-
-  const { data: allWorkouts } = useQuery({
-    queryKey: ["allWorkouts"],
-    queryFn: () => listWorkouts(),
-    enabled: showAssign && assignStep === "ficha",
-  });
-
-  const startFichaAssign = () => setAssignStep("ficha");
 
   const addExerciseToWorkout = (exercise: Exercise, sets: number, reps: number) => {
     setSelectedExercises(prev => [...prev, { exercise, sets, reps }]);
@@ -336,7 +307,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
 
   const openAssign = () => {
     setShowAssign(true);
-    setAssignStep("choice");
+    setAssignStep("biblioteca");
     setLibQuery("");
     setLibBodyPart("");
     setLibEquipment("");
@@ -411,7 +382,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-base font-black text-white">Atribuir Treino</div>
-            <div className="text-xs text-zinc-400">Ficha ou passo a passo para {studentName}</div>
+            <div className="text-xs text-zinc-400">Criar novo treino para {studentName}</div>
           </div>
           <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-[var(--lime)] transition-colors shrink-0" />
         </div>
@@ -433,107 +404,22 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
           {/* Header */}
           <div className="relative z-10 shrink-0 px-5 pt-5 pb-2 safe-top">
             <div className="flex items-center justify-between mb-1">
-              {assignStep !== "choice" && assignStep !== "completed" ? (
+              {assignStep !== "completed" ? (
                 <button
-                  onClick={() => setAssignStep("choice")}
+                  onClick={() => setAssignStep("biblioteca")}
                   className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               ) : <div />}
               <button
-                onClick={() => { setShowAssign(false); setAssignStep("choice"); }}
+                onClick={() => { setShowAssign(false); setAssignStep("biblioteca"); }}
                 className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
           </div>
-
-          {/* Step: Choice */}
-          {assignStep === "choice" && (
-            <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-8">
-              <div className="relative mb-8">
-                <div className="absolute inset-0 rounded-full bg-[var(--lime)]/10 blur-[40px]" />
-                <div className="relative w-20 h-20 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(204,255,0,0.15), rgba(204,255,0,0.05))", border: "1px solid rgba(204,255,0,0.15)" }}>
-                  <Dumbbell className="w-9 h-9 text-[var(--lime)]" />
-                </div>
-              </div>
-              <div className="text-center mb-8 space-y-2">
-                <h1 className="text-3xl font-black text-white">Atribuir Treino</h1>
-                <p className="text-sm text-zinc-500 max-w-[260px] mx-auto">Como quer atribuir o treino para {studentName}?</p>
-              </div>
-              <div className="w-full max-w-sm space-y-3">
-                <button
-                  onClick={startFichaAssign}
-                  className="w-full group relative overflow-hidden rounded-2xl border border-white/8 p-0 text-left transition-all hover:border-white/15 active:scale-[0.98]"
-                >
-                  <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80" alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
-                  <div className="relative flex items-center gap-4 p-5">
-                    <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/15 transition-colors">
-                      <FileText className="w-6 h-6 text-zinc-300 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-base font-black text-white mb-0.5">Ficha</div>
-                      <div className="text-xs text-zinc-400 leading-relaxed">Atribuir uma ficha existente</div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => setAssignStep("biblioteca")}
-                  className="w-full group relative overflow-hidden rounded-2xl border border-[var(--lime)]/15 p-0 text-left transition-all hover:border-[var(--lime)]/30 active:scale-[0.98]"
-                >
-                  <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80" alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#111112] via-[#111112]/90 to-transparent" />
-                  <div className="relative flex items-center gap-4 p-5">
-                    <div className="w-14 h-14 rounded-2xl bg-[var(--lime)]/10 border border-[var(--lime)]/15 flex items-center justify-center shrink-0 group-hover:bg-[var(--lime)]/15 transition-colors">
-                      <ListChecks className="w-6 h-6 text-[var(--lime)]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-base font-black text-white mb-0.5">Passo a Passo</div>
-                      <div className="text-xs text-zinc-400 leading-relaxed">Biblioteca completa - escolha qualquer exercicio</div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-[var(--lime)] group-hover:translate-x-0.5 transition-all shrink-0" />
-                  </div>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Step: Ficha - list existing workouts with exercise details */}
-          {assignStep === "ficha" && (
-            <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-8 pt-3">
-              <div className="text-center mb-5">
-                <h2 className="text-xl font-black text-white">Selecione uma ficha</h2>
-                <p className="text-xs text-zinc-500 mt-1">Toque para ver exercicios e atribuir</p>
-              </div>
-              {!allWorkouts || allWorkouts.length === 0 ? (
-                <div className="rounded-2xl border border-white/10 bg-[#111112] p-10 text-center">
-                  <FileText className="w-10 h-10 text-zinc-700 mx-auto mb-2" />
-                  <p className="text-sm text-zinc-500">Nenhuma ficha encontrada.</p>
-                  <p className="text-xs text-zinc-600 mt-1">Crie uma primeiro no painel.</p>
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {allWorkouts.map((w) => (
-                    <FichaCard
-                      key={w.id}
-                      workout={w}
-                      isAssigned={w.assigned_to === studentId}
-                      isExpanded={expandedFicha === w.id}
-                      onToggle={() => setExpandedFicha(expandedFicha === w.id ? null : w.id)}
-                      onAssign={() => assignWorkout.mutate({ data: { id: w.id, assigned_to: studentId } })}
-                      isPending={assignWorkout.isPending}
-                      studentId={studentId}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Step: Biblioteca - full exercise library */}
           {assignStep === "biblioteca" && (
@@ -836,148 +722,6 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-/* ─── Ficha Card (expandable with exercises) ─── */
-function FichaCard({
-  workout,
-  isAssigned,
-  isExpanded,
-  onToggle,
-  onAssign,
-  isPending,
-  studentId,
-}: {
-  workout: any;
-  isAssigned: boolean;
-  isExpanded: boolean;
-  onToggle: () => void;
-  onAssign: () => void;
-  isPending: boolean;
-  studentId: string;
-}) {
-  const { data: ficha, isLoading } = useQuery({
-    queryKey: ["fichaPreview", workout.id],
-    queryFn: () => getFicha({ data: { id: workout.id } }),
-    enabled: isExpanded,
-  });
-
-  const groups = ficha?.groups ?? [];
-  const totalExercises = groups.reduce((acc, g) => acc + g.exercises.length, 0);
-  const totalSets = groups.reduce(
-    (acc, g) => acc + g.exercises.reduce((a, e) => a + (e.series || e.sets_config?.length || 3), 0),
-    0,
-  );
-
-  return (
-    <div className={`rounded-2xl border overflow-hidden transition-all ${
-      isAssigned ? "border-[var(--lime)]/40 bg-[var(--lime)]/5" : "border-white/[0.06] bg-[#111112]"
-    }`}>
-      {/* Header row */}
-      <div className="flex items-center gap-3 p-4">
-        <button onClick={onToggle} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-          <div className={`w-12 h-12 rounded-2xl font-black text-xl flex items-center justify-center shrink-0 transition-all ${
-            isAssigned ? "bg-[var(--lime)] text-black" : "bg-white/[0.06] text-zinc-400 border border-white/[0.06]"
-          }`}>
-            {workout.letra}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-bold text-sm text-white">Treino {workout.letra}</div>
-            {workout.nome && <div className="text-xs text-zinc-500 truncate">{workout.nome}</div>}
-            <div className="flex items-center gap-2 mt-0.5">
-              {isExpanded && !isLoading && groups.length > 0 ? (
-                <span className="text-[10px] text-zinc-500">{totalExercises} exercicio{totalExercises !== 1 ? "s" : ""} &middot; {totalSets} series</span>
-              ) : isAssigned ? (
-                <span className="text-[10px] text-[var(--lime)] font-bold">Atribuido a este aluno</span>
-              ) : (
-                <span className="text-[10px] text-zinc-600">{workout.assigned_nome ? `Atribuido a: ${workout.assigned_nome}` : "Pessoal"}</span>
-              )}
-            </div>
-          </div>
-          <ChevronDown className={`w-4 h-4 text-zinc-600 transition-transform shrink-0 ${isExpanded ? "rotate-180" : ""}`} />
-        </button>
-      </div>
-
-      {/* Expanded content */}
-      {isExpanded && (
-        <div className="border-t border-white/[0.04] px-4 pb-4 pt-3 space-y-3">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
-            </div>
-          ) : groups.length === 0 ? (
-            <p className="text-xs text-zinc-500 text-center py-4">Nenhum exercicio nesta ficha.</p>
-          ) : (
-            groups.map((group) => (
-              <div key={group.id} className="space-y-1.5">
-                {/* Group header */}
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-1 h-3 rounded-full bg-[var(--lime)]" />
-                  <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
-                    {group.nome || `Grupo ${group.ordem + 1}`}
-                  </span>
-                  <span className="text-[10px] text-zinc-600">
-                    ({group.exercises.length} exercicio{group.exercises.length !== 1 ? "s" : ""})
-                  </span>
-                </div>
-
-                {/* Exercises */}
-                {group.exercises.map((ex, i) => {
-                  const setsCount = ex.series || ex.sets_config?.length || 3;
-                  const firstSet = ex.sets_config?.[0];
-                  const reps = firstSet?.reps ?? "12";
-                  const kg = firstSet?.kg ?? "—";
-
-                  return (
-                    <div key={ex.id} className="flex items-center gap-2.5 py-2 px-3 rounded-xl bg-white/[0.02] border border-white/[0.03]">
-                      <div className="w-7 h-7 rounded-lg bg-white/[0.04] flex items-center justify-center text-[10px] font-black text-zinc-500 shrink-0">
-                        {i + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-white truncate">{ex.nome}</div>
-                      </div>
-                      {/* Sets x Reps x Kg badges */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-[var(--lime)]/10 border border-[var(--lime)]/15 text-[10px] font-bold text-[var(--lime)]">
-                          {setsCount}x
-                        </span>
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06] text-[10px] font-bold text-zinc-300">
-                          {reps}rep
-                        </span>
-                        {kg && kg !== "—" && (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/15 text-[10px] font-bold text-orange-400">
-                            {kg}kg
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ))
-          )}
-
-          {/* Assign button */}
-          <div className="pt-2">
-            {isAssigned ? (
-              <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)]/10 border border-[var(--lime)]/20 text-[var(--lime)] px-4 py-3 text-sm font-bold">
-                <Check className="w-4 h-4" /> Ja atribuido a este aluno
-              </div>
-            ) : (
-              <button
-                onClick={onAssign}
-                disabled={isPending}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black px-4 py-3 font-bold text-sm hover:brightness-110 disabled:opacity-50 transition-all active:scale-[0.98]"
-              >
-                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                {isPending ? "Atribuindo..." : "Atribuir Esta Ficha"}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

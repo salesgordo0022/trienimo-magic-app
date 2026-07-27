@@ -791,3 +791,15 @@ export const hasCompletedToday = createServerFn({ method: "GET" })
       .limit(1);
     return { done: (sessions?.length ?? 0) > 0 };
   });
+
+export const listCompletedWorkoutIds = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: sessions } = await context.supabase
+      .from("sessions")
+      .select("workout_id")
+      .eq("user_id", context.userId)
+      .not("ended_at", "is", null);
+    const ids = Array.from(new Set((sessions ?? []).map((s) => s.workout_id).filter(Boolean)));
+    return ids as string[];
+  });
