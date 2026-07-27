@@ -29,13 +29,13 @@ function MeuTreino() {
         <h1 className="text-2xl sm:text-3xl font-black">Meu Treino</h1>
         <p className="text-sm text-zinc-500 mt-1">Selecione a ficha para comecar.</p>
       </div>
-      {all.length === 0 ? (
+      {activeAssigned.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-[#111112] p-10 text-center text-sm text-zinc-500">
           Nenhuma ficha disponivel ainda.
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {all.map(w => (
+          {activeAssigned.map(w => (
             <button
               key={w.id}
               onClick={() => setSelectedWorkout(w.id)}
