@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Trash2, Play, Users, Dumbbell, Search,
   UserPlus, ChevronRight, Pencil, BookOpen, CheckCircle2, X,
-  FileText, ListChecks, Loader2, Flag, RotateCcw, TrendingUp,
+  FileText, ListChecks, Loader2, Flag, RotateCcw, TrendingUp, Eye,
   Flame, Check,
 } from "lucide-react";
 
@@ -634,7 +634,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                 ) : (libResults.data?.length ?? 0) === 0 ? (
                   <div className="rounded-xl border border-white/10 bg-[#111112] p-8 text-center text-sm text-zinc-500">Nada encontrado. Tente outros filtros.</div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="space-y-2">
                     {libResults.data!.map((ex) => (
                       <LibExerciseCard
                         key={ex.id}
@@ -852,26 +852,29 @@ function LibExerciseCard({
 
   return (
     <>
-      <button
-        onClick={() => setShowDetail(true)}
-        className="text-left rounded-2xl border border-white/10 bg-[#111112] overflow-hidden hover:border-[var(--lime)]/40 transition-all group"
-      >
-        <div className="aspect-square bg-white overflow-hidden">
-          <img src={exercise.gifUrl} alt={exercise.name} loading="lazy" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"  onError={onGifError} />
-        </div>
-        <div className="p-3">
-          <div className="text-xs font-bold text-white capitalize line-clamp-2 leading-tight">{exercise.name}</div>
-          <div className="mt-1.5 flex flex-wrap gap-1">
+      <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-[#111112] px-3 py-2.5 group hover:border-[var(--lime)]/30 transition-all">
+        <button
+          onClick={() => setShowDetail(true)}
+          className="flex-1 min-w-0 text-left"
+        >
+          <div className="text-xs font-bold text-white capitalize truncate">{exercise.name}</div>
+          <div className="mt-1 flex flex-wrap gap-1">
             <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[var(--lime)]/15 text-[var(--lime)]">{ptTerm(TARGET_PT, exercise.target) ?? exercise.target}</span>
             <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/5 text-zinc-400">{ptTerm(EQUIPMENT_PT, exercise.equipment) ?? exercise.equipment}</span>
           </div>
-          {added && (
-            <div className="mt-2 text-[10px] font-bold text-[var(--lime)] flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Adicionado
-            </div>
-          )}
-        </div>
-      </button>
+        </button>
+        {added && (
+          <div className="shrink-0 text-[10px] font-bold text-[var(--lime)] flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" />
+          </div>
+        )}
+        <button
+          onClick={() => setShowDetail(true)}
+          className="shrink-0 p-2 rounded-lg text-zinc-500 hover:text-[var(--lime)] hover:bg-white/5 transition-all"
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+      </div>
 
       {showDetail && (
         <LibExerciseDetail exercise={exercise} onAdd={onAdd} added={added} onClose={() => setShowDetail(false)} />
