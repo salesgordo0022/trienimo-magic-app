@@ -87,7 +87,7 @@ export const listAssignedToMe = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to, tipo")
       .eq("assigned_to", context.userId)
       .order("ordem", { ascending: true });
     if (error) throw new Error(error.message);
