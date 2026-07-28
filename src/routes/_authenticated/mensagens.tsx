@@ -141,7 +141,8 @@ function Mensagens() {
             const time = c.last_at ? formatTime(c.last_at) : "";
             const date = c.last_at ? formatDate(c.last_at) : "";
             const hasUnread = c.unread > 0;
-            const showDate = i === 0 || (c.last_at && filtered[i - 1]?.last_at && date !== formatDate(filtered[i - 1].last_at));
+            const prevLastAt = filtered[i - 1]?.last_at;
+            const showDate = i === 0 || (!!c.last_at && !!prevLastAt && date !== formatDate(prevLastAt));
 
             return (
               <div key={c.partner_id}>
