@@ -547,7 +547,8 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         nome: data.nome ?? null,
         ordem,
         data_inicio: new Date().toISOString().slice(0, 10),
-      })
+        ...(data.tipo ? { tipo: data.tipo } : {}),
+      } as never)
       .select("id, letra")
       .single();
     if (error) throw new Error(error.message);
