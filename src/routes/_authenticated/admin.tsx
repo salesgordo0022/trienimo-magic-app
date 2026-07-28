@@ -283,7 +283,7 @@ function UserCard({
     aluno: { label: "Aluno", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20", icon: User },
   };
 
-  const rc = roleConfig[user.role];
+  const rc = roleConfig[user.role as AppRole];
 
   return (
     <div className="rounded-2xl border border-white/10 bg-[#111112] overflow-hidden">
