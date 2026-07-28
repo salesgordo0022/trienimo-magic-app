@@ -87,7 +87,7 @@ export const listAssignedToMe = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to")
+      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to, tipo")
       .eq("assigned_to", context.userId)
       .order("ordem", { ascending: true });
     if (error) throw new Error(error.message);
@@ -547,7 +547,8 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         nome: data.nome ?? null,
         ordem,
         data_inicio: new Date().toISOString().slice(0, 10),
-      })
+        ...(data.tipo ? { tipo: data.tipo } : {}),
+      } as never)
       .select("id, letra")
       .single();
     if (error) throw new Error(error.message);

@@ -408,6 +408,7 @@ export type Database = {
           nome: string | null
           observacao: string | null
           ordem: number
+          tipo: string
           updated_at: string
           user_id: string
         }
@@ -420,6 +421,7 @@ export type Database = {
           nome?: string | null
           observacao?: string | null
           ordem?: number
+          tipo?: string
           updated_at?: string
           user_id: string
         }
@@ -432,6 +434,7 @@ export type Database = {
           nome?: string | null
           observacao?: string | null
           ordem?: number
+          tipo?: string
           updated_at?: string
           user_id?: string
         }
