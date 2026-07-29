@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { EXERCISE_NAME_PT } from "./exercisedb.functions";
+import { translateEN } from "./exercisedb.functions";
 
 export type WorkoutRow = {
   id: string;
@@ -292,13 +292,17 @@ export const getFicha = createServerFn({ method: "GET" })
       : { data: [], error: null };
     if (e3) throw new Error(e3.message);
 
-    const translateName = (n: string) => EXERCISE_NAME_PT[n.toLowerCase().trim()] ?? n;
+    const translated = await Promise.all(
+      ((exs ?? []) as ExerciseRow[]).map(async (e) => ({
+        ...e,
+        exercise_db_id: e.exercise_db_id ?? null,
+        nome: await translateEN(e.nome),
+      })),
+    );
 
     const groupsWith: GroupWithExercises[] = (groups ?? []).map((g) => ({
       ...g,
-      exercises: ((exs ?? []) as ExerciseRow[])
-        .filter((e) => e.group_id === g.id)
-        .map((e) => ({ ...e, exercise_db_id: e.exercise_db_id ?? null, nome: translateName(e.nome) })),
+      exercises: translated.filter((e) => e.group_id === g.id),
     }));
 
     return {
