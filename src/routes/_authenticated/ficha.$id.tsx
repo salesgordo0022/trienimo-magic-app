@@ -11,31 +11,20 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   getFicha,
   updateWorkout,
-  addGroup,
-  deleteGroup,
-  addExercise,
   updateExercise,
-  deleteExercise,
   type ExerciseRow,
 } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents } from "@/lib/roles.functions";
-import { searchExercises, getExerciseById, exerciseGifUrl, type Exercise } from "@/lib/exercisedb.functions";
+import { exerciseGifUrl } from "@/lib/exercisedb.functions";
 import {
-  Plus,
-  Minus,
-  Trash2,
   History,
   ArrowLeft,
   User,
   FileText,
   Check,
-  Search,
-  X,
   Loader2,
-  Dumbbell,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const fichaQO = (id: string) =>
@@ -63,14 +52,10 @@ const glassCard =
   "rounded-2xl border border-white/10 backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/[0.02] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]";
 const inputCls =
   "w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--lime)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--lime)]/10";
-const limeBtn =
-  "inline-flex items-center justify-center gap-2 text-black font-semibold rounded-xl px-4 py-2.5 text-sm transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-60";
 const limeBtnStyle = {
   background: "linear-gradient(135deg, #A3E635, #84CC16)",
   boxShadow: "0 10px 30px -12px rgba(163,230,53,0.55)",
 } as const;
-const chipBtn =
-  "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all";
 
 function FichaEditor() {
   const { id } = Route.useParams();
@@ -84,12 +69,6 @@ function FichaEditor() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["ficha", id] });
 
   const updW = useMutation({ mutationFn: useServerFn(updateWorkout), onSuccess: invalidate });
-  const addG = useMutation({ mutationFn: useServerFn(addGroup), onSuccess: invalidate });
-  const delG = useMutation({ mutationFn: useServerFn(deleteGroup), onSuccess: invalidate });
-  const addE = useMutation({ mutationFn: useServerFn(addExercise), onSuccess: invalidate });
-  const delE = useMutation({ mutationFn: useServerFn(deleteExercise), onSuccess: invalidate });
-
-  const [newGroupName, setNewGroupName] = useState("");
 
   return (
     <div
@@ -213,43 +192,12 @@ function FichaEditor() {
               </div>
             </div>
 
-            {/* Grupos */}
-            {data.groups.map((g) => (
-              <GroupBlock
-                key={g.id}
-                group={g}
-                isTeacher={isTeacher}
-                onDelete={() => delG.mutate({ data: { id: g.id } })}
-                onAddExercise={(nome, exercise_db_id) =>
-                  addE.mutate({ data: { group_id: g.id, nome, exercise_db_id } })
-                }
-                onDeleteExercise={(eid) => delE.mutate({ data: { id: eid } })}
-                onExerciseSaved={invalidate}
-              />
-            ))}
-
-            {isTeacher && (
-              <form
-                className={`${glassCard} p-4 flex gap-2`}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!newGroupName) return;
-                  addG.mutate({ data: { workout_id: id, nome: newGroupName } });
-                  setNewGroupName("");
-                }}
-              >
-                <input
-                  placeholder="Novo grupo (ex: COSTAS, PERNAS...)"
-                  value={newGroupName}
-                  onChange={(e) => setNewGroupName(e.target.value)}
-                  className={inputCls}
-                />
-                <button type="submit" className={limeBtn} style={limeBtnStyle}>
-                  <Plus className="w-4 h-4" />
-                  Grupo
-                </button>
-              </form>
-            )}
+            {/* Tabela de exercicios (sem grupos) */}
+            <FichaTabela
+              allExercises={data.groups.flatMap((g) => g.exercises)}
+              isTeacher={isTeacher}
+              onSaved={invalidate}
+            />
           </>
         )}
       </main>
@@ -395,234 +343,49 @@ function HeaderField({
   );
 }
 
-function GroupBlock({
-  group,
+function FichaTabela({
+  allExercises,
   isTeacher,
-  onDelete,
-  onAddExercise,
-  onDeleteExercise,
-  onExerciseSaved,
+  onSaved,
 }: {
-  group: { id: string; nome: string; exercises: ExerciseRow[] };
+  allExercises: ExerciseRow[];
   isTeacher: boolean;
-  onDelete: () => void;
-  onAddExercise: (nome: string, exercise_db_id?: string | null) => void;
-  onDeleteExercise: (id: string) => void;
-  onExerciseSaved: () => void;
+  onSaved: () => void;
 }) {
-  const [newEx, setNewEx] = useState("");
+  if (allExercises.length === 0) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-[#111112] p-10 text-center text-sm text-zinc-500">
+        Nenhum exercicio cadastrado.
+      </div>
+    );
+  }
   return (
     <div className={`${glassCard} overflow-hidden`}>
-      <div className="px-4 py-3 flex items-center gap-2 border-b border-white/5 bg-black/30">
-        <div
-          className="w-1 h-5 rounded-full"
-          style={{ background: "linear-gradient(180deg, #A3E635, #84CC16)" }}
-        />
-        <div className="font-semibold uppercase tracking-wide text-sm text-white flex-1">
-          {group.nome}
-        </div>
-        {isTeacher && (
-          <button
-            onClick={() => {
-              if (confirm("Excluir grupo e exercícios?")) onDelete();
-            }}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-
-      {/* Desktop table */}
-      <div className="hidden md:block overflow-x-auto">
+      <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr
-              className="text-[10px] uppercase tracking-wider text-black"
-              style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}
-            >
-              <th className="px-2 py-2 w-12 text-left font-bold">Nº</th>
-              <th className="px-2 py-2 text-left font-bold">Exercício</th>
-              {[0, 1, 2, 3].map((i) => (
-                <>
-                  <th key={"r" + i} className="px-2 py-2 w-16 text-left font-bold">
-                    Repetições
-                  </th>
-                  <th key={"k" + i} className="px-2 py-2 w-16 text-left font-bold">
-                    Kg
-                  </th>
-                </>
-              ))}
-              <th className="px-2 py-2 w-16 text-left font-bold">Descanso</th>
-              <th className="px-2 py-2 w-24 text-left font-bold">Obs</th>
-              {isTeacher && <th className="px-2 py-2 w-8"></th>}
+            <tr className="text-[10px] uppercase tracking-wider text-black" style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
+              <th className="px-3 py-2.5 text-left font-bold w-1/2">Exercício</th>
+              <th className="px-3 py-2.5 text-center font-bold w-[15%]">Peso (kg)</th>
+              <th className="px-3 py-2.5 text-center font-bold w-[15%]">Repetições</th>
+              <th className="px-3 py-2.5 text-center font-bold w-[15%]">Séries</th>
             </tr>
           </thead>
           <tbody>
-            {group.exercises.map((ex, i) => (
-              <ExerciseRowEditor
+            {allExercises.map((ex, i) => (
+              <FichaRow
                 key={ex.id}
                 ex={ex}
                 rowIndex={i}
                 isTeacher={isTeacher}
-                onSaved={onExerciseSaved}
-                onDelete={() => onDeleteExercise(ex.id)}
+                onSaved={onSaved}
               />
             ))}
           </tbody>
         </table>
       </div>
-
-      {/* Mobile cards */}
-      <div className="md:hidden divide-y divide-white/5">
-        {group.exercises.map((ex) => (
-          <ExerciseCardMobile
-            key={ex.id}
-            ex={ex}
-            isTeacher={isTeacher}
-            onSaved={onExerciseSaved}
-            onDelete={() => onDeleteExercise(ex.id)}
-          />
-        ))}
-      </div>
-
-      {isTeacher && (
-        <form
-          className="p-3 flex gap-2 border-t border-white/5 flex-wrap"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!newEx) return;
-            onAddExercise(newEx);
-            setNewEx("");
-          }}
-        >
-          <input
-            placeholder="Novo exercício"
-            value={newEx}
-            onChange={(e) => setNewEx(e.target.value)}
-            className={`${inputCls} py-2 flex-1 min-w-[150px]`}
-          />
-          <ExerciseLibraryButton onPick={(ex) => onAddExercise(ex.name, ex.id)} />
-          <button type="submit" className={`${chipBtn} text-black`} style={limeBtnStyle}>
-            <Plus className="w-3 h-3" />
-            Adicionar
-          </button>
-        </form>
-      )}
     </div>
   );
-}
-
-function ExerciseLibraryButton({
-  onPick,
-  trigger,
-}: {
-  onPick: (ex: Exercise) => void;
-  trigger?: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
-  const results = useQuery({
-    queryKey: ["ex", "quicksearch", q],
-    queryFn: () => searchExercises({ data: { q: q || undefined, limit: 20 } }),
-    enabled: open,
-    staleTime: 1000 * 60 * 10,
-  });
-  return (
-    <>
-      {trigger ? (
-        <span onClick={() => setOpen(true)}>{trigger}</span>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className={`${chipBtn} bg-white/5 border border-white/10 text-white`}
-        >
-          <Search className="w-3 h-3" />
-          Biblioteca
-        </button>
-      )}
-      {open &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
-            onClick={() => setOpen(false)}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="w-full sm:max-w-2xl bg-[#111112] border border-white/10 rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col"
-            >
-              <div className="p-4 border-b border-white/10 flex items-center gap-2">
-                <Search className="w-4 h-4 text-zinc-500" />
-                <input
-                  autoFocus
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Buscar exercício (ex: supino, rosca, agachamento)"
-                  className="flex-1 bg-transparent outline-none text-sm text-white"
-                />
-                <button onClick={() => setOpen(false)} className="text-zinc-400 p-1">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="overflow-y-auto p-3">
-                {results.isLoading ? (
-                  <div className="p-8 text-center text-sm text-zinc-500">
-                    <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-                    Buscando...
-                  </div>
-                ) : (results.data?.length ?? 0) === 0 ? (
-                  <div className="p-8 text-center text-sm text-zinc-500">Nada encontrado.</div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {results.data!.map((ex: Exercise) => (
-                      <button
-                        key={ex.id}
-                        type="button"
-                        onClick={() => {
-                          onPick(ex);
-                          setOpen(false);
-                        }}
-                        className="text-left rounded-xl border border-white/10 bg-black/30 overflow-hidden hover:border-[var(--lime)]/50"
-                      >
-                        <img
-                          src={ex.gifUrl}
-                          alt={ex.name}
-                          loading="lazy"
-                          className="w-full aspect-square object-contain bg-white"
-                        />
-                        <div className="p-2">
-                          <div className="text-[11px] font-bold text-white capitalize line-clamp-2 leading-tight">
-                            {ex.name}
-                          </div>
-                          <div className="text-[9px] text-zinc-500 mt-0.5 capitalize">
-                            {ex.target} · {ex.equipment}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
-    </>
-  );
-}
-
-function useExerciseState(ex: ExerciseRow) {
-  const [series, setSeries] = useState(String(ex.series));
-  const [desc, setDesc] = useState(String(ex.desc_segundos));
-  const [obs, setObs] = useState(ex.obs ?? "");
-  const [nome, setNome] = useState(ex.nome);
-  const sc = ex.sets_config ?? [];
-  const [sets, setSets] = useState<Array<{ reps: string; kg: string }>>(
-    Array.from({ length: 4 }, (_, i) => ({ reps: sc[i]?.reps ?? "", kg: sc[i]?.kg ?? "" })),
-  );
-  return { series, setSeries, desc, setDesc, obs, setObs, nome, setNome, sets, setSets };
 }
 
 function useSaveStatus() {
@@ -635,369 +398,105 @@ function useSaveStatus() {
   return [status, setStatus] as const;
 }
 
-function ExerciseRowEditor({
+function FichaRow({
   ex,
   rowIndex,
   isTeacher,
   onSaved,
-  onDelete,
 }: {
   ex: ExerciseRow;
   rowIndex: number;
   isTeacher: boolean;
   onSaved: () => void;
-  onDelete: () => void;
 }) {
   const [status, setStatus] = useSaveStatus();
   const upd = useMutation({
     mutationFn: useServerFn(updateExercise),
     onMutate: () => setStatus("saving"),
-    onSuccess: () => {
-      onSaved();
-      setStatus("saved");
-    },
-    onError: (e) => {
-      setStatus("idle");
-      toast.error(e.message);
-    },
+    onSuccess: () => { onSaved(); setStatus("saved"); },
+    onError: (e) => { setStatus("idle"); toast.error(e.message); },
   });
-  const s = useExerciseState(ex);
+  const [nome] = useState(ex.nome);
+  const [peso, setPeso] = useState(ex.sets_config?.[0]?.kg ?? "");
+  const [reps, setReps] = useState(ex.sets_config?.[0]?.reps ?? "");
+  const [series, setSeries] = useState(String(ex.series));
+  const bg = rowIndex % 2 === 0 ? "bg-white/[0.015]" : "bg-white/[0.04]";
+  const td = "px-3 py-2.5 border-b border-white/5";
+  const inp = "w-full bg-transparent text-center outline-none text-white focus:bg-[var(--lime)]/5 rounded px-1 py-0.5";
+  const ro = !isTeacher;
   const save = () =>
     upd.mutate({
       data: {
         id: ex.id,
-        nome: s.nome,
-        series: parseInt(s.series) || 1,
-        desc_segundos: parseInt(s.desc) || 0,
-        obs: s.obs || null,
-        sets_config: s.sets,
+        sets_config: [{ kg: peso, reps }],
+        series: parseInt(series) || ex.series,
+        nome,
       },
     });
-  const stepSeries = (delta: number) => {
-    const n = Math.max(1, Math.min(20, (parseInt(s.series) || 1) + delta));
-    s.setSeries(String(n));
-    setTimeout(save, 0);
-  };
-  const ro = !isTeacher;
-  const bg = rowIndex % 2 === 0 ? "bg-white/[0.015]" : "bg-white/[0.04]";
-  const td = "px-2 py-2 border-b border-white/5 text-white";
-  const inp = `bg-transparent outline-none ${ro ? "" : "focus:bg-[var(--lime)]/5"} rounded px-1 py-0.5`;
   return (
     <tr className={`${bg} transition-colors ${status === "saved" ? "bg-[var(--lime)]/10" : ""}`}>
-      <td className={`${td} w-16`}>
-        <div className="inline-flex items-center gap-0.5">
-          {isTeacher && (
-            <button
-              onClick={() => stepSeries(-1)}
-              className="text-zinc-500 hover:text-[var(--lime)] p-0.5"
-            >
-              <Minus className="w-3 h-3" />
-            </button>
-          )}
-          <input
-            value={s.series}
-            onChange={(e) => s.setSeries(e.target.value)}
-            onBlur={ro ? undefined : save}
-            readOnly={ro}
-            className={`${inp} w-6 text-center ${ro ? "cursor-default" : ""}`}
-          />
-          {isTeacher && (
-            <button
-              onClick={() => stepSeries(1)}
-              className="text-zinc-500 hover:text-[var(--lime)] p-0.5"
-            >
-              <Plus className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-      </td>
       <td className={td}>
-        <div className="flex items-center gap-1.5">
-          {isTeacher ? (
-            <ExerciseLibraryButton
-              onPick={(picked) => {
-                s.setNome(picked.name);
-                upd.mutate({ data: { id: ex.id, nome: picked.name, exercise_db_id: picked.id } });
-              }}
-              trigger={
-                ex.exercise_db_id ? (
-                  <img
-                    src={exerciseGifUrl(ex.exercise_db_id!)}
-                    alt=""
-                    className="w-7 h-7 rounded-md object-contain bg-white shrink-0 cursor-pointer border border-white/10"
-                   onError={onGifError} />
-                ) : (
-                  <div
-                    className="w-7 h-7 rounded-md bg-white/5 border border-white/10 text-zinc-500 flex items-center justify-center shrink-0 cursor-pointer hover:text-[var(--lime)]"
-                    title="Vincular GIF da biblioteca"
-                  >
-                    <Dumbbell className="w-3.5 h-3.5" />
-                  </div>
-                )
-              }
+        <div className="flex items-center gap-2">
+          {ex.exercise_db_id && (
+            <img
+              src={exerciseGifUrl(ex.exercise_db_id)}
+              alt=""
+              className="w-7 h-7 rounded-md object-contain bg-white shrink-0 border border-white/10"
+              onError={onGifError}
             />
-          ) : null}
-          <span className={`${inp} w-full ${ro ? "text-white" : ""}`}>{s.nome}</span>
-          {status === "saving" && (
-            <Loader2 className="w-3 h-3 text-zinc-500 animate-spin shrink-0" />
           )}
+          <span className="text-sm font-semibold text-white">{nome}</span>
+          {status === "saving" && <Loader2 className="w-3 h-3 text-zinc-500 animate-spin shrink-0" />}
           {status === "saved" && <Check className="w-3 h-3 text-[var(--lime)] shrink-0" />}
         </div>
       </td>
-      {s.sets.map((set, i) => (
-        <>
-          <td key={"r" + i} className={td}>
-            {ro ? (
-              <span className="text-white">{set.reps || "—"}</span>
-            ) : (
-              <input
-                value={set.reps}
-                onChange={(e) => {
-                  const c = [...s.sets];
-                  c[i] = { ...c[i], reps: e.target.value };
-                  s.setSets(c);
-                }}
-                onBlur={save}
-                placeholder="10"
-                className={`${inp} w-14 placeholder:text-zinc-700`}
-              />
-            )}
-          </td>
-          <td key={"k" + i} className={td}>
-            {ro ? (
-              <span className="text-white">{set.kg || "—"}</span>
-            ) : (
-              <input
-                value={set.kg}
-                onChange={(e) => {
-                  const c = [...s.sets];
-                  c[i] = { ...c[i], kg: e.target.value };
-                  s.setSets(c);
-                }}
-                onBlur={save}
-                placeholder="kg"
-                className={`${inp} w-14 placeholder:text-zinc-700`}
-              />
-            )}
-          </td>
-        </>
-      ))}
       <td className={td}>
         {ro ? (
-          <span className="text-white">{s.desc || "—"}s</span>
-        ) : (
-          <>
-            <input
-              value={s.desc}
-              onChange={(e) => s.setDesc(e.target.value)}
-              onBlur={save}
-              className={`${inp} w-12`}
-            />
-            <span className="text-zinc-500">s</span>
-          </>
-        )}
-      </td>
-      <td className={td}>
-        {ro ? (
-          <span className="text-white">{s.obs || "—"}</span>
+          <span className="block text-center text-white font-medium">{peso || "—"}</span>
         ) : (
           <input
-            value={s.obs}
-            onChange={(e) => s.setObs(e.target.value)}
+            value={peso}
+            onChange={(e) => setPeso(e.target.value)}
             onBlur={save}
-            className={`${inp} w-full placeholder:text-zinc-700`}
-            placeholder="—"
+            placeholder="0"
+            type="number"
+            min="0"
+            step="0.5"
+            className={inp}
           />
         )}
       </td>
-      {isTeacher && (
-        <td className={td}>
-          <button
-            onClick={onDelete}
-            className="p-1 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-          >
-            <Trash2 className="w-3 h-3" />
-          </button>
-        </td>
-      )}
+      <td className={td}>
+        {ro ? (
+          <span className="block text-center text-white font-medium">{reps || "—"}</span>
+        ) : (
+          <input
+            value={reps}
+            onChange={(e) => setReps(e.target.value)}
+            onBlur={save}
+            placeholder="0"
+            type="number"
+            min="0"
+            className={inp}
+          />
+        )}
+      </td>
+      <td className={td}>
+        {ro ? (
+          <span className="block text-center text-white font-medium">{series || "—"}</span>
+        ) : (
+          <input
+            value={series}
+            onChange={(e) => setSeries(e.target.value)}
+            onBlur={save}
+            placeholder="0"
+            type="number"
+            min="0"
+            className={inp}
+          />
+        )}
+      </td>
     </tr>
-  );
-}
-
-function ExerciseCardMobile({
-  ex,
-  onSaved,
-  onDelete,
-  isTeacher,
-}: {
-  ex: ExerciseRow;
-  onSaved: () => void;
-  onDelete: () => void;
-  isTeacher: boolean;
-}) {
-  const [status, setStatus] = useSaveStatus();
-  const upd = useMutation({
-    mutationFn: useServerFn(updateExercise),
-    onMutate: () => setStatus("saving"),
-    onSuccess: () => {
-      onSaved();
-      setStatus("saved");
-    },
-    onError: () => setStatus("idle"),
-  });
-  const ro = !isTeacher;
-  const s = useExerciseState(ex);
-  const save = () =>
-    upd.mutate({
-      data: {
-        id: ex.id,
-        nome: s.nome,
-        series: parseInt(s.series) || 1,
-        desc_segundos: parseInt(s.desc) || 0,
-        obs: s.obs || null,
-        sets_config: s.sets,
-      },
-    });
-  const stepSeries = (delta: number) => {
-    const n = Math.max(1, Math.min(20, (parseInt(s.series) || 1) + delta));
-    s.setSeries(String(n));
-    setTimeout(save, 0);
-  };
-  if (ro) {
-    return (
-      <div className="p-3 space-y-2">
-        <div className="flex gap-2 items-center">
-          <span className="font-semibold text-sm text-white">{s.nome}</span>
-        </div>
-        <div className="flex gap-3 text-xs text-zinc-400 items-center">
-          <span>Séries: <span className="text-white">{s.series}</span></span>
-          <span>Descanso: <span className="text-white">{s.desc || "0"}s</span></span>
-        </div>
-        <div className="grid grid-cols-4 gap-1.5">
-          {s.sets.map((set, i) => (
-            <div key={i} className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-xs">
-              <div className="text-[10px] text-zinc-500 mb-1">Série {i + 1}</div>
-              <div className="text-white">{set.reps || "—"} reps</div>
-              <div className="text-white">{set.kg || "—"} kg</div>
-            </div>
-          ))}
-        </div>
-        {s.obs && <div className="text-xs text-zinc-400">Obs: <span className="text-white">{s.obs}</span></div>}
-      </div>
-    );
-  }
-  return (
-    <div
-      className={`p-3 space-y-2 transition-colors ${status === "saved" ? "bg-[var(--lime)]/10" : ""}`}
-    >
-      <div className="flex gap-2 items-center">
-        <ExerciseLibraryButton
-          onPick={(picked) => {
-            s.setNome(picked.name);
-            upd.mutate({ data: { id: ex.id, nome: picked.name, exercise_db_id: picked.id } });
-          }}
-          trigger={
-            ex.exercise_db_id ? (
-              <img
-                src={exerciseGifUrl(ex.exercise_db_id!)}
-                alt=""
-                className="w-8 h-8 rounded-md object-contain bg-white shrink-0 cursor-pointer border border-white/10"
-               onError={onGifError} />
-            ) : (
-              <div
-                className="w-8 h-8 rounded-md bg-white/5 border border-white/10 text-zinc-500 flex items-center justify-center shrink-0 cursor-pointer hover:text-[var(--lime)]"
-                title="Vincular GIF da biblioteca"
-              >
-                <Dumbbell className="w-4 h-4" />
-              </div>
-            )
-          }
-        />
-        <input
-          value={s.nome}
-          onChange={(e) => s.setNome(e.target.value)}
-          onBlur={save}
-          className="flex-1 font-semibold text-sm bg-transparent border-b border-white/10 focus:border-[var(--lime)]/60 outline-none text-white pb-1"
-        />
-        {status === "saving" && <Loader2 className="w-4 h-4 text-zinc-500 animate-spin" />}
-        {status === "saved" && <Check className="w-4 h-4 text-[var(--lime)]" />}
-        <button
-          onClick={onDelete}
-          className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="flex gap-3 text-xs text-zinc-400 items-center">
-        <div className="flex items-center gap-1">
-          <span>Séries</span>
-          <button
-            onClick={() => stepSeries(-1)}
-            className="w-6 h-6 rounded-md border border-white/10 text-white hover:bg-white/10 flex items-center justify-center"
-          >
-            <Minus className="w-3 h-3" />
-          </button>
-          <input
-            value={s.series}
-            onChange={(e) => s.setSeries(e.target.value)}
-            onBlur={save}
-            className="w-8 border-b border-white/10 bg-transparent text-white text-center outline-none focus:border-[var(--lime)]/60"
-          />
-          <button
-            onClick={() => stepSeries(1)}
-            className="w-6 h-6 rounded-md border border-white/10 text-white hover:bg-white/10 flex items-center justify-center"
-          >
-            <Plus className="w-3 h-3" />
-          </button>
-        </div>
-        <label className="flex items-center gap-1.5">
-          Descanso{" "}
-          <input
-            value={s.desc}
-            onChange={(e) => s.setDesc(e.target.value)}
-            onBlur={save}
-            className="w-10 border-b border-white/10 bg-transparent text-white text-center outline-none focus:border-[var(--lime)]/60"
-          />
-          s
-        </label>
-      </div>
-      <div className="grid grid-cols-4 gap-1.5">
-        {s.sets.map((set, i) => (
-          <div key={i} className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-xs">
-            <div className="text-[10px] text-zinc-500 mb-1">Série {i + 1}</div>
-            <input
-              value={set.reps}
-              onChange={(e) => {
-                const c = [...s.sets];
-                c[i] = { ...c[i], reps: e.target.value };
-                s.setSets(c);
-              }}
-              onBlur={save}
-              placeholder="repetições"
-              className="w-full bg-transparent text-white outline-none placeholder:text-zinc-700"
-            />
-            <input
-              value={set.kg}
-              onChange={(e) => {
-                const c = [...s.sets];
-                c[i] = { ...c[i], kg: e.target.value };
-                s.setSets(c);
-              }}
-              onBlur={save}
-              placeholder="kg"
-              className="w-full bg-transparent text-white outline-none placeholder:text-zinc-700"
-            />
-          </div>
-        ))}
-      </div>
-      <input
-        value={s.obs}
-        onChange={(e) => s.setObs(e.target.value)}
-        onBlur={save}
-        placeholder="Observações"
-        className="w-full bg-transparent text-white text-xs outline-none placeholder:text-zinc-700"
-      />
-    </div>
   );
 }
 
