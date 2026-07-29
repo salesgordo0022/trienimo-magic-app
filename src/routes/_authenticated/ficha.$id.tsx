@@ -466,9 +466,9 @@ function FichaTabela({
                 {treinoLetra}
               </th>
               {allExercises.map((ex, i) => (
-                <th key={ex.id} className={`px-3 py-2 text-center min-w-[110px] ${i > 0 ? "border-l border-black/15" : ""}`}>
-                  <div className="text-[10px] font-black text-black/50 uppercase tracking-wider">{ex.series}x</div>
-                  <div className="text-xs font-black text-black leading-tight truncate max-w-[100px] mx-auto">{ptExName(ex.nome)}</div>
+                <th key={ex.id} className={`px-4 py-3 text-center min-w-[130px] ${i > 0 ? "border-l border-black/15" : ""}`}>
+                  <div className="text-xs font-black text-black/50 uppercase tracking-wider">{ex.series}x</div>
+                  <div className="text-base font-black text-black leading-tight whitespace-nowrap">{ptExName(ex.nome)}</div>
                 </th>
               ))}
             </tr>
