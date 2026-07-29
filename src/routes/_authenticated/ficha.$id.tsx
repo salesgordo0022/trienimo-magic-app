@@ -254,8 +254,8 @@ function FichaEditor() {
                   className="rounded-xl px-5 py-3 text-center min-w-[90px] text-black"
                   style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}
                 >
-                  <div className="text-[10px] font-bold uppercase opacity-70">Séries</div>
-                  <div className="font-bold text-4xl leading-none">{data.groups.flatMap(g => g.exercises).reduce((s, e) => s + e.series, 0)}x</div>
+                  <div className="text-[10px] font-bold uppercase opacity-70">Treino</div>
+                  <div className="font-bold text-4xl leading-none">{data.workout.letra}</div>
                   {data.workout.conjugado && <div className="text-[8px] font-black text-yellow-300 uppercase tracking-widest mt-0.5">Conjugado</div>}
                 </div>
               </div>
@@ -279,7 +279,6 @@ function FichaEditor() {
             {/* Tabela de exercicios (sem grupos) */}
             <FichaTabela
               allExercises={data.groups.flatMap((g) => g.exercises)}
-              treinoLetra={data.workout.letra}
               isTeacher={isTeacher}
               onSaved={invalidate}
             />
@@ -440,12 +439,10 @@ function useSaveStatus() {
 
 function FichaTabela({
   allExercises,
-  treinoLetra,
   isTeacher,
   onSaved,
 }: {
   allExercises: ExerciseRow[];
-  treinoLetra: string;
   isTeacher: boolean;
   onSaved: () => void;
 }) {
@@ -462,8 +459,8 @@ function FichaTabela({
         <table className="w-full text-sm" style={{ minWidth: allExercises.length * 130 }}>
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
-              <th className="px-3 py-2 text-left text-[10px] font-black text-black/60 uppercase w-[70px] tracking-wider">
-                {treinoLetra}
+              <th className="px-3 py-2 text-left text-[11px] font-black text-black/60 uppercase w-[70px] tracking-wider">
+                {allExercises.reduce((s, e) => s + e.series, 0)}x
               </th>
               {allExercises.map((ex, i) => (
                 <th key={ex.id} className={`px-3 py-2.5 text-center min-w-[100px] max-w-[140px] ${i > 0 ? "border-l border-black/15" : ""}`}>
