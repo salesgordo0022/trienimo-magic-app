@@ -50,8 +50,6 @@ const pageBg =
   "radial-gradient(1200px 600px at 15% 10%, rgba(163,230,53,0.08), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(163,230,53,0.05), transparent 60%), #0b0b0d";
 const glassCard =
   "rounded-2xl border border-white/10 backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/[0.02] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]";
-const inputCls =
-  "w-full bg-white/5 border border-white/10 rounded-xl text-white px-4 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-[var(--lime)]/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-[var(--lime)]/10";
 const limeBtnStyle = {
   background: "linear-gradient(135deg, #A3E635, #84CC16)",
   boxShadow: "0 10px 30px -12px rgba(163,230,53,0.55)",
@@ -360,30 +358,15 @@ function FichaTabela({
     );
   }
   return (
-    <div className={`${glassCard} overflow-hidden`}>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-wider text-black" style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
-              <th className="px-3 py-2.5 text-left font-bold w-1/2">Exercício</th>
-              <th className="px-3 py-2.5 text-center font-bold w-[15%]">Peso (kg)</th>
-              <th className="px-3 py-2.5 text-center font-bold w-[15%]">Repetições</th>
-              <th className="px-3 py-2.5 text-center font-bold w-[15%]">Séries</th>
-            </tr>
-          </thead>
-          <tbody>
-            {allExercises.map((ex, i) => (
-              <FichaRow
-                key={ex.id}
-                ex={ex}
-                rowIndex={i}
-                isTeacher={isTeacher}
-                onSaved={onSaved}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-2">
+      {allExercises.map((ex, i) => (
+        <FichaCard
+          key={ex.id}
+          ex={ex}
+          isTeacher={isTeacher}
+          onSaved={onSaved}
+        />
+      ))}
     </div>
   );
 }
@@ -398,14 +381,12 @@ function useSaveStatus() {
   return [status, setStatus] as const;
 }
 
-function FichaRow({
+function FichaCard({
   ex,
-  rowIndex,
   isTeacher,
   onSaved,
 }: {
   ex: ExerciseRow;
-  rowIndex: number;
   isTeacher: boolean;
   onSaved: () => void;
 }) {
@@ -420,9 +401,6 @@ function FichaRow({
   const [peso, setPeso] = useState(ex.sets_config?.[0]?.kg ?? "");
   const [reps, setReps] = useState(ex.sets_config?.[0]?.reps ?? "");
   const [series, setSeries] = useState(String(ex.series));
-  const bg = rowIndex % 2 === 0 ? "bg-white/[0.015]" : "bg-white/[0.04]";
-  const td = "px-3 py-2.5 border-b border-white/5";
-  const inp = "w-full bg-transparent text-center outline-none text-white focus:bg-[var(--lime)]/5 rounded px-1 py-0.5";
   const ro = !isTeacher;
   const save = () =>
     upd.mutate({
@@ -433,70 +411,74 @@ function FichaRow({
         nome,
       },
     });
+  const inp = "w-full bg-transparent text-center outline-none text-white focus:bg-[var(--lime)]/10 rounded-lg px-2 py-2 text-sm font-semibold";
   return (
-    <tr className={`${bg} transition-colors ${status === "saved" ? "bg-[var(--lime)]/10" : ""}`}>
-      <td className={td}>
-        <div className="flex items-center gap-2">
-          {ex.exercise_db_id && (
-            <img
-              src={exerciseGifUrl(ex.exercise_db_id)}
-              alt=""
-              className="w-7 h-7 rounded-md object-contain bg-white shrink-0 border border-white/10"
-              onError={onGifError}
+    <div className={`${glassCard} overflow-hidden transition-colors ${status === "saved" ? "ring-2 ring-[var(--lime)]/30" : ""}`}>
+      <div className="px-4 py-3 flex items-center gap-2 border-b border-white/5">
+        {ex.exercise_db_id && (
+          <img
+            src={exerciseGifUrl(ex.exercise_db_id)}
+            alt=""
+            className="w-8 h-8 rounded-lg object-contain bg-white shrink-0 border border-white/10"
+            onError={onGifError}
+          />
+        )}
+        <span className="text-sm font-bold text-white flex-1">{nome}</span>
+        {status === "saving" && <Loader2 className="w-4 h-4 text-zinc-500 animate-spin shrink-0" />}
+        {status === "saved" && <Check className="w-4 h-4 text-[var(--lime)] shrink-0" />}
+      </div>
+      <div className="grid grid-cols-3 divide-x divide-white/5">
+        <div className="flex flex-col items-center py-2.5 px-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 mb-1">Peso (kg)</span>
+          {ro ? (
+            <span className="text-sm font-bold text-white">{peso || "—"}</span>
+          ) : (
+            <input
+              value={peso}
+              onChange={(e) => setPeso(e.target.value)}
+              onBlur={save}
+              placeholder="0"
+              type="number"
+              min="0"
+              step="0.5"
+              className={inp}
             />
           )}
-          <span className="text-sm font-semibold text-white">{nome}</span>
-          {status === "saving" && <Loader2 className="w-3 h-3 text-zinc-500 animate-spin shrink-0" />}
-          {status === "saved" && <Check className="w-3 h-3 text-[var(--lime)] shrink-0" />}
         </div>
-      </td>
-      <td className={td}>
-        {ro ? (
-          <span className="block text-center text-white font-medium">{peso || "—"}</span>
-        ) : (
-          <input
-            value={peso}
-            onChange={(e) => setPeso(e.target.value)}
-            onBlur={save}
-            placeholder="0"
-            type="number"
-            min="0"
-            step="0.5"
-            className={inp}
-          />
-        )}
-      </td>
-      <td className={td}>
-        {ro ? (
-          <span className="block text-center text-white font-medium">{reps || "—"}</span>
-        ) : (
-          <input
-            value={reps}
-            onChange={(e) => setReps(e.target.value)}
-            onBlur={save}
-            placeholder="0"
-            type="number"
-            min="0"
-            className={inp}
-          />
-        )}
-      </td>
-      <td className={td}>
-        {ro ? (
-          <span className="block text-center text-white font-medium">{series || "—"}</span>
-        ) : (
-          <input
-            value={series}
-            onChange={(e) => setSeries(e.target.value)}
-            onBlur={save}
-            placeholder="0"
-            type="number"
-            min="0"
-            className={inp}
-          />
-        )}
-      </td>
-    </tr>
+        <div className="flex flex-col items-center py-2.5 px-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 mb-1">Repetições</span>
+          {ro ? (
+            <span className="text-sm font-bold text-white">{reps || "—"}</span>
+          ) : (
+            <input
+              value={reps}
+              onChange={(e) => setReps(e.target.value)}
+              onBlur={save}
+              placeholder="0"
+              type="number"
+              min="0"
+              className={inp}
+            />
+          )}
+        </div>
+        <div className="flex flex-col items-center py-2.5 px-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 mb-1">Séries</span>
+          {ro ? (
+            <span className="text-sm font-bold text-white">{series || "—"}</span>
+          ) : (
+            <input
+              value={series}
+              onChange={(e) => setSeries(e.target.value)}
+              onBlur={save}
+              placeholder="0"
+              type="number"
+              min="0"
+              className={inp}
+            />
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
