@@ -374,13 +374,13 @@ function FichaTabela({
         <table className="w-full text-sm" style={{ minWidth: allExercises.length * 130 }}>
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
-              <th className="px-3 py-3 text-left text-xs font-black text-black uppercase w-[80px]">
+              <th className="px-3 py-2 text-left text-[10px] font-black text-black/60 uppercase w-[70px] tracking-wider">
                 {treinoLetra}
               </th>
               {allExercises.map((ex, i) => (
-                <th key={ex.id} className="px-3 py-3 text-center text-xs font-black text-black min-w-[120px]">
-                  {i > 0 && <span className="mr-1.5 text-black/50">+</span>}
-                  {ex.series}x {ex.nome}
+                <th key={ex.id} className={`px-3 py-2 text-center min-w-[110px] ${i > 0 ? "border-l border-black/15" : ""}`}>
+                  <div className="text-[10px] font-black text-black/50 uppercase tracking-wider">{ex.series}x</div>
+                  <div className="text-xs font-black text-black leading-tight capitalize truncate max-w-[100px] mx-auto">{ex.nome}</div>
                 </th>
               ))}
             </tr>
