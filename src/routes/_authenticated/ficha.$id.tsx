@@ -254,8 +254,8 @@ function FichaEditor() {
                   className="rounded-xl px-5 py-3 text-center min-w-[90px] text-black"
                   style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}
                 >
-                  <div className="text-[10px] font-bold uppercase opacity-70">Treino</div>
-                  <div className="font-bold text-4xl leading-none">{data.workout.letra}</div>
+                  <div className="text-[10px] font-bold uppercase opacity-70">Séries</div>
+                  <div className="font-bold text-4xl leading-none">{data.groups.flatMap(g => g.exercises).reduce((s, e) => s + e.series, 0)}x</div>
                   {data.workout.conjugado && <div className="text-[8px] font-black text-yellow-300 uppercase tracking-widest mt-0.5">Conjugado</div>}
                 </div>
               </div>
