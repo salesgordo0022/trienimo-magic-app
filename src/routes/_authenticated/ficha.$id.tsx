@@ -193,6 +193,7 @@ function FichaEditor() {
             <FichaTabela
               allExercises={data.groups.flatMap((g) => g.exercises)}
               voltas={data.workout.voltas ?? 1}
+              conjugado={data.workout.conjugado === true}
               isTeacher={isTeacher}
               onSaved={invalidate}
             />
@@ -354,11 +355,13 @@ function useSaveStatus() {
 function FichaTabela({
   allExercises,
   voltas,
+  conjugado,
   isTeacher,
   onSaved,
 }: {
   allExercises: ExerciseRow[];
   voltas: number;
+  conjugado: boolean;
   isTeacher: boolean;
   onSaved: () => void;
 }) {
@@ -387,6 +390,18 @@ function FichaTabela({
             </tr>
           </thead>
           <tbody>
+            {conjugado && Array.from({ length: voltas }, (_, vi) => (
+              <tr key={`r${vi}`} className={vi % 2 === 0 ? "bg-white/[0.015]" : ""}>
+                <td className="px-3 py-3 text-[11px] font-bold uppercase tracking-wide text-white border-b border-white/5">
+                  {vi + 1}ª
+                </td>
+                {allExercises.map((ex) => (
+                  <td key={ex.id} className="px-3 py-2.5 text-center text-sm font-black text-white border-b border-white/5">
+                    {Math.round(ex.series / voltas)}x
+                  </td>
+                ))}
+              </tr>
+            ))}
             {[
               { key: "peso", label: "Peso (kg)" },
               { key: "reps", label: "Repetições" },
