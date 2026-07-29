@@ -341,6 +341,16 @@ function HeaderField({
   );
 }
 
+function useSaveStatus() {
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  useEffect(() => {
+    if (status !== "saved") return;
+    const t = setTimeout(() => setStatus("idle"), 900);
+    return () => clearTimeout(t);
+  }, [status]);
+  return [status, setStatus] as const;
+}
+
 function FichaTabela({
   allExercises,
   isTeacher,
@@ -358,30 +368,49 @@ function FichaTabela({
     );
   }
   return (
-    <div className="space-y-2">
-      {allExercises.map((ex, i) => (
-        <FichaCard
-          key={ex.id}
-          ex={ex}
-          isTeacher={isTeacher}
-          onSaved={onSaved}
-        />
-      ))}
+    <div className={`${glassCard} overflow-hidden`}>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm" style={{ minWidth: allExercises.length * 140 }}>
+          <thead>
+            <tr>
+              <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold text-zinc-500 w-[70px]"></th>
+              {allExercises.map((ex) => (
+                <FichaTh
+                  key={ex.id}
+                  ex={ex}
+                  isTeacher={isTeacher}
+                  onSaved={onSaved}
+                />
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { key: "peso", label: "Peso (kg)" },
+              { key: "reps", label: "Repetições" },
+              { key: "series", label: "Séries" },
+            ].map((row) => (
+              <tr key={row.key}>
+                <td className="px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-zinc-400 border-b border-white/5 align-middle">{row.label}</td>
+                {allExercises.map((ex) => (
+                  <FichaTd
+                    key={ex.id}
+                    ex={ex}
+                    field={row.key}
+                    isTeacher={isTeacher}
+                    onSaved={onSaved}
+                  />
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
 
-function useSaveStatus() {
-  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
-  useEffect(() => {
-    if (status !== "saved") return;
-    const t = setTimeout(() => setStatus("idle"), 900);
-    return () => clearTimeout(t);
-  }, [status]);
-  return [status, setStatus] as const;
-}
-
-function FichaCard({
+function FichaTh({
   ex,
   isTeacher,
   onSaved,
@@ -397,88 +426,89 @@ function FichaCard({
     onSuccess: () => { onSaved(); setStatus("saved"); },
     onError: (e) => { setStatus("idle"); toast.error(e.message); },
   });
-  const [nome] = useState(ex.nome);
+  const [nome, setNome] = useState(ex.nome);
+  const saveNome = (v: string) => {
+    setNome(v);
+    upd.mutate({ data: { id: ex.id, nome: v } });
+  };
+  return (
+    <th className="px-2 py-2.5 text-center border-b border-white/5 min-w-[130px]">
+      <div className="flex items-center justify-center gap-1.5 mb-1">
+        {ex.exercise_db_id && (
+          <img
+            src={exerciseGifUrl(ex.exercise_db_id)}
+            alt=""
+            className="w-7 h-7 rounded-md object-contain bg-white shrink-0 border border-white/10"
+            onError={onGifError}
+          />
+        )}
+      </div>
+      {isTeacher ? (
+        <input
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          onBlur={() => nome !== ex.nome && saveNome(nome)}
+          className="w-full bg-transparent text-center text-sm font-bold text-white outline-none focus:bg-[var(--lime)]/10 rounded px-1 py-0.5"
+        />
+      ) : (
+        <span className="text-sm font-bold text-white">{nome}</span>
+      )}
+      {status === "saving" && <Loader2 className="w-3 h-3 text-zinc-500 animate-spin inline ml-1" />}
+      {status === "saved" && <Check className="w-3 h-3 text-[var(--lime)] inline ml-1" />}
+    </th>
+  );
+}
+
+function FichaTd({
+  ex,
+  field,
+  isTeacher,
+  onSaved,
+}: {
+  ex: ExerciseRow;
+  field: string;
+  isTeacher: boolean;
+  onSaved: () => void;
+}) {
+  const [status, setStatus] = useSaveStatus();
+  const upd = useMutation({
+    mutationFn: useServerFn(updateExercise),
+    onMutate: () => setStatus("saving"),
+    onSuccess: () => { onSaved(); setStatus("saved"); },
+    onError: (e) => { setStatus("idle"); toast.error(e.message); },
+  });
   const [peso, setPeso] = useState(ex.sets_config?.[0]?.kg ?? "");
   const [reps, setReps] = useState(ex.sets_config?.[0]?.reps ?? "");
   const [series, setSeries] = useState(String(ex.series));
   const ro = !isTeacher;
+  const value = field === "peso" ? peso : field === "reps" ? reps : series;
+  const setter = field === "peso" ? setPeso : field === "reps" ? setReps : setSeries;
   const save = () =>
     upd.mutate({
       data: {
         id: ex.id,
         sets_config: [{ kg: peso, reps }],
         series: parseInt(series) || ex.series,
-        nome,
       },
     });
-  const inp = "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-white text-center outline-none focus:border-[var(--lime)]/60 focus:bg-[var(--lime)]/10 transition-colors";
+  const inp = "w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-sm font-semibold text-white text-center outline-none focus:border-[var(--lime)]/60 focus:bg-[var(--lime)]/10 transition-colors";
   return (
-    <div className={`${glassCard} overflow-hidden transition-colors ${status === "saved" ? "ring-2 ring-[var(--lime)]/30" : ""}`}>
-      <div className="px-4 py-3 flex items-center gap-2 border-b border-white/5">
-        {ex.exercise_db_id && (
-          <img
-            src={exerciseGifUrl(ex.exercise_db_id)}
-            alt=""
-            className="w-8 h-8 rounded-lg object-contain bg-white shrink-0 border border-white/10"
-            onError={onGifError}
-          />
-        )}
-        <span className="text-sm font-bold text-white flex-1">{nome}</span>
-        {status === "saving" && <Loader2 className="w-4 h-4 text-zinc-500 animate-spin shrink-0" />}
-        {status === "saved" && <Check className="w-4 h-4 text-[var(--lime)] shrink-0" />}
-      </div>
-      <div className="divide-y divide-white/5">
-        <div className="grid grid-cols-[80px_1fr] items-center">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-400 px-4 py-3">Peso (kg)</span>
-          {ro ? (
-            <span className="text-sm font-semibold text-white px-4 py-3">{peso || "—"}</span>
-          ) : (
-            <input
-              value={peso}
-              onChange={(e) => setPeso(e.target.value)}
-              onBlur={save}
-              placeholder="0"
-              type="number"
-              min="0"
-              step="0.5"
-              className={inp}
-            />
-          )}
-        </div>
-        <div className="grid grid-cols-[80px_1fr] items-center">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-400 px-4 py-3">Repetições</span>
-          {ro ? (
-            <span className="text-sm font-semibold text-white px-4 py-3">{reps || "—"}</span>
-          ) : (
-            <input
-              value={reps}
-              onChange={(e) => setReps(e.target.value)}
-              onBlur={save}
-              placeholder="0"
-              type="number"
-              min="0"
-              className={inp}
-            />
-          )}
-        </div>
-        <div className="grid grid-cols-[80px_1fr] items-center">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-400 px-4 py-3">Séries</span>
-          {ro ? (
-            <span className="text-sm font-semibold text-white px-4 py-3">{series || "—"}</span>
-          ) : (
-            <input
-              value={series}
-              onChange={(e) => setSeries(e.target.value)}
-              onBlur={save}
-              placeholder="0"
-              type="number"
-              min="0"
-              className={inp}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+    <td className={`px-2 py-2 text-center border-b border-white/5 align-middle transition-colors ${status === "saved" ? "bg-[var(--lime)]/10" : status === "saving" ? "bg-white/[0.02]" : ""}`}>
+      {ro ? (
+        <span className="text-sm font-semibold text-white">{value || "—"}</span>
+      ) : (
+        <input
+          value={value}
+          onChange={(e) => setter(e.target.value)}
+          onBlur={save}
+          placeholder="0"
+          type="number"
+          min="0"
+          step={field === "peso" ? "0.5" : "1"}
+          className={inp}
+        />
+      )}
+    </td>
   );
 }
 
