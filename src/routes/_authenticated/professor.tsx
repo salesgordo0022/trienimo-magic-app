@@ -695,25 +695,27 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                 </div>
 
                 {/* Selected exercises list */}
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {selectedExercises.map((item, i) => (
-                    <div key={i} className="rounded-xl border border-white/[0.06] bg-[#111112] p-3 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[var(--lime)]/10 flex items-center justify-center text-[var(--lime)] font-black text-xs shrink-0">
-                        {i + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-white truncate capitalize">{item.exercise.name}</div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
-                          <span>{item.sets}x{item.reps}</span>
-                          {item.kg > 0 && <span className="text-orange-400">{item.kg}kg</span>}
+                    <div key={i}>
+                      {i > 0 && <div className="text-center text-xs font-black text-[var(--lime)] py-0.5">+</div>}
+                      <div className="rounded-xl border border-white/[0.06] bg-[#111112] p-3 flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-black text-white">
+                            {item.sets}x <span className="capitalize">{item.exercise.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                            <span>{item.reps} reps</span>
+                            {item.kg > 0 && <span className="text-orange-400">{item.kg}kg</span>}
+                          </div>
                         </div>
+                        <button
+                          onClick={() => removeSelectedExercise(i)}
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => removeSelectedExercise(i)}
-                        className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
                     </div>
                   ))}
                 </div>
