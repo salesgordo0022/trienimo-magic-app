@@ -191,6 +191,7 @@ function FichaEditor() {
             {/* Tabela de exercicios (sem grupos) */}
             <FichaTabela
               allExercises={data.groups.flatMap((g) => g.exercises)}
+              treinoLetra={data.workout.letra}
               isTeacher={isTeacher}
               onSaved={invalidate}
             />
@@ -351,10 +352,12 @@ function useSaveStatus() {
 
 function FichaTabela({
   allExercises,
+  treinoLetra,
   isTeacher,
   onSaved,
 }: {
   allExercises: ExerciseRow[];
+  treinoLetra: string;
   isTeacher: boolean;
   onSaved: () => void;
 }) {
@@ -371,7 +374,9 @@ function FichaTabela({
         <table className="w-full text-sm" style={{ minWidth: allExercises.length * 130 }}>
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
-              <th className="px-3 py-3 text-left text-[10px] uppercase tracking-wider font-bold text-black w-[80px]"></th>
+              <th className="px-3 py-3 text-left text-xs font-black text-black uppercase w-[80px]">
+                {treinoLetra}
+              </th>
               {allExercises.map((ex) => (
                 <th key={ex.id} className="px-3 py-3 text-center text-xs font-bold text-black min-w-[120px]">
                   {ex.nome}
