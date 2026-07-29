@@ -279,6 +279,7 @@ function FichaEditor() {
             {/* Tabela de exercicios (sem grupos) */}
             <FichaTabela
               allExercises={data.groups.flatMap((g) => g.exercises)}
+              voltas={data.workout.voltas ?? 1}
               isTeacher={isTeacher}
               onSaved={invalidate}
             />
@@ -439,10 +440,12 @@ function useSaveStatus() {
 
 function FichaTabela({
   allExercises,
+  voltas,
   isTeacher,
   onSaved,
 }: {
   allExercises: ExerciseRow[];
+  voltas: number;
   isTeacher: boolean;
   onSaved: () => void;
 }) {
@@ -460,7 +463,7 @@ function FichaTabela({
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
               <th className="px-3 py-2 text-left text-[11px] font-black text-black/60 uppercase w-[70px] tracking-wider">
-                {allExercises.reduce((s, e) => s + e.series, 0)}x
+                {voltas}x
               </th>
               {allExercises.map((ex, i) => (
                 <th key={ex.id} className={`px-3 py-2.5 text-center min-w-[100px] max-w-[140px] ${i > 0 ? "border-l border-black/15" : ""}`}>

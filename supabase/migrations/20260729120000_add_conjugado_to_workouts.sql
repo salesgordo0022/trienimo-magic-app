@@ -1,1 +1,2 @@
 ALTER TABLE workouts ADD COLUMN IF NOT EXISTS conjugado boolean NOT NULL DEFAULT false;
+ALTER TABLE workouts ADD COLUMN IF NOT EXISTS voltas integer NOT NULL DEFAULT 1;

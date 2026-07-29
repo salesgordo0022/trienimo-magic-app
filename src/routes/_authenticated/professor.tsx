@@ -270,6 +270,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
   const [fichaLetra, setFichaLetra] = useState("");
   const [fichaNome, setFichaNome] = useState("");
   const [fichaTipo, setFichaTipo] = useState<"normal" | "conjugado">("normal");
+  const [fichaVoltas, setFichaVoltas] = useState(1);
   const [tipoAtual, setTipoAtual] = useState<"ficha" | "passo">("ficha");
 
   const createPasso = useMutation({
@@ -314,6 +315,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
         assigned_to: studentId,
         tipo: tipoAtual,
         conjugado: fichaTipo === "conjugado" || undefined,
+        voltas: fichaVoltas,
         exercises: selectedExercises.map(ex => ({
           exercise_db_id: ex.exercise.id.toString(),
           nome: ex.exercise.name,
@@ -337,6 +339,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
     setFichaLetra("");
     setFichaNome("");
     setFichaTipo("normal");
+    setFichaVoltas(1);
   };
 
   const libIsSearching = !!(libQuery || libBodyPart || libEquipment);
@@ -522,6 +525,14 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                     maxLength={80}
                     className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors"
                   />
+                  <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3">
+                    <span className="text-sm font-bold text-zinc-400 shrink-0">Séries (voltas)</span>
+                    <div className="flex items-center gap-2 ml-auto">
+                      <button onClick={() => setFichaVoltas(Math.max(1, fichaVoltas - 1))} className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold text-sm hover:bg-white/20 transition-all">-</button>
+                      <span className="w-8 text-center text-white font-black text-base">{fichaVoltas}</span>
+                      <button onClick={() => setFichaVoltas(Math.min(20, fichaVoltas + 1))} className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold text-sm hover:bg-white/20 transition-all">+</button>
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setFichaTipo("normal")}

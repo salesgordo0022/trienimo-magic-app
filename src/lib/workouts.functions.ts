@@ -14,6 +14,7 @@ export type WorkoutRow = {
   assigned_nome?: string | null;
   tipo?: string | null;
   conjugado?: boolean;
+  voltas?: number;
 };
 
 export type ExerciseRow = {
@@ -512,6 +513,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
       assigned_to: string;
       tipo?: string;
       conjugado?: boolean;
+      voltas?: number;
       exercises: Array<{ exercise_db_id: string; nome: string; sets: number; reps: number; kg?: number }>;
       body_part_label?: string;
     }) =>
@@ -521,6 +523,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         assigned_to: z.string().uuid(),
         tipo: z.string().max(20).optional(),
         conjugado: z.boolean().optional(),
+        voltas: z.number().int().min(1).max(20).optional(),
         exercises: z
           .array(
             z.object({
@@ -552,6 +555,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         nome: data.nome ?? null,
         tipo: data.tipo ?? "ficha",
         conjugado: data.conjugado ?? false,
+        voltas: data.voltas ?? 1,
         ordem,
         data_inicio: new Date().toISOString().slice(0, 10),
         ...(data.tipo ? { tipo: data.tipo } : {}),
