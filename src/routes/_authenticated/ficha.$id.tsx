@@ -256,6 +256,7 @@ function FichaEditor() {
                 >
                   <div className="text-[10px] font-bold uppercase opacity-70">Treino</div>
                   <div className="font-bold text-4xl leading-none">{data.workout.letra}</div>
+                  {data.workout.conjugado && <div className="text-[8px] font-black text-yellow-300 uppercase tracking-widest mt-0.5">Conjugado</div>}
                 </div>
               </div>
               <div className="border-t border-white/5 divide-y divide-white/5 text-sm">

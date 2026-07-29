@@ -269,6 +269,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
   const [passoNome, setPassoNome] = useState("");
   const [fichaLetra, setFichaLetra] = useState("");
   const [fichaNome, setFichaNome] = useState("");
+  const [fichaTipo, setFichaTipo] = useState<"normal" | "conjugado">("normal");
   const [tipoAtual, setTipoAtual] = useState<"ficha" | "passo">("ficha");
 
   const createPasso = useMutation({
@@ -312,6 +313,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
         nome: nomeFinal || undefined,
         assigned_to: studentId,
         tipo: tipoAtual,
+        conjugado: fichaTipo === "conjugado" || undefined,
         exercises: selectedExercises.map(ex => ({
           exercise_db_id: ex.exercise.id.toString(),
           nome: ex.exercise.name,
@@ -334,6 +336,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
     setPassoNome("");
     setFichaLetra("");
     setFichaNome("");
+    setFichaTipo("normal");
   };
 
   const libIsSearching = !!(libQuery || libBodyPart || libEquipment);
@@ -519,6 +522,28 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                     maxLength={80}
                     className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors"
                   />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setFichaTipo("normal")}
+                      className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
+                        fichaTipo === "normal"
+                          ? "bg-[var(--lime)] text-black"
+                          : "bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10"
+                      }`}
+                    >
+                      Normal
+                    </button>
+                    <button
+                      onClick={() => setFichaTipo("conjugado")}
+                      className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
+                        fichaTipo === "conjugado"
+                          ? "bg-[var(--lime)] text-black"
+                          : "bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10"
+                      }`}
+                    >
+                      Conjugado
+                    </button>
+                  </div>
                   <button
                     onClick={() => {
                       if (!fichaLetra.trim()) { toast.error("Digite a letra do treino"); return; }
@@ -734,6 +759,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                   {fichaLetra.trim() ? (
                     <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--lime)]/5 border border-[var(--lime)]/15">
                       <span className="text-sm font-black text-[var(--lime)]">{fichaLetra.trim()}</span>
+                      {fichaTipo === "conjugado" && <span className="text-[10px] font-black text-yellow-400 uppercase tracking-wider">Conjugado</span>}
                       {fichaNome.trim() && <span className="text-sm text-zinc-400">— {fichaNome.trim()}</span>}
                     </div>
                   ) : (

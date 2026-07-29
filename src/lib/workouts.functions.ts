@@ -13,6 +13,7 @@ export type WorkoutRow = {
   assigned_to?: string | null;
   assigned_nome?: string | null;
   tipo?: string | null;
+  conjugado?: boolean;
 };
 
 export type ExerciseRow = {
@@ -251,15 +252,17 @@ export const getFicha = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const { data: workout, error: e1 } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem, assigned_to, user_id, tipo")
+      .select("*")
       .eq("id", data.id)
       .single();
     if (e1) throw new Error(e1.message);
 
+    const w = workout as unknown as WorkoutRow;
+
     const { data: roleData } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     const isAdmin = !!roleData;
-    const isOwner = workout.user_id === context.userId;
-    const isAssigned = workout.assigned_to === context.userId;
+    const isOwner = w.user_id === context.userId;
+    const isAssigned = w.assigned_to === context.userId;
     if (!isAdmin && !isOwner && !isAssigned) throw new Error("Acesso negado");
 
     const { data: profile } = await context.supabase
@@ -295,7 +298,7 @@ export const getFicha = createServerFn({ method: "GET" })
     }));
 
     return {
-      workout: workout as WorkoutRow,
+      workout: w,
       profile: profile ?? {
         nome: null,
         objetivo: null,
@@ -508,6 +511,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
       nome?: string;
       assigned_to: string;
       tipo?: string;
+      conjugado?: boolean;
       exercises: Array<{ exercise_db_id: string; nome: string; sets: number; reps: number; kg?: number }>;
       body_part_label?: string;
     }) =>
@@ -516,6 +520,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         nome: z.string().max(80).optional(),
         assigned_to: z.string().uuid(),
         tipo: z.string().max(20).optional(),
+        conjugado: z.boolean().optional(),
         exercises: z
           .array(
             z.object({
@@ -546,6 +551,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         letra: data.letra.toUpperCase(),
         nome: data.nome ?? null,
         tipo: data.tipo ?? "ficha",
+        conjugado: data.conjugado ?? false,
         ordem,
         data_inicio: new Date().toISOString().slice(0, 10),
         ...(data.tipo ? { tipo: data.tipo } : {}),
