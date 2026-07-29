@@ -25,93 +25,6 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const EXERCISE_PT: Record<string, string> = {
-  "bench press": "supino reto",
-  "barbell bench press": "supino reto com barra",
-  "dumbbell bench press": "supino com halteres",
-  "incline bench press": "supino inclinado",
-  "decline bench press": "supino declinado",
-  "dumbbell fly": "crucifixo com halteres",
-  "cable fly": "crucifixo no cabo",
-  "push-up": "flexão",
-  "push up": "flexão",
-  "chest dip": "mergulho no peito",
-  "chest press machine": "supino na máquina",
-  "pull-up": "barra fixa",
-  "pull up": "barra fixa",
-  "lat pulldown": "puxada alta",
-  "seated row": "remada baixa",
-  "bent over row": "remada curvada",
-  "dumbbell row": "remada unilateral",
-  "t-bar row": "remada T",
-  "deadlift": "levantamento terra",
-  "romanian deadlift": "levantamento terra romeno",
-  "stiff leg deadlift": "stiff",
-  "squat": "agachamento",
-  "barbell squat": "agachamento com barra",
-  "goblet squat": "agachamento com halter",
-  "leg press": "leg press",
-  "leg extension": "cadeira extensora",
-  "leg curl": "cadeira flexora",
-  "lunge": "avanço",
-  "walking lunge": "avanço caminhando",
-  "hip thrust": "elevação pélvica",
-  "glute bridge": "ponte",
-  "calf raise": "elevação de panturrilha",
-  "standing calf raise": "panturrilha em pé",
-  "seated calf raise": "panturrilha sentado",
-  "shoulder press": "desenvolvimento de ombros",
-  "arnold press": "arnold press",
-  "lateral raise": "elevação lateral",
-  "front raise": "elevação frontal",
-  "reverse fly": "crucifixo inverso",
-  "face pull": "face pull",
-  "upright row": "remada alta",
-  "barbell curl": "rosca direta com barra",
-  "dumbbell curl": "rosca direta com halteres",
-  "hammer curl": "rosca martelo",
-  "preacher curl": "rosca no banco",
-  "concentration curl": "rosca concentrada",
-  "cable curl": "rosca no cabo",
-  "triceps pushdown": "tríceps na polia",
-  "triceps extension": "tríceps testa",
-  "skull crusher": "tríceps testa",
-  "close grip bench press": "supino fechado",
-  "dip": "mergulho",
-  "overhead triceps extension": "tríceps acima da cabeça",
-  "plank": "prancha",
-  "crunch": "abdominal",
-  "leg raise": "elevação de pernas",
-  "hanging leg raise": "elevação de pernas na barra",
-  "russian twist": "torção russa",
-  "cable crunch": "abdominal no cabo",
-  "ab wheel": "roda abdominal",
-  "mountain climber": "escalador",
-  "burpee": "burpee",
-  "jumping jack": "polichinelo",
-  "jump rope": "pular corda",
-  "running": "corrida",
-  "cycling": "bicicleta",
-  "rowing": "remo",
-  "barbell rollout": "rolamento com barra",
-  "farmers walk": "caminhada do fazendeiro",
-  "sled push": "propulsão no sled",
-  "box jump": "salto na caixa",
-  "step-up": "step up",
-  "good morning": "bom dia",
-  "hyperextension": "hiperextensão",
-  "back extension": "extensão de costas",
-  "reverse hyper": "hiperextensão reversa",
-  "shrug": "encolhimento de ombros",
-  "power clean": "arranco",
-  "clean and jerk": "arremesso",
-  "snatch": "arranco",
-};
-
-function ptExName(name: string): string {
-  return EXERCISE_PT[name.toLowerCase().trim()] ?? name;
-}
-
 const fichaQO = (id: string) =>
   queryOptions({ queryKey: ["ficha", id], queryFn: () => getFicha({ data: { id } }) });
 const roleQO = () => queryOptions({ queryKey: ["myRole"], queryFn: () => getMyRole() });
@@ -468,7 +381,7 @@ function FichaTabela({
               {allExercises.map((ex, i) => (
                 <th key={ex.id} className={`px-3 py-2.5 text-center min-w-[100px] max-w-[140px] ${i > 0 ? "border-l border-black/15" : ""}`}>
                   <div className="text-[10px] font-black text-black/50 uppercase tracking-wider">{ex.series}x</div>
-                  <div className="text-sm font-black text-black leading-tight truncate">{ptExName(ex.nome)}</div>
+                  <div className="text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
                 </th>
               ))}
             </tr>

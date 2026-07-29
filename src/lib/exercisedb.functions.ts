@@ -158,7 +158,7 @@ export function ptTerm(map: Record<string, string>, term?: string): string | und
 }
 
 // Dicionário estático EN->PT dos exercícios mais comuns (resolve sem chamada externa)
-const EXERCISE_NAME_PT: Record<string, string> = {
+export const EXERCISE_NAME_PT: Record<string, string> = {
   "barbell bench press": "supino reto com barra",
   "dumbbell bench press": "supino reto com halteres",
   "incline barbell bench press": "supino inclinado com barra",
