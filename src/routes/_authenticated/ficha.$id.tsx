@@ -377,9 +377,10 @@ function FichaTabela({
               <th className="px-3 py-3 text-left text-xs font-black text-black uppercase w-[80px]">
                 {treinoLetra}
               </th>
-              {allExercises.map((ex) => (
-                <th key={ex.id} className="px-3 py-3 text-center text-xs font-bold text-black min-w-[120px]">
-                  {ex.nome}
+              {allExercises.map((ex, i) => (
+                <th key={ex.id} className="px-3 py-3 text-center text-xs font-black text-black min-w-[120px]">
+                  {i > 0 && <span className="mr-1.5 text-black/50">+</span>}
+                  {ex.series}x {ex.nome}
                 </th>
               ))}
             </tr>
@@ -388,7 +389,6 @@ function FichaTabela({
             {[
               { key: "peso", label: "Peso (kg)" },
               { key: "reps", label: "Repetições" },
-              { key: "series", label: "Séries" },
             ].map((row, ri) => (
               <tr key={row.key} className={ri % 2 === 0 ? "bg-white/[0.015]" : ""}>
                 <td className="px-3 py-3 text-[11px] font-bold uppercase tracking-wide text-zinc-400 border-b border-white/5">
