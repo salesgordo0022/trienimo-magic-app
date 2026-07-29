@@ -411,7 +411,7 @@ function FichaCard({
         nome,
       },
     });
-  const inp = "w-full bg-transparent text-center outline-none text-white focus:bg-[var(--lime)]/10 rounded-lg px-2 py-2 text-sm font-semibold";
+  const inp = "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-white text-center outline-none focus:border-[var(--lime)]/60 focus:bg-[var(--lime)]/10 transition-colors";
   return (
     <div className={`${glassCard} overflow-hidden transition-colors ${status === "saved" ? "ring-2 ring-[var(--lime)]/30" : ""}`}>
       <div className="px-4 py-3 flex items-center gap-2 border-b border-white/5">
@@ -427,11 +427,11 @@ function FichaCard({
         {status === "saving" && <Loader2 className="w-4 h-4 text-zinc-500 animate-spin shrink-0" />}
         {status === "saved" && <Check className="w-4 h-4 text-[var(--lime)] shrink-0" />}
       </div>
-      <div className="grid grid-cols-3 divide-x divide-white/5">
-        <div className="flex flex-col items-center py-2.5 px-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 mb-1">Peso (kg)</span>
+      <div className="divide-y divide-white/5">
+        <div className="grid grid-cols-[80px_1fr] items-center">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-400 px-4 py-3">Peso (kg)</span>
           {ro ? (
-            <span className="text-sm font-bold text-white">{peso || "—"}</span>
+            <span className="text-sm font-semibold text-white px-4 py-3">{peso || "—"}</span>
           ) : (
             <input
               value={peso}
@@ -445,10 +445,10 @@ function FichaCard({
             />
           )}
         </div>
-        <div className="flex flex-col items-center py-2.5 px-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 mb-1">Repetições</span>
+        <div className="grid grid-cols-[80px_1fr] items-center">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-400 px-4 py-3">Repetições</span>
           {ro ? (
-            <span className="text-sm font-bold text-white">{reps || "—"}</span>
+            <span className="text-sm font-semibold text-white px-4 py-3">{reps || "—"}</span>
           ) : (
             <input
               value={reps}
@@ -461,10 +461,10 @@ function FichaCard({
             />
           )}
         </div>
-        <div className="flex flex-col items-center py-2.5 px-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 mb-1">Séries</span>
+        <div className="grid grid-cols-[80px_1fr] items-center">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-400 px-4 py-3">Séries</span>
           {ro ? (
-            <span className="text-sm font-bold text-white">{series || "—"}</span>
+            <span className="text-sm font-semibold text-white px-4 py-3">{series || "—"}</span>
           ) : (
             <input
               value={series}
