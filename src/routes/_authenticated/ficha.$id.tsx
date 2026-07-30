@@ -149,27 +149,27 @@ function FichaEditor() {
           <>
             {/* Cabeçalho estilo ficha */}
             <div className={`${glassCard} overflow-hidden`}>
-              <div className="grid grid-cols-[1fr_auto] gap-3 p-5 items-stretch">
-                <div className="flex items-center gap-4">
+              <div className="flex items-stretch gap-2 sm:gap-3 p-4 sm:p-5">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   <img
                     src="/imperial-fitness-logo.png"
                     alt="Logo"
-                    className="w-12 h-12 rounded-xl object-cover shrink-0"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover shrink-0"
                   />
-                  <div className="hidden md:block border-l border-white/10 pl-4">
-                    <div className="font-semibold text-sm text-white">
+                  <div className="hidden sm:block border-l border-white/10 pl-3 sm:pl-4 min-w-0">
+                    <div className="font-semibold text-xs sm:text-sm text-white truncate">
                       {data.profile.personal_nome ?? "SEU NOME - TREINADOR PESSOAL"}
                     </div>
-                    <div className="text-xs text-zinc-500 mt-0.5">FICHA DE TREINO</div>
+                    <div className="text-[10px] sm:text-xs text-zinc-500 mt-0.5">FICHA DE TREINO</div>
                   </div>
                 </div>
                 <div
-                  className="rounded-xl px-5 py-3 text-center min-w-[90px] text-black"
+                  className="rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-center min-w-[80px] sm:min-w-[90px] text-black shrink-0"
                   style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}
                 >
-                  <div className="text-[10px] font-bold uppercase opacity-70">Treino</div>
-                  <div className="font-bold text-4xl leading-none">{data.workout.letra}</div>
-                  {(data.workout.tipo === "conjugado" || data.workout.conjugado) && <div className="text-[8px] font-black text-yellow-300 uppercase tracking-widest mt-0.5">Conjugado</div>}
+                  <div className="text-[9px] sm:text-[10px] font-bold uppercase opacity-70">Treino</div>
+                  <div className="font-bold text-3xl sm:text-4xl leading-none">{data.workout.letra}</div>
+                  {(data.workout.tipo === "conjugado" || data.workout.conjugado) && <div className="text-[7px] sm:text-[8px] font-black text-yellow-300 uppercase tracking-widest mt-0.5">Conjugado</div>}
                 </div>
               </div>
               <div className="border-t border-white/5 divide-y divide-white/5 text-sm">
@@ -321,13 +321,13 @@ function HeaderField({
 }) {
   const [v, setV] = useState(value);
   return (
-    <div className="grid grid-cols-[100px_1fr] sm:grid-cols-[140px_1fr] items-center">
-      <div className="px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-zinc-400 bg-white/[0.02]">
+    <div className="grid grid-cols-[80px_1fr] sm:grid-cols-[140px_1fr] items-center">
+      <div className="px-2 sm:px-4 py-2 sm:py-2.5 text-[9px] sm:text-[11px] font-semibold uppercase tracking-wide text-zinc-400 bg-white/[0.02]">
         {label}
       </div>
       {readOnly ? (
-        <div className="px-3 sm:px-4 py-2.5 text-sm text-white truncate">
-          {value || <span className="text-zinc-600 text-xs">defina em Perfil</span>}
+        <div className="px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-white truncate">
+          {value || <span className="text-zinc-600 text-[10px] sm:text-xs">defina em Perfil</span>}
         </div>
       ) : (
         <input
@@ -335,7 +335,7 @@ function HeaderField({
           value={v}
           onChange={(e) => setV(e.target.value)}
           onBlur={() => v !== value && onSave?.(v)}
-          className="px-3 sm:px-4 py-2.5 text-sm bg-transparent text-white outline-none focus:bg-[var(--lime)]/5 min-w-0"
+          className="px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-transparent text-white outline-none focus:bg-[var(--lime)]/5 min-w-0"
         />
       )}
     </div>
@@ -372,23 +372,23 @@ function FichaTabela({
       </div>
     );
   }
-  const sepW = "w-12";
+  const sepW = "w-8 sm:w-10";
   const renderHeaderCells = () =>
     allExercises.map((ex, i) =>
       conjugado ? (
         <React.Fragment key={ex.id}>
           {i > 0 && (
-            <th className={`${sepW} px-0 py-2.5 text-center`}>
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/10 text-lg font-black text-black/60">+</span>
+            <th className={`${sepW} px-0 py-2 sm:py-2.5 text-center`}>
+              <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-black/10 text-base sm:text-lg font-black text-black/60">+</span>
             </th>
           )}
-          <th className="px-3 py-2.5 text-center min-w-[120px]">
-            <div className="text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
+          <th className="px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[120px]">
+            <div className="text-xs sm:text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
           </th>
         </React.Fragment>
       ) : (
-        <th key={ex.id} className={`px-3 py-2.5 text-center min-w-[120px] ${i > 0 ? "border-l border-black/15" : ""}`}>
-          <div className="text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
+        <th key={ex.id} className={`px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[120px] ${i > 0 ? "border-l border-black/15" : ""}`}>
+          <div className="text-xs sm:text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
         </th>
       )
     );
@@ -398,16 +398,16 @@ function FichaTabela({
       conjugado ? (
         <React.Fragment key={ex.id}>
           {i > 0 && (
-            <td className={`${sepW} px-0 py-2.5 text-center border-b border-white/5`}>
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/5 text-lg font-black text-zinc-500">+</span>
+            <td className={`${sepW} px-0 py-2 sm:py-2.5 text-center border-b border-white/5`}>
+              <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/5 text-base sm:text-lg font-black text-zinc-500">+</span>
             </td>
           )}
-          <td className="px-3 py-2.5 text-center border-b border-white/5">
+          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center border-b border-white/5">
             {children(ex, i)}
           </td>
         </React.Fragment>
       ) : (
-        <td key={ex.id} className={`px-3 py-2.5 text-center border-b border-white/5 ${i > 0 ? "border-l border-white/5" : ""}`}>
+        <td key={ex.id} className={`px-2 sm:px-3 py-2 sm:py-2.5 text-center border-b border-white/5 ${i > 0 ? "border-l border-white/5" : ""}`}>
           {children(ex, i)}
         </td>
       )
@@ -415,12 +415,12 @@ function FichaTabela({
 
   return (
     <div className={`${glassCard} overflow-hidden`}>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm" style={{ minWidth: conjugado ? allExercises.length * 180 : allExercises.length * 130 }}>
+      <div className="overflow-x-auto bg-[#0b0b0d]">
+        <table className="w-full text-sm" style={{ minWidth: conjugado ? allExercises.length * 140 : allExercises.length * 110 }}>
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
-              <th className="px-3 py-2 text-left w-[70px]">
-                <span className="text-lg font-black text-black/80">{voltas}x</span>
+              <th className="sticky left-0 z-10 px-2 sm:px-3 py-1.5 sm:py-2 text-left w-[52px] sm:w-[70px]" style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
+                <span className="text-base sm:text-lg font-black text-black/80">{voltas}x</span>
               </th>
               {renderHeaderCells()}
             </tr>
@@ -432,9 +432,9 @@ function FichaTabela({
               { key: "reps", label: "Repetições" },
             ].map((row, ri) => (
               <tr key={row.key} className={ri % 2 === 0 ? "bg-white/[0.015]" : ""}>
-                <td className="px-3 py-3 text-[11px] font-bold uppercase tracking-wide text-zinc-400 border-b border-white/5">
-                  {row.label}
-                </td>
+                  <td className="sticky left-0 z-10 bg-[#0b0b0d] px-2 sm:px-3 py-2 sm:py-3 text-[11px] font-bold uppercase tracking-wide text-zinc-400 border-b border-white/5">
+                    {row.label}
+                  </td>
                 {renderBodyCells((ex) => (
                   <FichaTd
                     ex={ex}
@@ -484,7 +484,7 @@ function FichaTd({
         series: parseInt(series) || ex.series,
       },
     });
-  const inp = "w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm font-bold text-white text-center outline-none focus:border-[var(--lime)]/50 focus:bg-[var(--lime)]/10 focus:ring-2 focus:ring-[var(--lime)]/20 transition-all";
+  const inp = "w-full bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-2 py-1.5 sm:px-3 sm:py-2.5 text-sm font-bold text-white text-center outline-none focus:border-[var(--lime)]/50 focus:bg-[var(--lime)]/10 focus:ring-2 focus:ring-[var(--lime)]/20 transition-all";
   return (
     <td className={`px-3 py-2.5 text-center border-b border-white/5 align-middle transition-colors ${status === "saved" ? "bg-[var(--lime)]/10" : ""}`}>
       {ro ? (
