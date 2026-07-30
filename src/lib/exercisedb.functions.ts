@@ -480,88 +480,60 @@ const EXERCISE_INSTRUCTION_PT: Record<string, string> = {
   "don't let your hips sag": "não deixe o quadril cair",
 };
 
-// Tenta traduzir via LibreTranslate (fallback grátis, sem chave)
-async function translateLibre(text: string): Promise<string | null> {
-  for (const host of ["https://libretranslate.de", "https://translate.argosopentech.com"]) {
-    try {
-      const r = await fetch(`${host}/translate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: text, source: "en", target: "pt" }),
-      });
-      if (!r.ok) continue;
-      const json = (await r.json()) as { translatedText?: string };
-      if (json.translatedText) return json.translatedText;
-    } catch {
-      continue;
-    }
+// Tradução via Lovable AI (fallback confiável para frases livres/instruções)
+async function translateAI(text: string): Promise<string | null> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) return null;
+  try {
+    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Você traduz termos de musculação do inglês para português do Brasil, usando a nomenclatura usada em academias. Responda APENAS com a tradução, sem aspas e sem explicações.",
+          },
+          { role: "user", content: text },
+        ],
+      }),
+    });
+    if (!r.ok) return null;
+    const json = (await r.json()) as { choices?: { message?: { content?: string } }[] };
+    const out = json.choices?.[0]?.message?.content?.trim();
+    if (!out || out.length > text.length * 4) return null;
+    return out.replace(/^["'\s]+|["'\s]+$/g, "");
+  } catch {
+    return null;
   }
-  return null;
 }
 
 // Tradução de texto livre (nome, instruções, descrição):
-// 1º dicionário estático, 2º MyMemory API, 3º LibreTranslate
-// Heurística simples para detectar se o texto já parece português
-function isPortuguese(text: string): boolean {
-  const lower = text.toLowerCase();
-  // Palavras comuns em português que raramente aparecem em nomes de exercícios em inglês
-  const ptWords = ["com", "para", "na", "no", "da", "do", "das", "dos", "de", "em", "um", "uma",
-    "elevação", "flexão", "rosca", "remada", "supino", "agachamento", "levantamento",
-    "desenvolvimento", "mergulho", "prancha", "abdominal", "cadeira", "puxada",
-    "crucifixo", "crossover", "panturrilha", "avanço", "caminhada", "extensão",
-    "abdução", "adução", "elevação", "pélvica", "barra", "halteres", "polia",
-    "bíceps", "tríceps", "costas", "peito", "ombro", "pernas", "glúteo",
-    "abdômen", "quadríceps", "posterior", "pular", "rotação", "tocando",
-    "esticando", "círculos", "ponte", "gato", "cachorro", "postura",
-    "torção", "rosca", "rosca", "oblíquo", "escalador", "polichinelo",
-    "alternado", "unilateral", "banco", "inclinado", "declinado", "reto",
-    "fechado", "aberto", "apoio", "solo"];
-  return ptWords.some((w) => lower.includes(w));
-}
-
-// Tradução de texto livre (nome, instruções, descrição):
-// 1º dicionário estático, 2º MyMemory API, 3º LibreTranslate
+// 1º dicionário estático, 2º tradutor composicional local, 3º Lovable AI
 export async function translateEN(text: string): Promise<string> {
   const trimmed = text.trim();
   if (!trimmed) return text;
   const lower = trimmed.toLowerCase();
-  // Se já parece português, retorna como está
-  if (isPortuguese(trimmed)) return trimmed;
+  if (looksPortuguese(trimmed)) return trimmed;
+
   const dict = EXERCISE_NAME_PT[lower] ?? EXERCISE_INSTRUCTION_PT[lower];
-  if (dict) return dict;
+  if (dict) return dict.charAt(0).toUpperCase() + dict.slice(1);
+
   const key = `tr:${trimmed}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL) return hit.data as string;
-  let result = text;
-  try {
-    // Tenta MyMemory primeiro
-    const r = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|pt-BR`,
-    );
-    if (r.ok) {
-      const json = (await r.json()) as {
-        responseData?: { translatedText?: string };
-        responseStatus?: number;
-      };
-      const translated = json.responseData?.translatedText;
-      if (json.responseStatus === 200 && translated && !/MYMEMORY WARNING/i.test(translated)) {
-        result = translated;
-      }
-    }
-    // Se MyMemory falhou ou deu warning, tenta LibreTranslate
-    if (result === text) {
-      const libre = await translateLibre(trimmed);
-      if (libre) result = libre;
-    }
-  } catch {
-    // Fallback: tenta LibreTranslate direto
-    try {
-      const libre = await translateLibre(trimmed);
-      if (libre) result = libre;
-    } catch {
-      // mantém texto original
-    }
+
+  // tradutor composicional (nomes de exercícios) — determinístico, sem rede
+  const composed = composeExerciseName(trimmed);
+  let result = composed ?? text;
+
+  if (!composed) {
+    const ai = await translateAI(trimmed);
+    if (ai) result = ai;
   }
+
   cache.set(key, { at: Date.now(), data: result });
   return result;
 }
