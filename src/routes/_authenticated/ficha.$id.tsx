@@ -22,7 +22,7 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const fichaQO = (id: string) =>
@@ -372,6 +372,46 @@ function FichaTabela({
       </div>
     );
   }
+  const renderHeaderCells = () =>
+    allExercises.map((ex, i) =>
+      conjugado ? (
+        <React.Fragment key={ex.id}>
+          {i > 0 && (
+            <th className="px-1 py-2.5 text-center w-8">
+              <span className="text-base font-black text-black/40">+</span>
+            </th>
+          )}
+          <th className="px-3 py-2.5 text-center min-w-[100px] max-w-[140px]">
+            <div className="text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
+          </th>
+        </React.Fragment>
+      ) : (
+        <th key={ex.id} className={`px-3 py-2.5 text-center min-w-[100px] max-w-[140px] ${i > 0 ? "border-l border-black/15" : ""}`}>
+          <div className="text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
+        </th>
+      )
+    );
+
+  const renderBodyCells = (children: (ex: ExerciseRow, i: number) => React.ReactNode) =>
+    allExercises.map((ex, i) =>
+      conjugado ? (
+        <React.Fragment key={ex.id}>
+          {i > 0 && (
+            <td className="px-1 py-2.5 text-center w-8 border-b border-white/5">
+              <span className="text-base font-black text-zinc-600">+</span>
+            </td>
+          )}
+          <td className="px-3 py-2.5 text-center border-b border-white/5">
+            {children(ex, i)}
+          </td>
+        </React.Fragment>
+      ) : (
+        <td key={ex.id} className={`px-3 py-2.5 text-center border-b border-white/5 ${i > 0 ? "border-l border-white/5" : ""}`}>
+          {children(ex, i)}
+        </td>
+      )
+    );
+
   return (
     <div className={`${glassCard} overflow-hidden`}>
       <div className="overflow-x-auto">
@@ -381,11 +421,7 @@ function FichaTabela({
               <th className="px-3 py-2 text-left w-[70px]">
                 <span className="text-lg font-black text-black/80">{voltas}x</span>
               </th>
-              {allExercises.map((ex, i) => (
-                <th key={ex.id} className={`px-3 py-2.5 text-center min-w-[100px] max-w-[140px] ${i > 0 ? "border-l border-black/15" : ""}`}>
-                  <div className="text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
-                </th>
-              ))}
+              {renderHeaderCells()}
             </tr>
           </thead>
           <tbody>
@@ -394,10 +430,8 @@ function FichaTabela({
                 <td className="px-3 py-3 text-[11px] font-bold uppercase tracking-wide text-white border-b border-white/5">
                   {vi + 1}ª
                 </td>
-                {allExercises.map((ex) => (
-                  <td key={ex.id} className="px-3 py-2.5 text-center text-sm font-black text-white border-b border-white/5">
-                    {Math.round(ex.series / voltas)}x
-                  </td>
+                {renderBodyCells((ex) => (
+                  <span className="text-sm font-black text-white">{Math.round(ex.series / voltas)}x</span>
                 ))}
               </tr>
             ))}
@@ -409,9 +443,8 @@ function FichaTabela({
                 <td className="px-3 py-3 text-[11px] font-bold uppercase tracking-wide text-zinc-400 border-b border-white/5">
                   {row.label}
                 </td>
-                {allExercises.map((ex) => (
+                {renderBodyCells((ex) => (
                   <FichaTd
-                    key={ex.id}
                     ex={ex}
                     field={row.key}
                     isTeacher={isTeacher}
