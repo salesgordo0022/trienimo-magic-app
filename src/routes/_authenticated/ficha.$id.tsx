@@ -372,21 +372,22 @@ function FichaTabela({
       </div>
     );
   }
+  const sepW = "w-12";
   const renderHeaderCells = () =>
     allExercises.map((ex, i) =>
       conjugado ? (
         <React.Fragment key={ex.id}>
           {i > 0 && (
-            <th className="px-1 py-2.5 text-center w-8">
-              <span className="text-base font-black text-black/40">+</span>
+            <th className={`${sepW} px-0 py-2.5 text-center`}>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/10 text-lg font-black text-black/60">+</span>
             </th>
           )}
-          <th className="px-3 py-2.5 text-center min-w-[100px] max-w-[140px]">
+          <th className="px-3 py-2.5 text-center min-w-[120px]">
             <div className="text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
           </th>
         </React.Fragment>
       ) : (
-        <th key={ex.id} className={`px-3 py-2.5 text-center min-w-[100px] max-w-[140px] ${i > 0 ? "border-l border-black/15" : ""}`}>
+        <th key={ex.id} className={`px-3 py-2.5 text-center min-w-[120px] ${i > 0 ? "border-l border-black/15" : ""}`}>
           <div className="text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
         </th>
       )
@@ -397,8 +398,8 @@ function FichaTabela({
       conjugado ? (
         <React.Fragment key={ex.id}>
           {i > 0 && (
-            <td className="px-1 py-2.5 text-center w-8 border-b border-white/5">
-              <span className="text-base font-black text-zinc-600">+</span>
+            <td className={`${sepW} px-0 py-2.5 text-center border-b border-white/5`}>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/5 text-lg font-black text-zinc-500">+</span>
             </td>
           )}
           <td className="px-3 py-2.5 text-center border-b border-white/5">
@@ -415,7 +416,7 @@ function FichaTabela({
   return (
     <div className={`${glassCard} overflow-hidden`}>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm" style={{ minWidth: allExercises.length * 130 }}>
+        <table className="w-full text-sm" style={{ minWidth: conjugado ? allExercises.length * 180 : allExercises.length * 130 }}>
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
               <th className="px-3 py-2 text-left w-[70px]">
