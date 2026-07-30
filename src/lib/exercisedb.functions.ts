@@ -757,7 +757,7 @@ export const searchExercises = createServerFn({ method: "GET" })
         .range(offset, offset + limit - 1);
       const rows2 = rows ?? [];
       const items = rows2.map(rowToExercise);
-      const translated = await Promise.all(items.map((e) => translateSummary(e)));
+      const translated = await translateList(items);
       for (const t of translated) {
         const orig = rows2.find((r: any) => r.id === t.id);
         if (orig && t.name !== orig.name) {
@@ -781,7 +781,7 @@ export const searchExercises = createServerFn({ method: "GET" })
       url = `${BASE}/exercises?limit=${limit}&offset=${offset}`;
     }
     const items = await cachedJson<Exercise[]>(url);
-    const translated = await Promise.all(items.map((e) => translateSummary(e)));
+    const translated = await translateList(items);
     return translated.map((e) => ({ ...e, gifUrl: exerciseGifUrl(e.id) }));
   });
 
