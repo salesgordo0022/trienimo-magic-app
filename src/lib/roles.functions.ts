@@ -188,12 +188,11 @@ export const listMyStudents = createServerFn({ method: "GET" })
       if (pErr) throw new Error(pErr.message);
       return (profiles ?? []) as Array<{ id: string; nome: string | null }>;
     }
-    // Otherwise, return linked students only
+    // Otherwise, return linked students only (including current user for self-assignment)
     const { data: links, error } = await context.supabase
       .from("teacher_students").select("student_id").eq("teacher_id", context.userId);
     if (error) throw new Error(error.message);
-    const ids = (links ?? []).map(l => l.student_id);
-    if (!ids.length) return [];
+    const ids = Array.from(new Set([...(links ?? []).map(l => l.student_id), context.userId]));
     const { data: profiles } = await context.supabase.from("profiles").select("id, nome").in("id", ids);
     return (profiles ?? []) as Array<{ id: string; nome: string | null }>;
   });

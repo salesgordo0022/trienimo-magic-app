@@ -547,9 +547,12 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
       }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { data: isProf } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "professor" });
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    if (!isProf && !isAdmin) throw new Error("Somente professores podem prescrever fichas.");
+    // Self-assignment allowed for any user; assigning to others requires professor/admin
+    if (data.assigned_to !== context.userId) {
+      const { data: isProf } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "professor" });
+      const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+      if (!isProf && !isAdmin) throw new Error("Somente professores podem prescrever fichas.");
+    }
 
     const { data: countRows } = await context.supabase.from("workouts").select("id").eq("user_id", context.userId).eq("assigned_to", data.assigned_to);
     const ordem = countRows?.length ?? 0;
@@ -565,7 +568,6 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         voltas: data.voltas ?? 1,
         ordem,
         data_inicio: new Date().toISOString().slice(0, 10),
-        ...(data.tipo ? { tipo: data.tipo } : {}),
       } as never)
       .select("id, letra")
       .single();
