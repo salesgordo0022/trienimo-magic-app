@@ -426,16 +426,7 @@ function FichaTabela({
             </tr>
           </thead>
           <tbody>
-            {conjugado && Array.from({ length: voltas }, (_, vi) => (
-              <tr key={`r${vi}`} className={vi % 2 === 0 ? "bg-white/[0.015]" : ""}>
-                <td className="px-3 py-3 text-[11px] font-bold uppercase tracking-wide text-white border-b border-white/5">
-                  {vi + 1}ª
-                </td>
-                {renderBodyCells((ex) => (
-                  <span className="text-sm font-black text-white">{Math.round(ex.series / voltas)}x</span>
-                ))}
-              </tr>
-            ))}
+
             {[
               { key: "peso", label: "Peso (kg)" },
               { key: "reps", label: "Repetições" },
