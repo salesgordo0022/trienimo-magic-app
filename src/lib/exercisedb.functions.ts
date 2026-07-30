@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { composeExerciseName, looksPortuguese } from "@/lib/exercise-translate";
 
 export type Exercise = {
   id: string;
