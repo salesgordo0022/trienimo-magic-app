@@ -383,7 +383,6 @@ function FichaTabela({
               </th>
               {allExercises.map((ex, i) => (
                 <th key={ex.id} className={`px-3 py-2.5 text-center min-w-[100px] max-w-[140px] ${i > 0 ? "border-l border-black/15" : ""}`}>
-                  <div className="text-[10px] font-black text-black/50 uppercase tracking-wider">{ex.series}x</div>
                   <div className="text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
                 </th>
               ))}
