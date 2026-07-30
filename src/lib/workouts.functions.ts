@@ -556,21 +556,30 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
 
     const { data: countRows } = await context.supabase.from("workouts").select("id").eq("user_id", context.userId).eq("assigned_to", data.assigned_to);
     const ordem = countRows?.length ?? 0;
-    const { data: w, error } = await context.supabase
+    const insertPayload: Record<string, unknown> = {
+      user_id: context.userId,
+      assigned_to: data.assigned_to,
+      letra: data.letra.toUpperCase(),
+      nome: data.nome ?? null,
+      tipo: data.tipo ?? "ficha",
+      conjugado: data.conjugado ?? false,
+      voltas: data.voltas ?? 1,
+      ordem,
+      data_inicio: new Date().toISOString().slice(0, 10),
+    };
+    let { data: w, error } = await context.supabase
       .from("workouts")
-      .insert({
-        user_id: context.userId,
-        assigned_to: data.assigned_to,
-        letra: data.letra.toUpperCase(),
-        nome: data.nome ?? null,
-        tipo: data.tipo ?? "ficha",
-        conjugado: data.conjugado ?? false,
-        voltas: data.voltas ?? 1,
-        ordem,
-        data_inicio: new Date().toISOString().slice(0, 10),
-      } as never)
+      .insert(insertPayload as never)
       .select("id, letra")
       .single();
+    if (error?.code === "42703" || error?.code === "PGRST204") {
+      const { conjugado, voltas, ...fallback } = insertPayload;
+      ({ data: w, error } = await context.supabase
+        .from("workouts")
+        .insert(fallback as never)
+        .select("id, letra")
+        .single());
+    }
     if (error) throw new Error(error.message);
 
     const groupName = data.body_part_label ?? "EXERCÍCIOS";
