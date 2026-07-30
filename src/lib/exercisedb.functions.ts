@@ -568,13 +568,37 @@ async function translateSummary(e: Exercise): Promise<Exercise> {
 }
 
 // Tradução completa (nome + instruções + descrição + músculos secundários), usada na tela de detalhe de 1 exercício por vez
+// Traduz uma lista de instruções em UMA chamada só (mais rápido e consistente)
+async function translateInstructions(list: string[]): Promise<string[]> {
+  const pending = list.filter((s) => !looksPortuguese(s) && !EXERCISE_INSTRUCTION_PT[s.toLowerCase().trim()]);
+  if (pending.length === 0) {
+    return list.map((s) => EXERCISE_INSTRUCTION_PT[s.toLowerCase().trim()] ?? s);
+  }
+  const cacheKey = `tri:${list.join("|")}`;
+  const hit = cache.get(cacheKey);
+  if (hit && Date.now() - hit.at < TTL) return hit.data as string[];
+
+  const numbered = list.map((s, i) => `${i + 1}. ${s}`).join("\n");
+  const ai = await translateAI(
+    `Traduza cada passo abaixo para português do Brasil, mantendo a numeração e uma linha por passo:\n${numbered}`,
+  );
+  let out = list;
+  if (ai) {
+    const parsed = ai
+      .split("\n")
+      .map((l) => l.replace(/^\s*\d+[.)-]\s*/, "").trim())
+      .filter(Boolean);
+    if (parsed.length === list.length) out = parsed;
+  }
+  cache.set(cacheKey, { at: Date.now(), data: out });
+  return out;
+}
+
 async function translateFull(e: Exercise): Promise<Exercise> {
   const [name, description, instructions, secondaryMuscles] = await Promise.all([
     translateEN(e.name),
     e.description ? translateEN(e.description) : Promise.resolve(e.description),
-    e.instructions
-      ? Promise.all(e.instructions.map((s) => translateEN(s)))
-      : Promise.resolve(e.instructions),
+    e.instructions ? translateInstructions(e.instructions) : Promise.resolve(e.instructions),
     e.secondaryMuscles
       ? Promise.all(e.secondaryMuscles.map(translateMuscle))
       : Promise.resolve(e.secondaryMuscles),
