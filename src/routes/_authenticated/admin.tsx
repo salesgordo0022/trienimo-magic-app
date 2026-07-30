@@ -6,6 +6,7 @@ import {
   listAllUsers, setUserRole, assignStudent, createInvite, listInvites,
   deleteInvite, getMyRole, createStudent, fixUserRoleByEmail, type AppRole,
 } from "@/lib/roles.functions";
+import { translateAllCatalogExercises, translateAllWorkoutExercises } from "@/lib/exercisedb.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -143,6 +144,8 @@ function AdminPage() {
 
           {/* Fix Role by Email */}
           <FixRoleByEmail />
+          {/* Translate All Exercises */}
+          <TranslateExercises />
 
           {/* Tabs */}
           <div className="flex gap-2">
@@ -578,6 +581,85 @@ function FixRoleByEmail() {
             {fix.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             {fix.isPending ? "Aplicando..." : "Corrigir Papel"}
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── New Student Form ─── */
+/* ─── Translate All Exercises ─── */
+function TranslateExercises() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [catalogStatus, setCatalogStatus] = useState<string | null>(null);
+  const [workoutStatus, setWorkoutStatus] = useState<string | null>(null);
+  const catalogMut = useMutation({
+    mutationFn: useServerFn(translateAllCatalogExercises),
+    onSuccess: (r: any) => {
+      setCatalogStatus(`Catálogo: ${r.total} exercícios, ${r.ok} traduzidos, ${r.fail} falhas`);
+      qc.invalidateQueries({ queryKey: ["sync"] });
+    },
+    onError: (e) => { setCatalogStatus(`Erro: ${e.message}`); },
+  });
+  const workoutMut = useMutation({
+    mutationFn: useServerFn(translateAllWorkoutExercises),
+    onSuccess: (r: any) => {
+      setWorkoutStatus(`Fichas: ${r.total} exercícios, ${r.ok} traduzidos, ${r.fail} falhas`);
+    },
+    onError: (e) => { setWorkoutStatus(`Erro: ${e.message}`); },
+  });
+
+  const busy = catalogMut.isPending || workoutMut.isPending;
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#111112] overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.02] transition-colors"
+      >
+        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+          <Dumbbell className="w-5 h-5 text-blue-400" />
+        </div>
+        <div className="flex-1 text-left">
+          <div className="text-sm font-bold text-white">Traduzir Todos os Exercícios</div>
+          <div className="text-[11px] text-zinc-500">Traduzir catálogo + exercícios em fichas para português</div>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-zinc-600 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 space-y-3 border-t border-white/5 pt-3">
+          <p className="text-xs text-zinc-500">
+            Traduz todos os exercícios da biblioteca e das fichas para português usando dicionário + API.
+            Pode levar alguns minutos.
+          </p>
+          <button
+            onClick={() => { setCatalogStatus("Traduzindo..."); catalogMut.mutate({}); }}
+            disabled={busy}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-500 text-white px-4 py-2.5 font-bold text-sm hover:brightness-110 disabled:opacity-50 transition-all"
+          >
+            {catalogMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Dumbbell className="w-4 h-4" />}
+            {catalogMut.isPending ? "Traduzindo catálogo..." : "Traduzir Biblioteca (catálogo)"}
+          </button>
+          {catalogStatus && (
+            <div className={`text-xs px-3 py-2 rounded-lg ${catalogStatus.startsWith("Erro") ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400"}`}>
+              {catalogStatus}
+            </div>
+          )}
+          <button
+            onClick={() => { setWorkoutStatus("Traduzindo..."); workoutMut.mutate({}); }}
+            disabled={busy}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-500 text-white px-4 py-2.5 font-bold text-sm hover:brightness-110 disabled:opacity-50 transition-all"
+          >
+            {workoutMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Dumbbell className="w-4 h-4" />}
+            {workoutMut.isPending ? "Traduzindo fichas..." : "Traduzir Exercícios nas Fichas"}
+          </button>
+          {workoutStatus && (
+            <div className={`text-xs px-3 py-2 rounded-lg ${workoutStatus.startsWith("Erro") ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400"}`}>
+              {workoutStatus}
+            </div>
+          )}
         </div>
       )}
     </div>
