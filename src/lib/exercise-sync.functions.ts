@@ -164,10 +164,10 @@ async function translatePending(admin: any) {
   const { translateEN } = await import("./exercisedb.functions");
   for (const ex of toTranslate) {
     try {
-      const ptName = translateEN(ex.name);
+      const ptName = await translateEN(ex.name);
       const upd: any = { name_pt: ptName };
       if (ex.instructions?.length) {
-        upd.instructions_pt = (ex.instructions as string[]).map((s) => translateEN(s));
+        upd.instructions_pt = await Promise.all((ex.instructions as string[]).map((s) => translateEN(s)));
       }
       await admin.from("exercises_catalog").update(upd).eq("id", ex.id);
     } catch {

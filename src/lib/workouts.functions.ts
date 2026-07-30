@@ -293,11 +293,13 @@ export const getFicha = createServerFn({ method: "GET" })
     if (e3) throw new Error(e3.message);
 
     const translated = await Promise.all(
-      ((exs ?? []) as ExerciseRow[]).map(async (e) => ({
-        ...e,
-        exercise_db_id: e.exercise_db_id ?? null,
-        nome: await translateEN(e.nome),
-      })),
+      ((exs ?? []) as ExerciseRow[]).map(async (e) => {
+        const pt = await translateEN(e.nome);
+        if (pt !== e.nome) {
+          await context.supabase.from("exercises").update({ nome: pt }).eq("id", e.id);
+        }
+        return { ...e, exercise_db_id: e.exercise_db_id ?? null, nome: pt };
+      }),
     );
 
     const groupsWith: GroupWithExercises[] = (groups ?? []).map((g) => ({
@@ -726,23 +728,19 @@ export const getHistorico = createServerFn({ method: "GET" })
       .from("session_sets")
       .select("session_id, exercise_id, set_index, reps, kg, done, exercises(nome)")
       .in("session_id", ids);
+    const setsWithTranslation = await Promise.all(
+      (sets ?? []).map(async (x: any) => ({
+        ...x,
+        exercise_nome: x.exercises?.nome ? await translateEN(x.exercises.nome) : "",
+      })),
+    );
     return (sessions ?? []).map((s) => ({
       ...s,
-      sets: (
-        (sets ?? []) as Array<{
-          session_id: string;
-          exercise_id: string;
-          set_index: number;
-          reps: number | null;
-          kg: number | null;
-          done: boolean;
-          exercises: { nome: string } | null;
-        }>
-      )
-        .filter((x) => x.session_id === s.id)
-        .map((x) => ({
+      sets: setsWithTranslation
+        .filter((x: any) => x.session_id === s.id)
+        .map((x: any) => ({
           exercise_id: x.exercise_id,
-          exercise_nome: x.exercises?.nome ?? "",
+          exercise_nome: x.exercise_nome,
           set_index: x.set_index,
           reps: x.reps,
           kg: x.kg,
@@ -781,25 +779,21 @@ export const getAllSessions = createServerFn({ method: "GET" })
       .from("session_sets")
       .select("session_id, exercise_id, set_index, reps, kg, done, exercises(nome)")
       .in("session_id", ids);
+    const setsWithTranslation = await Promise.all(
+      (sets ?? []).map(async (x: any) => ({
+        ...x,
+        exercise_nome: x.exercises?.nome ? await translateEN(x.exercises.nome) : "",
+      })),
+    );
     return (sessions ?? []).map((s) => ({
       id: s.id,
       started_at: s.started_at,
       ended_at: s.ended_at,
       workout_letra: (s.workouts as any)?.letra ?? null,
-      sets: (
-        (sets ?? []) as Array<{
-          session_id: string;
-          exercise_id: string;
-          set_index: number;
-          reps: number | null;
-          kg: number | null;
-          done: boolean;
-          exercises: { nome: string } | null;
-        }>
-      )
-        .filter((x) => x.session_id === s.id)
-        .map((x) => ({
-          exercise_nome: x.exercises?.nome ?? "",
+      sets: setsWithTranslation
+        .filter((x: any) => x.session_id === s.id)
+        .map((x: any) => ({
+          exercise_nome: x.exercise_nome,
           set_index: x.set_index,
           reps: x.reps,
           kg: x.kg,

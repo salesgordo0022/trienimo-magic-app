@@ -520,10 +520,32 @@ async function translateLibre(text: string): Promise<string | null> {
 
 // Tradução de texto livre (nome, instruções, descrição):
 // 1º dicionário estático, 2º MyMemory API, 3º LibreTranslate
+// Heurística simples para detectar se o texto já parece português
+function isPortuguese(text: string): boolean {
+  const lower = text.toLowerCase();
+  // Palavras comuns em português que raramente aparecem em nomes de exercícios em inglês
+  const ptWords = ["com", "para", "na", "no", "da", "do", "das", "dos", "de", "em", "um", "uma",
+    "elevação", "flexão", "rosca", "remada", "supino", "agachamento", "levantamento",
+    "desenvolvimento", "mergulho", "prancha", "abdominal", "cadeira", "puxada",
+    "crucifixo", "crossover", "panturrilha", "avanço", "caminhada", "extensão",
+    "abdução", "adução", "elevação", "pélvica", "barra", "halteres", "polia",
+    "bíceps", "tríceps", "costas", "peito", "ombro", "pernas", "glúteo",
+    "abdômen", "quadríceps", "posterior", "pular", "rotação", "tocando",
+    "esticando", "círculos", "ponte", "gato", "cachorro", "postura",
+    "torção", "rosca", "rosca", "oblíquo", "escalador", "polichinelo",
+    "alternado", "unilateral", "banco", "inclinado", "declinado", "reto",
+    "fechado", "aberto", "apoio", "solo"];
+  return ptWords.some((w) => lower.includes(w));
+}
+
+// Tradução de texto livre (nome, instruções, descrição):
+// 1º dicionário estático, 2º MyMemory API, 3º LibreTranslate
 export async function translateEN(text: string): Promise<string> {
   const trimmed = text.trim();
   if (!trimmed) return text;
   const lower = trimmed.toLowerCase();
+  // Se já parece português, retorna como está
+  if (isPortuguese(trimmed)) return trimmed;
   const dict = EXERCISE_NAME_PT[lower] ?? EXERCISE_INSTRUCTION_PT[lower];
   if (dict) return dict;
   const key = `tr:${trimmed}`;
