@@ -304,7 +304,7 @@ export function composeExerciseName(nameEn: string): string | null {
 }
 
 const PT_HINT =
-  /(ção|ções|ão|com |na |no |de |da |do |halteres|barra|polia|máquina|supino|agachamento|rosca|remada|puxada|elevação|abdominal|prancha|afundo|crucifixo|panturrilha|tríceps|bíceps|glúteo|coxa)/i;
+  /(\bcom\b|\bna\b|\bno\b|\bde\b|\bda\b|\bdo\b|\bpara\b|\bhalteres?\b|\bbarra\b|\bpolia\b|\bmáquina\b|\bsupino\b|\bagachamento\b|\brosca\b|\bremada\b|\bpuxada\b|\belevação\b|\babdominal\b|\bprancha\b|\bafundo\b|\bcrucifixo\b|\bpanturrilha\b|\btríceps\b|\bbíceps\b|\bglúteo\b|\bcoxa\b|ção|ções|nh|lh|ã|õ|é|í|ó|ú|â|ê|ô|ç)/i;
 
 export function looksPortuguese(text: string): boolean {
   return PT_HINT.test(text);
