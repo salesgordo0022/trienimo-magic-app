@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { composeExerciseName, looksPortuguese } from "@/lib/exercise-translate";
 
 export type Exercise = {
   id: string;
@@ -358,14 +359,11 @@ export const EXERCISE_NAME_PT: Record<string, string> = {
   "overhead triceps extension": "tríceps testa",
   "triceps extension": "tríceps testa",
   "lying triceps extension": "tríceps testa deitado",
-  "close grip bench press": "supino fechado",
   "reverse grip triceps pushdown": "tríceps na polia inverso",
-  "cable crossover": "crossover na polia",
   "incline cable fly": "crucifixo inclinado na polia",
   "decline cable fly": "crucifixo declinado na polia",
   "low cable fly": "crucifixo baixo na polia",
   "high cable fly": "crucifixo alto na polia",
-  "dumbbell pullover": "pullover com halteres",
   "ez bar curl": "rosca com barra w",
   "spider curl": "rosca spider",
   "drag curl": "rosca drag",
@@ -378,47 +376,31 @@ export const EXERCISE_NAME_PT: Record<string, string> = {
   "push up band": "flexão com elástico",
   "push up handles": "flexão com pegadores",
   "push up board": "flexão no board",
-  "decline push up": "flexão declinada",
-  "incline push up": "flexão inclinada",
-  "wide push up": "flexão aberta",
-  "diamond push up": "flexão diamante",
   "pike push up": "flexão pike",
   "archer push up": "flexão arqueiro",
   "clap push up": "flexão com palma",
-  "handstand push up": "flexão parada de mãos",
   "medicine ball chest pass": "passada de bola medicinal",
   "barbell glute bridge": "ponte com barra",
-  "barbell hip thrust": "elevação pélvica com barra",
   "single leg hip thrust": "elevação pélvica unilateral",
   "single leg glute bridge": "ponte unilateral",
   "cable glute kickback": "extensão de glúteo na polia",
-  "cable pull through": "puxada na polia",
   "ab crunch machine": "cadeira abdominal",
   "ab crunch": "abdominal crunch",
   "decline crunch": "abdominal declinado",
   "reverse crunch on bench": "abdominal reverso no banco",
-  "cable crunch": "abdominal na polia",
   "hanging knee raise": "elevação de joelhos na barra",
-  "hanging leg raise": "elevação de pernas na barra",
   "captains chair leg raise": "elevação de pernas no banco romano",
   "lying leg raise": "elevação de pernas deitado",
   "ab roller": "roda abdominal",
   "ab wheel": "roda abdominal",
   "landmine 180": "landmine 180",
   "pallof press": "pallof press",
-  "cable woodchop": "corte de lenha na polia",
   "cable anti rotation": "rotação anti-rotação na polia",
-  "dead bug": "dead bug",
-  "bird dog": "bird dog",
   "superman": "superman",
   "cobra": "cobra",
   "cat cow": "gato-vaca",
   "child pose": "postura da criança",
   "downward dog": "cachorro olhando pra baixo",
-  "kettlebell swing": "swing com kettlebell",
-  "kettlebell goblet squat": "agachamento copa com kettlebell",
-  "kettlebell clean": "clean com kettlebell",
-  "kettlebell snatch": "arranco com kettlebell",
   "kettlebell deadlift": "levantamento terra com kettlebell",
   "kettlebell turkish get up": "levantamento turco com kettlebell",
   "sled push": "propulsão no sled",
@@ -499,89 +481,61 @@ const EXERCISE_INSTRUCTION_PT: Record<string, string> = {
   "don't let your hips sag": "não deixe o quadril cair",
 };
 
-// Tenta traduzir via LibreTranslate (fallback grátis, sem chave)
-async function translateLibre(text: string): Promise<string | null> {
-  for (const host of ["https://libretranslate.de", "https://translate.argosopentech.com"]) {
-    try {
-      const r = await fetch(`${host}/translate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: text, source: "en", target: "pt" }),
-      });
-      if (!r.ok) continue;
-      const json = (await r.json()) as { translatedText?: string };
-      if (json.translatedText) return json.translatedText;
-    } catch {
-      continue;
-    }
+// Tradução via Lovable AI (fallback confiável para frases livres/instruções)
+async function translateAI(text: string): Promise<string | null> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) return null;
+  try {
+    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Você traduz termos de musculação do inglês para português do Brasil, usando a nomenclatura usada em academias. Responda APENAS com a tradução, sem aspas e sem explicações.",
+          },
+          { role: "user", content: text },
+        ],
+      }),
+    });
+    if (!r.ok) return null;
+    const json = (await r.json()) as { choices?: { message?: { content?: string } }[] };
+    const out = json.choices?.[0]?.message?.content?.trim();
+    if (!out || out.length > text.length * 4) return null;
+    return out.replace(/^["'\s]+|["'\s]+$/g, "");
+  } catch {
+    return null;
   }
-  return null;
 }
 
 // Tradução de texto livre (nome, instruções, descrição):
-// 1º dicionário estático, 2º MyMemory API, 3º LibreTranslate
-// Heurística simples para detectar se o texto já parece português
-function isPortuguese(text: string): boolean {
-  const lower = text.toLowerCase();
-  // Palavras comuns em português que raramente aparecem em nomes de exercícios em inglês
-  const ptWords = ["com", "para", "na", "no", "da", "do", "das", "dos", "de", "em", "um", "uma",
-    "elevação", "flexão", "rosca", "remada", "supino", "agachamento", "levantamento",
-    "desenvolvimento", "mergulho", "prancha", "abdominal", "cadeira", "puxada",
-    "crucifixo", "crossover", "panturrilha", "avanço", "caminhada", "extensão",
-    "abdução", "adução", "elevação", "pélvica", "barra", "halteres", "polia",
-    "bíceps", "tríceps", "costas", "peito", "ombro", "pernas", "glúteo",
-    "abdômen", "quadríceps", "posterior", "pular", "rotação", "tocando",
-    "esticando", "círculos", "ponte", "gato", "cachorro", "postura",
-    "torção", "rosca", "rosca", "oblíquo", "escalador", "polichinelo",
-    "alternado", "unilateral", "banco", "inclinado", "declinado", "reto",
-    "fechado", "aberto", "apoio", "solo"];
-  return ptWords.some((w) => lower.includes(w));
-}
-
-// Tradução de texto livre (nome, instruções, descrição):
-// 1º dicionário estático, 2º MyMemory API, 3º LibreTranslate
+// 1º dicionário estático, 2º tradutor composicional local, 3º Lovable AI
 export async function translateEN(text: string): Promise<string> {
   const trimmed = text.trim();
   if (!trimmed) return text;
   const lower = trimmed.toLowerCase();
-  // Se já parece português, retorna como está
-  if (isPortuguese(trimmed)) return trimmed;
+  if (looksPortuguese(trimmed)) return trimmed;
+
   const dict = EXERCISE_NAME_PT[lower] ?? EXERCISE_INSTRUCTION_PT[lower];
-  if (dict) return dict;
+  if (dict) return dict.charAt(0).toUpperCase() + dict.slice(1);
+
   const key = `tr:${trimmed}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL) return hit.data as string;
-  let result = text;
-  try {
-    // Tenta MyMemory primeiro
-    const r = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|pt-BR`,
-    );
-    if (r.ok) {
-      const json = (await r.json()) as {
-        responseData?: { translatedText?: string };
-        responseStatus?: number;
-      };
-      const translated = json.responseData?.translatedText;
-      if (json.responseStatus === 200 && translated && !/MYMEMORY WARNING/i.test(translated)) {
-        result = translated;
-      }
-    }
-    // Se MyMemory falhou ou deu warning, tenta LibreTranslate
-    if (result === text) {
-      const libre = await translateLibre(trimmed);
-      if (libre) result = libre;
-    }
-  } catch {
-    // Fallback: tenta LibreTranslate direto
-    try {
-      const libre = await translateLibre(trimmed);
-      if (libre) result = libre;
-    } catch {
-      // mantém texto original
-    }
+
+  // tradutor composicional (nomes de exercícios) — determinístico, sem rede
+  const composed = composeExerciseName(trimmed);
+  let result = composed ?? text;
+
+  if (!composed) {
+    const ai = await translateAI(trimmed);
+    if (ai) result = ai;
   }
-  cache.set(key, { at: Date.now(), data: result });
+
+  if (result !== text) cache.set(key, { at: Date.now(), data: result });
   return result;
 }
 
@@ -602,25 +556,84 @@ async function translateMuscle(m: string): Promise<string> {
   return translateEN(m);
 }
 
-// Tradução "leve": nome + músculos secundários via API (usado nas listas de busca)
-async function translateSummary(e: Exercise): Promise<Exercise> {
-  const [name, secondaryMuscles] = await Promise.all([
-    translateEN(e.name),
-    e.secondaryMuscles
-      ? Promise.all(e.secondaryMuscles.map(translateMuscle))
-      : Promise.resolve(e.secondaryMuscles),
-  ]);
-  return { ...translateDict(e), name, secondaryMuscles };
+// Traduz uma lista de exercícios: nomes desconhecidos vão em UMA chamada de IA
+async function translateList(items: Exercise[]): Promise<Exercise[]> {
+  const localName = (n: string): string | null => {
+    const trimmed = n.trim();
+    if (!trimmed) return n;
+    if (looksPortuguese(trimmed)) return trimmed;
+    const dict = EXERCISE_NAME_PT[trimmed.toLowerCase()];
+    if (dict) return dict.charAt(0).toUpperCase() + dict.slice(1);
+    const cached = cache.get(`tr:${trimmed}`);
+    if (cached && Date.now() - cached.at < TTL) return cached.data as string;
+    return composeExerciseName(trimmed);
+  };
+
+  const resolved = items.map((e) => localName(e.name));
+  const missingIdx = resolved.map((v, i) => (v === null ? i : -1)).filter((i) => i >= 0);
+
+  if (missingIdx.length > 0) {
+    const numbered = missingIdx.map((i, k) => `${k + 1}. ${items[i].name}`).join("\n");
+    const ai = await translateAI(
+      `Traduza cada nome de exercício de musculação para português do Brasil, mantendo a numeração, uma linha por item:\n${numbered}`,
+    );
+    if (ai) {
+      const parsed = ai
+        .split("\n")
+        .map((l) => l.replace(/^\s*\d+[.)-]\s*/, "").trim())
+        .filter(Boolean);
+      if (parsed.length === missingIdx.length) {
+        missingIdx.forEach((idx, k) => {
+          resolved[idx] = parsed[k];
+          cache.set(`tr:${items[idx].name.trim()}`, { at: Date.now(), data: parsed[k] });
+        });
+      }
+    }
+  }
+
+  return Promise.all(
+    items.map(async (e, i) => {
+      const secondaryMuscles = e.secondaryMuscles
+        ? await Promise.all(e.secondaryMuscles.map(translateMuscle))
+        : e.secondaryMuscles;
+      const name = resolved[i] ?? e.name;
+      return { ...translateDict(e), name, secondaryMuscles };
+    }),
+  );
 }
 
 // Tradução completa (nome + instruções + descrição + músculos secundários), usada na tela de detalhe de 1 exercício por vez
+// Traduz uma lista de instruções em UMA chamada só (mais rápido e consistente)
+async function translateInstructions(list: string[]): Promise<string[]> {
+  const pending = list.filter((s) => !looksPortuguese(s) && !EXERCISE_INSTRUCTION_PT[s.toLowerCase().trim()]);
+  if (pending.length === 0) {
+    return list.map((s) => EXERCISE_INSTRUCTION_PT[s.toLowerCase().trim()] ?? s);
+  }
+  const cacheKey = `tri:${list.join("|")}`;
+  const hit = cache.get(cacheKey);
+  if (hit && Date.now() - hit.at < TTL) return hit.data as string[];
+
+  const numbered = list.map((s, i) => `${i + 1}. ${s}`).join("\n");
+  const ai = await translateAI(
+    `Traduza cada passo abaixo para português do Brasil, mantendo a numeração e uma linha por passo:\n${numbered}`,
+  );
+  let out = list;
+  if (ai) {
+    const parsed = ai
+      .split("\n")
+      .map((l) => l.replace(/^\s*\d+[.)-]\s*/, "").trim())
+      .filter(Boolean);
+    if (parsed.length === list.length) out = parsed;
+  }
+  cache.set(cacheKey, { at: Date.now(), data: out });
+  return out;
+}
+
 async function translateFull(e: Exercise): Promise<Exercise> {
   const [name, description, instructions, secondaryMuscles] = await Promise.all([
     translateEN(e.name),
     e.description ? translateEN(e.description) : Promise.resolve(e.description),
-    e.instructions
-      ? Promise.all(e.instructions.map((s) => translateEN(s)))
-      : Promise.resolve(e.instructions),
+    e.instructions ? translateInstructions(e.instructions) : Promise.resolve(e.instructions),
     e.secondaryMuscles
       ? Promise.all(e.secondaryMuscles.map(translateMuscle))
       : Promise.resolve(e.secondaryMuscles),
@@ -733,7 +746,7 @@ export const searchExercises = createServerFn({ method: "GET" })
         .range(offset, offset + limit - 1);
       const rows2 = rows ?? [];
       const items = rows2.map(rowToExercise);
-      const translated = await Promise.all(items.map((e) => translateSummary(e)));
+      const translated = await translateList(items);
       for (const t of translated) {
         const orig = rows2.find((r: any) => r.id === t.id);
         if (orig && t.name !== orig.name) {
@@ -757,7 +770,7 @@ export const searchExercises = createServerFn({ method: "GET" })
       url = `${BASE}/exercises?limit=${limit}&offset=${offset}`;
     }
     const items = await cachedJson<Exercise[]>(url);
-    const translated = await Promise.all(items.map((e) => translateSummary(e)));
+    const translated = await translateList(items);
     return translated.map((e) => ({ ...e, gifUrl: exerciseGifUrl(e.id) }));
   });
 

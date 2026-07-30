@@ -583,6 +583,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         .single());
     }
     if (error) throw new Error(error.message);
+    if (!w) throw new Error("Falha ao criar treino");
 
     const groupName = data.body_part_label ?? "EXERCÍCIOS";
     const { data: group } = await context.supabase
