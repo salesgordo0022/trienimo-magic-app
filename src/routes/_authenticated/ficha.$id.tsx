@@ -12,6 +12,7 @@ import {
   updateWorkout,
   updateExercise,
   type ExerciseRow,
+  type GroupWithExercises,
 } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents } from "@/lib/roles.functions";
 import {
@@ -189,9 +190,9 @@ function FichaEditor() {
               </div>
             </div>
 
-            {/* Tabela de exercicios (sem grupos) */}
+            {/* Tabela de exercicios */}
             <FichaTabela
-              allExercises={data.groups.flatMap((g) => g.exercises)}
+              groups={data.groups}
               voltas={data.workout.voltas ?? 1}
               conjugado={data.workout.tipo === "conjugado" || data.workout.conjugado === true}
               isTeacher={isTeacher}
@@ -353,101 +354,133 @@ function useSaveStatus() {
 }
 
 function FichaTabela({
-  allExercises,
+  groups,
   voltas,
   conjugado,
   isTeacher,
   onSaved,
 }: {
-  allExercises: ExerciseRow[];
+  groups: GroupWithExercises[];
   voltas: number;
   conjugado: boolean;
   isTeacher: boolean;
   onSaved: () => void;
 }) {
-  if (allExercises.length === 0) {
+  if (groups.length === 0 || groups.every((g) => g.exercises.length === 0)) {
     return (
       <div className="rounded-2xl border border-white/10 bg-[#111112] p-10 text-center text-sm text-zinc-500">
         Nenhum exercicio cadastrado.
       </div>
     );
   }
-  const sepW = "w-8 sm:w-10";
-  const renderHeaderCells = () =>
-    allExercises.map((ex, i) =>
-      conjugado ? (
-        <React.Fragment key={ex.id}>
-          {i > 0 && (
-            <th className={`${sepW} px-0 py-2 sm:py-2.5 text-center`}>
-              <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-black/10 text-base sm:text-lg font-black text-black/60">+</span>
-            </th>
-          )}
-          <th className="px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[120px]">
-            <div className="text-xs sm:text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
-          </th>
-        </React.Fragment>
-      ) : (
-        <th key={ex.id} className={`px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[120px] ${i > 0 ? "border-l border-black/15" : ""}`}>
-          <div className="text-xs sm:text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
-        </th>
-      )
-    );
+  const allExercises = groups.flatMap((g) => g.exercises);
 
-  const renderBodyCells = (children: (ex: ExerciseRow, i: number) => React.ReactNode) =>
-    allExercises.map((ex, i) =>
-      conjugado ? (
-        <React.Fragment key={ex.id}>
-          {i > 0 && (
-            <td className={`${sepW} px-0 py-2 sm:py-2.5 text-center border-b border-white/5`}>
-              <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/5 text-base sm:text-lg font-black text-zinc-500">+</span>
-            </td>
-          )}
-          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center border-b border-white/5">
-            {children(ex, i)}
-          </td>
-        </React.Fragment>
-      ) : (
-        <td key={ex.id} className={`px-2 sm:px-3 py-2 sm:py-2.5 text-center border-b border-white/5 ${i > 0 ? "border-l border-white/5" : ""}`}>
-          {children(ex, i)}
-        </td>
-      )
-    );
-
-  return (
-    <div className={`${glassCard} overflow-hidden`}>
-      <div className="overflow-x-auto bg-[#0b0b0d]">
-        <table className="w-full text-sm" style={{ minWidth: conjugado ? allExercises.length * 140 : allExercises.length * 110 }}>
-          <thead>
-            <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
-              <th className="sticky left-0 z-10 px-2 sm:px-3 py-1.5 sm:py-2 text-left w-[52px] sm:w-[70px]" style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
-                <span className="text-base sm:text-lg font-black text-black/80">{voltas}x</span>
-              </th>
-              {renderHeaderCells()}
-            </tr>
-          </thead>
-          <tbody>
-
-            {[
-              { key: "peso", label: "Peso (kg)" },
-              { key: "reps", label: "Repetições" },
-            ].map((row, ri) => (
-              <tr key={row.key} className={ri % 2 === 0 ? "bg-white/[0.015]" : ""}>
-                  <td className="sticky left-0 z-10 bg-[#0b0b0d] px-2 sm:px-3 py-2 sm:py-3 text-[11px] font-bold uppercase tracking-wide text-zinc-400 border-b border-white/5">
-                    {row.label}
-                  </td>
-                {renderBodyCells((ex) => (
-                  <FichaTd
-                    ex={ex}
-                    field={row.key}
-                    isTeacher={isTeacher}
-                    onSaved={onSaved}
-                  />
+  if (conjugado) {
+    return (
+      <div className={`${glassCard} overflow-hidden`}>
+        <div className="overflow-x-auto bg-[#0b0b0d]">
+          <table className="w-full text-sm" style={{ minWidth: allExercises.length * 140 }}>
+            <thead>
+              <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
+                <th className="sticky left-0 z-10 px-2 sm:px-3 py-1.5 sm:py-2 text-left w-[52px] sm:w-[70px]" style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
+                  <span className="text-base sm:text-lg font-black text-black/80">{voltas}x</span>
+                </th>
+                {allExercises.map((ex, i) => (
+                  <React.Fragment key={ex.id}>
+                    {i > 0 && (
+                      <th className="w-8 sm:w-10 px-0 py-2 sm:py-2.5 text-center">
+                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-black/10 text-base sm:text-lg font-black text-black/60">+</span>
+                      </th>
+                    )}
+                    <th className="px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[120px]">
+                      <div className="text-xs sm:text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
+                    </th>
+                  </React.Fragment>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {Array.from({ length: voltas }, (_, vi) => (
+                <tr key={`r${vi}`} className={vi % 2 === 0 ? "bg-white/[0.015]" : ""}>
+                  <td className="sticky left-0 z-10 bg-[#0b0b0d] px-2 sm:px-3 py-2 sm:py-3 text-[11px] font-bold uppercase tracking-wide text-white border-b border-white/5">
+                    {vi + 1}ª
+                  </td>
+                  {allExercises.map((ex, i) => (
+                    <React.Fragment key={ex.id}>
+                      {i > 0 && <td className="w-8 sm:w-10 px-0 py-2 sm:py-2.5 text-center border-b border-white/5" />}
+                      <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-sm font-black text-white border-b border-white/5">
+                        {Math.round(ex.series / voltas)}x
+                      </td>
+                    </React.Fragment>
+                  ))}
+                </tr>
+              ))}
+              {["peso", "reps"].map((key, ri) => (
+                <tr key={key} className={ri % 2 === 0 ? "bg-white/[0.015]" : ""}>
+                  <td className="sticky left-0 z-10 bg-[#0b0b0d] px-2 sm:px-3 py-2 sm:py-3 text-[11px] font-bold uppercase tracking-wide text-zinc-400 border-b border-white/5">
+                    {key === "peso" ? "Peso (kg)" : "Repetições"}
+                  </td>
+                  {allExercises.map((ex, i) => (
+                    <React.Fragment key={ex.id}>
+                      {i > 0 && <td className="w-8 sm:w-10 px-0 py-2 sm:py-2.5 text-center border-b border-white/5" />}
+                      <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center border-b border-white/5">
+                        <FichaTd ex={ex} field={key} isTeacher={isTeacher} onSaved={onSaved} />
+                      </td>
+                    </React.Fragment>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
+    );
+  }
+
+  // Normal: one table per group
+  return (
+    <div className="space-y-6">
+      {groups.map((group) => {
+        const exs = group.exercises;
+        if (exs.length === 0) return null;
+        return (
+          <div key={group.id} className={`${glassCard} overflow-hidden`}>
+            <div className="px-5 py-2.5 bg-white/[0.04] border-b border-white/5">
+              <span className="text-[10px] font-black text-[var(--lime)] uppercase tracking-widest">{group.nome}</span>
+            </div>
+            <div className="overflow-x-auto bg-[#0b0b0d]">
+              <table className="w-full text-sm" style={{ minWidth: exs.length * 110 }}>
+                <thead>
+                  <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
+                    <th className="sticky left-0 z-10 px-2 sm:px-3 py-1.5 sm:py-2 text-left w-[52px] sm:w-[70px]" style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
+                      <span className="text-base sm:text-lg font-black text-black/80">{voltas}x</span>
+                    </th>
+                    {exs.map((ex, i) => (
+                      <th key={ex.id} className="px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[120px] border-l border-black/15">
+                        <div className="text-xs sm:text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {["peso", "reps"].map((key, ri) => (
+                    <tr key={key} className={ri % 2 === 0 ? "bg-white/[0.015]" : ""}>
+                      <td className="sticky left-0 z-10 bg-[#0b0b0d] px-2 sm:px-3 py-2 sm:py-3 text-[11px] font-bold uppercase tracking-wide text-zinc-400 border-b border-white/5">
+                        {key === "peso" ? "Peso (kg)" : "Repetições"}
+                      </td>
+                      {exs.map((ex) => (
+                        <td key={ex.id} className="px-2 sm:px-3 py-2 sm:py-2.5 text-center border-b border-white/5 border-l border-white/5">
+                          <FichaTd ex={ex} field={key} isTeacher={isTeacher} onSaved={onSaved} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
