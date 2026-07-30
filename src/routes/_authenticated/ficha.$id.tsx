@@ -378,8 +378,8 @@ function FichaTabela({
         <table className="w-full text-sm" style={{ minWidth: allExercises.length * 130 }}>
           <thead>
             <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
-              <th className="px-3 py-2 text-left text-[11px] font-black text-black/60 uppercase w-[70px] tracking-wider">
-                {voltas}x
+              <th className="px-3 py-2 text-left w-[70px]">
+                <span className="text-lg font-black text-black/80">{voltas}x</span>
               </th>
               {allExercises.map((ex, i) => (
                 <th key={ex.id} className={`px-3 py-2.5 text-center min-w-[100px] max-w-[140px] ${i > 0 ? "border-l border-black/15" : ""}`}>
