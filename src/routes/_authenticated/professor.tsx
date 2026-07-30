@@ -313,7 +313,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
         letra: letraFinal,
         nome: nomeFinal || undefined,
         assigned_to: studentId,
-        tipo: tipoAtual,
+        tipo: fichaTipo === "conjugado" ? "conjugado" : tipoAtual,
         conjugado: fichaTipo === "conjugado" || undefined,
         voltas: fichaVoltas,
         exercises: selectedExercises.map(ex => ({
