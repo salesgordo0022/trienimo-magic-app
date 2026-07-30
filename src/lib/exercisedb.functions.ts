@@ -567,6 +567,52 @@ async function translateSummary(e: Exercise): Promise<Exercise> {
   return { ...translateDict(e), name, secondaryMuscles };
 }
 
+// Traduz uma lista de exercícios: nomes desconhecidos vão em UMA chamada de IA
+async function translateList(items: Exercise[]): Promise<Exercise[]> {
+  const localName = (n: string): string | null => {
+    const trimmed = n.trim();
+    if (!trimmed) return n;
+    if (looksPortuguese(trimmed)) return trimmed;
+    const dict = EXERCISE_NAME_PT[trimmed.toLowerCase()];
+    if (dict) return dict.charAt(0).toUpperCase() + dict.slice(1);
+    const cached = cache.get(`tr:${trimmed}`);
+    if (cached && Date.now() - cached.at < TTL) return cached.data as string;
+    return composeExerciseName(trimmed);
+  };
+
+  const resolved = items.map((e) => localName(e.name));
+  const missingIdx = resolved.map((v, i) => (v === null ? i : -1)).filter((i) => i >= 0);
+
+  if (missingIdx.length > 0) {
+    const numbered = missingIdx.map((i, k) => `${k + 1}. ${items[i].name}`).join("\n");
+    const ai = await translateAI(
+      `Traduza cada nome de exercício de musculação para português do Brasil, mantendo a numeração, uma linha por item:\n${numbered}`,
+    );
+    if (ai) {
+      const parsed = ai
+        .split("\n")
+        .map((l) => l.replace(/^\s*\d+[.)-]\s*/, "").trim())
+        .filter(Boolean);
+      if (parsed.length === missingIdx.length) {
+        missingIdx.forEach((idx, k) => {
+          resolved[idx] = parsed[k];
+          cache.set(`tr:${items[idx].name.trim()}`, { at: Date.now(), data: parsed[k] });
+        });
+      }
+    }
+  }
+
+  return Promise.all(
+    items.map(async (e, i) => {
+      const secondaryMuscles = e.secondaryMuscles
+        ? await Promise.all(e.secondaryMuscles.map(translateMuscle))
+        : e.secondaryMuscles;
+      const name = resolved[i] ?? e.name;
+      return { ...translateDict(e), name, secondaryMuscles };
+    }),
+  );
+}
+
 // Tradução completa (nome + instruções + descrição + músculos secundários), usada na tela de detalhe de 1 exercício por vez
 // Traduz uma lista de instruções em UMA chamada só (mais rápido e consistente)
 async function translateInstructions(list: string[]): Promise<string[]> {
