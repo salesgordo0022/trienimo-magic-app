@@ -535,7 +535,7 @@ export async function translateEN(text: string): Promise<string> {
     if (ai) result = ai;
   }
 
-  cache.set(key, { at: Date.now(), data: result });
+  if (result !== text) cache.set(key, { at: Date.now(), data: result });
   return result;
 }
 
