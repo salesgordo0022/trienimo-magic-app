@@ -556,17 +556,6 @@ async function translateMuscle(m: string): Promise<string> {
   return translateEN(m);
 }
 
-// Tradução "leve": nome + músculos secundários via API (usado nas listas de busca)
-async function translateSummary(e: Exercise): Promise<Exercise> {
-  const [name, secondaryMuscles] = await Promise.all([
-    translateEN(e.name),
-    e.secondaryMuscles
-      ? Promise.all(e.secondaryMuscles.map(translateMuscle))
-      : Promise.resolve(e.secondaryMuscles),
-  ]);
-  return { ...translateDict(e), name, secondaryMuscles };
-}
-
 // Traduz uma lista de exercícios: nomes desconhecidos vão em UMA chamada de IA
 async function translateList(items: Exercise[]): Promise<Exercise[]> {
   const localName = (n: string): string | null => {
