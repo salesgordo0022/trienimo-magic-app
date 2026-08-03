@@ -30,9 +30,34 @@ function TreinarPage() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [finished, setFinished] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [animPhase, setAnimPhase] = useState(0);
   const [countUp, setCountUp] = useState(0);
   const startedRef = useRef(false);
+
+  const totalSets = useMemo(
+    () => allExercises.reduce((acc, e) => acc + (e.series || 0), 0),
+    [allExercises],
+  );
+
+  const confetti = useMemo(
+    () =>
+      Array.from({ length: 80 }).map((_, i) => ({
+        left: Math.random() * 100,
+        delay: Math.random() * 2.5,
+        duration: 3 + Math.random() * 4,
+        size: 3 + Math.random() * 8,
+        radius: i % 4 === 0 ? "50%" : i % 4 === 1 ? "2px" : i % 4 === 2 ? "0" : "30%",
+        color: ["var(--lime)", "#c8ff33", "#FFD400", "#fff", "#22c55e", "#84cc16", "#facc15", "#a855f7", "#3b82f6", "#ec4899"][i % 10],
+        rotate: Math.random() * 360,
+        scale: 0.5 + Math.random(),
+      })),
+    [],
+  );
+
+  const closeToHome = () => {
+    qc.invalidateQueries({ queryKey: ["assigned"] });
+    qc.invalidateQueries({ queryKey: ["completedWorkoutIds"] });
+    navigate({ to: "/app" });
+  };
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -65,9 +90,6 @@ function TreinarPage() {
     qc.invalidateQueries({ queryKey: ["completedToday"] });
     qc.invalidateQueries({ queryKey: ["allSessions"] });
     setFinished(true);
-    setTimeout(() => setAnimPhase(1), 300);
-    setTimeout(() => setAnimPhase(2), 800);
-    setTimeout(() => setAnimPhase(3), 1300);
     const timer = setInterval(() => {
       setCountUp((p) => {
         if (p >= total) { clearInterval(timer); return total; }
@@ -78,106 +100,169 @@ function TreinarPage() {
 
   if (finished) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-5 text-center overflow-hidden" style={{ background: "linear-gradient(180deg, #0d0d0f 0%, #0a0a0a 50%, #0a0f0a 100%)" }}>
+      <div
+        className="fixed inset-0 z-50 flex flex-col overflow-hidden"
+        style={{ background: "linear-gradient(180deg, #0d0d0f 0%, #0a0a0a 50%, #0a0f0a 100%)" }}
+      >
+        {/* Confetti */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {Array.from({ length: 80 }).map((_, i) => (
+          {confetti.map((p, i) => (
             <div
               key={i}
               className="absolute"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `-8%`,
-                width: `${3 + Math.random() * 8}px`,
-                height: `${3 + Math.random() * 8}px`,
-                borderRadius: i % 4 === 0 ? "50%" : i % 4 === 1 ? "2px" : i % 4 === 2 ? "0" : "30%",
-                background: ["var(--lime)", "#c8ff33", "#FFD400", "#fff", "#22c55e", "#84cc16", "#facc15", "#a855f7", "#3b82f6", "#ec4899"][i % 10],
-                animation: `confettiFall ${3 + Math.random() * 4}s linear ${Math.random() * 2.5}s infinite`,
+                left: `${p.left}%`,
+                top: "-8%",
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+                borderRadius: p.radius,
+                background: p.color,
+                animation: `confettiFall ${p.duration}s linear ${p.delay}s infinite`,
                 opacity: 0.9,
-                transform: `rotate(${Math.random() * 360}deg) scale(${0.5 + Math.random()})`,
+                transform: `rotate(${p.rotate}deg) scale(${p.scale})`,
               }}
             />
           ))}
         </div>
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-[120px]" style={{ background: "radial-gradient(circle, rgba(204,255,0,0.12), transparent)" }} />
-        <div className="relative flex flex-col items-center gap-5 w-full max-w-xs">
-          <div
-            className="relative w-28 h-28"
-            style={{ animation: animPhase >= 0 ? "popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards" : "none" }}
-          >
-            <div className="absolute inset-0 rounded-full bg-[var(--lime)]/15 animate-ping" style={{ animationDuration: "2.5s" }} />
-            <div className="absolute inset-3 rounded-full bg-[var(--lime)]/10 animate-pulse" />
-            <div className="relative w-28 h-28 rounded-full flex items-center justify-center" style={{
-              background: "linear-gradient(135deg, var(--lime), #c8ff33)",
-              boxShadow: "0 0 60px -5px rgba(204,255,0,0.5)",
-            }}>
-              <CheckCircle2 className="w-12 h-12 text-black" />
-            </div>
-          </div>
+        <div
+          className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-[120px]"
+          style={{ background: "radial-gradient(circle, rgba(204,255,0,0.12), transparent)" }}
+        />
 
-          <div
-            className="space-y-1.5"
-            style={{ animation: animPhase >= 1 ? "completionFadeUp 0.5s ease-out forwards" : "none", opacity: 0 }}
-          >
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/20 mb-2">
-              <Sparkles className="w-3 h-3 text-[var(--lime)]" />
-              <span className="text-[9px] font-black text-[var(--lime)] uppercase tracking-widest">Treino Completo</span>
-            </div>
-            <h1 className="text-3xl font-black text-white">Parabens!</h1>
-            <p className="text-sm text-zinc-400">
-              Voce completou o Treino <span className="font-bold text-[var(--lime)]">{ficha.workout.letra}</span>
-            </p>
-          </div>
-
-          <div
-            className="w-full grid grid-cols-2 gap-2.5"
-            style={{ animation: animPhase >= 2 ? "completionFadeUp 0.5s ease-out forwards" : "none", opacity: 0 }}
-          >
-            <div className="rounded-xl border border-white/8 bg-white/[0.03] py-3 px-2 space-y-0.5">
-              <div className="text-lg font-black text-white tabular-nums">{countUp}</div>
-              <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Exercicios</div>
-            </div>
-            <div className="rounded-xl border border-[var(--lime)]/20 bg-[var(--lime)]/5 py-3 px-2 space-y-0.5">
-              <div className="text-lg font-black text-[var(--lime)]">100%</div>
-              <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Progresso</div>
-            </div>
-          </div>
-
-          <div
-            className="w-full rounded-xl border border-white/8 bg-white/[0.03] p-3.5"
-            style={{ animation: animPhase >= 2 ? "completionFadeUp 0.5s ease-out forwards" : "none", opacity: 0 }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Progresso</span>
-              <span className="text-[10px] font-black text-[var(--lime)]">100%</span>
-            </div>
-            <div className="w-full h-1.5 bg-white/8 rounded-full overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: "100%", background: "linear-gradient(90deg, var(--lime), #c8ff33, var(--lime))", backgroundSize: "200% 100%", animation: "shimmer 2s linear infinite" }} />
-            </div>
-          </div>
-
-          <div
-            className="w-full space-y-2.5"
-            style={{ animation: animPhase >= 3 ? "completionFadeUp 0.5s ease-out forwards" : "none", opacity: 0 }}
-          >
-            <Link
-              to="/perfil"
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--lime)]/20 bg-[var(--lime)]/5 py-3.5 text-sm font-bold text-[var(--lime)] hover:bg-[var(--lime)]/10 active:scale-[0.97] transition-all"
-            >
-              <TrendingUp className="w-4 h-4" />
-              Ver Evolucao
-            </Link>
+        {/* Header */}
+        <div className="relative z-10 shrink-0 px-4 pt-4 pb-2 safe-top">
+          <div className="flex items-center justify-between">
             <button
-              onClick={() => { qc.invalidateQueries({ queryKey: ["assigned"] }); qc.invalidateQueries({ queryKey: ["completedWorkoutIds"] }); navigate({ to: "/app" }); }}
-              className="w-full rounded-xl py-3.5 font-black text-sm text-black active:scale-[0.97] transition-all"
-              style={{
-                background: "linear-gradient(135deg, var(--lime), #c8ff33)",
-                boxShadow: "0 6px 20px -5px rgba(204,255,0,0.3)",
-              }}
+              onClick={closeToHome}
+              className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
+              aria-label="Voltar"
             >
-              Voltar ao Inicio
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--lime)]" />
+              <span className="text-[10px] font-black text-[var(--lime)] uppercase tracking-widest">Treino {ficha.workout.letra}</span>
+            </div>
+            <button
+              onClick={closeToHome}
+              className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
+              aria-label="Fechar"
+            >
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
+
+        {/* Body */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-5 pb-8 text-center min-h-0">
+          <div className="w-full max-w-xs flex flex-col items-center gap-5">
+            {/* Check circle */}
+            <div className="relative w-28 h-28" style={{ animation: "popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards" }}>
+              <div className="absolute inset-0 rounded-full bg-[var(--lime)]/15 animate-ping" style={{ animationDuration: "2.5s" }} />
+              <div className="absolute inset-3 rounded-full bg-[var(--lime)]/10 animate-pulse" />
+              <div
+                className="relative w-28 h-28 rounded-full flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(135deg, var(--lime), #c8ff33)",
+                  boxShadow: "0 0 60px -5px rgba(204,255,0,0.5)",
+                }}
+              >
+                <CheckCircle2 className="w-12 h-12 text-black" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <div className="space-y-1.5" style={{ animation: "completionFadeUp 0.5s ease-out 0.3s forwards", opacity: 0 }}>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/20 mb-2">
+                <Sparkles className="w-3 h-3 text-[var(--lime)]" />
+                <span className="text-[9px] font-black text-[var(--lime)] uppercase tracking-widest">Treino Completo</span>
+              </div>
+              <h1 className="text-3xl font-black text-white">Parabens!</h1>
+              <p className="text-sm text-zinc-400">
+                Voce completou o Treino <span className="font-bold text-[var(--lime)]">{ficha.workout.letra}</span>
+                {ficha.workout.nome ? <span className="text-zinc-500"> — {ficha.workout.nome}</span> : null}
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div
+              className="w-full grid grid-cols-2 gap-2.5"
+              style={{ animation: "completionFadeUp 0.5s ease-out 0.6s forwards", opacity: 0 }}
+            >
+              <div className="rounded-xl border border-white/8 bg-white/[0.03] py-3 px-2 space-y-0.5">
+                <div className="text-lg font-black text-white tabular-nums">{countUp}</div>
+                <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Exercicios</div>
+              </div>
+              <div className="rounded-xl border border-white/8 bg-white/[0.03] py-3 px-2 space-y-0.5">
+                <div className="text-lg font-black text-white tabular-nums">{totalSets}</div>
+                <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Series</div>
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div
+              className="w-full rounded-xl border border-white/8 bg-white/[0.03] p-3.5"
+              style={{ animation: "completionFadeUp 0.5s ease-out 0.8s forwards", opacity: 0 }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Progresso</span>
+                <span className="text-[10px] font-black text-[var(--lime)]">100%</span>
+              </div>
+              <div className="w-full h-1.5 bg-white/8 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: "100%",
+                    background: "linear-gradient(90deg, var(--lime), #c8ff33, var(--lime))",
+                    backgroundSize: "200% 100%",
+                    animation: "shimmer 2s linear infinite",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="w-full space-y-2.5" style={{ animation: "completionFadeUp 0.5s ease-out 1s forwards", opacity: 0 }}>
+              <Link
+                to="/perfil"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--lime)]/20 bg-[var(--lime)]/5 py-3.5 text-sm font-bold text-[var(--lime)] hover:bg-[var(--lime)]/10 active:scale-[0.97] transition-all"
+              >
+                <TrendingUp className="w-4 h-4" />
+                Ver Evolucao
+              </Link>
+              <button
+                onClick={closeToHome}
+                className="w-full rounded-xl py-3.5 font-black text-sm text-black active:scale-[0.97] transition-all"
+                style={{
+                  background: "linear-gradient(135deg, var(--lime), #c8ff33)",
+                  boxShadow: "0 6px 20px -5px rgba(204,255,0,0.3)",
+                }}
+              >
+                Voltar ao Inicio
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes confettiFall {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+          }
+          @keyframes completionFadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+          }
+          @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+          }
+        `}</style>
       </div>
     );
   }
