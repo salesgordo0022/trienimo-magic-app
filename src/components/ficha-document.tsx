@@ -21,7 +21,7 @@ export function FichaDocument({ data }: { data: FichaFull }) {
       <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b-2 border-black">
         <div className="flex items-center gap-3 min-w-0">
           <img
-            src="/icon-512.png"
+            src="/imperial-fitness-logo.png"
             alt="Logo"
             className="w-14 h-14 sm:w-16 sm:h-16 rounded object-cover border border-black/10 shrink-0"
           />

@@ -95,8 +95,8 @@ function AuthPage() {
       >
         <div className="px-8 pt-10 pb-6 text-center">
           <img
-            src="/icon-512.png"
-            alt="Ficha de Treino"
+            src="/imperial-fitness-logo.png"
+            alt="Imperial Fitness"
             className="mx-auto h-24 sm:h-28 w-auto object-contain mb-4 drop-shadow-[0_0_28px_rgba(204,255,0,0.45)]"
           />
           <h1 className="text-2xl font-bold text-white tracking-tight">Ficha de Treino</h1>
