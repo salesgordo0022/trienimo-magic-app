@@ -614,11 +614,11 @@ function FichaTd({
         series: parseInt(series) || ex.series,
       },
     });
-  const inp = "w-full bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-2 py-1.5 sm:px-3 sm:py-2.5 text-sm font-bold text-white text-center outline-none focus:border-[var(--lime)]/50 focus:bg-[var(--lime)]/10 focus:ring-2 focus:ring-[var(--lime)]/20 transition-all";
+  const inp = "w-full bg-transparent text-center text-sm sm:text-base font-black text-white placeholder:text-zinc-600 outline-none focus:text-[var(--lime)] transition-colors";
   return (
     <td className={`px-3 py-2.5 text-center border-b border-white/5 align-middle transition-colors ${status === "saved" ? "bg-[var(--lime)]/10" : ""}`}>
       {ro ? (
-        <span className="text-sm font-bold text-white">{value || "—"}</span>
+        <span className="text-sm sm:text-base font-black text-white">{value || "—"}</span>
       ) : (
         <input
           value={value}
@@ -663,11 +663,11 @@ function FichaSetTd({
     cfg[setIndex] = { ...(cfg[setIndex] ?? {}), [field]: value };
     upd.mutate({ data: { id: ex.id, sets_config: cfg } });
   };
-  const inp = "w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-bold text-white text-center outline-none focus:border-[var(--lime)]/50 focus:bg-[var(--lime)]/10 focus:ring-2 focus:ring-[var(--lime)]/20 transition-all";
+  const inp = "w-full bg-transparent text-center text-sm sm:text-base font-black text-white placeholder:text-zinc-600 outline-none focus:text-[var(--lime)] transition-colors";
   return (
     <td className={`px-2 py-2.5 text-center border-b border-white/5 align-middle transition-colors ${status === "saved" ? "bg-[var(--lime)]/10" : ""}`}>
       {ro ? (
-        <span className="text-sm font-bold text-white">{value || "—"}</span>
+        <span className="text-sm sm:text-base font-black text-white">{value || "—"}</span>
       ) : (
         <input
           value={value}
