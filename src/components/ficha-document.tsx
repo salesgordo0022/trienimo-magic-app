@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { type FichaFull, type GroupWithExercises, type ExerciseRow } from "@/lib/workouts.functions";
 
 function formatDate(d: string | null | undefined): string {
@@ -219,19 +220,25 @@ function GroupTable({ group }: { group: GroupWithExercises }) {
 }
 
 function ConjugadoTable({ exercises, voltas }: { exercises: ExerciseRow[]; voltas: number }) {
+  const cols = 1 + exercises.length * 2 - 1;
   return (
     <div className="overflow-x-auto">
       <table
         className="w-full border-collapse text-[11px] print:text-[10px]"
-        style={{ minWidth: Math.max(320, 60 + exercises.length * 110) }}
+        style={{ minWidth: Math.max(360, 60 + exercises.length * 120) }}
       >
         <thead>
           <tr>
             <Th className="w-14 bg-black text-[var(--yellow)]">{voltas}x</Th>
-            {exercises.map((ex) => (
-              <Th key={ex.id} className="min-w-[110px] bg-[var(--yellow)] text-black">
-                {ex.nome}
-              </Th>
+            {exercises.map((ex, i) => (
+              <Fragment key={ex.id}>
+                {i > 0 && (
+                  <Th className="w-8 px-0 text-[var(--yellow)]">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-black/10 text-sm font-black text-black/60">+</span>
+                  </Th>
+                )}
+                <Th className="min-w-[110px] bg-[var(--yellow)] text-black">{ex.nome}</Th>
+              </Fragment>
             ))}
           </tr>
         </thead>
@@ -239,10 +246,13 @@ function ConjugadoTable({ exercises, voltas }: { exercises: ExerciseRow[]; volta
           {Array.from({ length: voltas }, (_, vi) => (
             <tr key={`r${vi}`} className={vi % 2 === 0 ? "bg-white" : "bg-gray-50"}>
               <td className="border border-black/40 px-1.5 py-1 text-center font-black">{vi + 1}ª</td>
-              {exercises.map((ex) => (
-                <td key={ex.id} className="border border-black/40 px-1.5 py-1 text-center font-bold">
-                  {Math.round(ex.series / voltas)}x
-                </td>
+              {exercises.map((ex, i) => (
+                <Fragment key={ex.id}>
+                  {i > 0 && <td className="w-8 px-0 border border-black/40" />}
+                  <td className="border border-black/40 px-1.5 py-1 text-center font-bold">
+                    {Math.round(ex.series / voltas)}x
+                  </td>
+                </Fragment>
               ))}
             </tr>
           ))}
@@ -254,13 +264,19 @@ function ConjugadoTable({ exercises, voltas }: { exercises: ExerciseRow[]; volta
               <td className="border border-black/40 px-1 py-1 text-center text-[10px] font-black uppercase">
                 {row.label}
               </td>
-              {exercises.map((ex) => (
-                <td key={ex.id} className="border border-black/40 px-1.5 py-1 text-center font-bold">
-                  {ex.sets_config?.[0]?.[row.key] ?? "—"}
-                </td>
+              {exercises.map((ex, i) => (
+                <Fragment key={ex.id}>
+                  {i > 0 && <td className="w-8 px-0 border border-black/40" />}
+                  <td className="border border-black/40 px-1.5 py-1 text-center font-bold">
+                    {ex.sets_config?.[0]?.[row.key] ?? "—"}
+                  </td>
+                </Fragment>
               ))}
             </tr>
           ))}
+          <tr>
+            <td className="border border-black/40 h-5" colSpan={cols} />
+          </tr>
         </tbody>
       </table>
     </div>
