@@ -23,7 +23,7 @@ export function FichaDocument({ data }: { data: FichaFull }) {
           <img
             src="/imperial-fitness-logo.png"
             alt="Logo"
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded object-cover border border-black/10 shrink-0"
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-black p-1.5 object-contain shrink-0"
           />
           <div className="min-w-0">
             <div className="font-display font-black text-xl sm:text-2xl leading-tight truncate">
