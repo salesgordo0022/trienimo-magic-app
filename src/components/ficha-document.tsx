@@ -114,7 +114,7 @@ export function FichaDocument({ data }: { data: FichaFull }) {
         <ConjugadoTable exercises={allExercises} voltas={voltas} />
       ) : (
         <div className="space-y-3">
-          {groups.map((g) => (
+          {splitByMuscle(groups).map((g) => (
             <GroupTable key={g.id} group={g} />
           ))}
         </div>
