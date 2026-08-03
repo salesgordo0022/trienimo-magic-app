@@ -36,21 +36,23 @@ function muscleOf(nome: string, fallback: string): string {
   return fallback;
 }
 
-/** Divide os exercícios em tabelas por grupo muscular, mantendo a ordem original. */
+/** Uma tabela por grupo muscular — todos aparecem, mesmo sem exercícios. */
 function splitByMuscle(groups: GroupWithExercises[]): GroupWithExercises[] {
-  const out: GroupWithExercises[] = [];
+  const buckets = new Map<string, ExerciseRow[]>();
+  for (const [label] of MUSCLE_RULES) buckets.set(label, []);
   for (const g of groups) {
-    let current: GroupWithExercises | null = null;
     for (const ex of g.exercises) {
       const label = muscleOf(ex.nome, g.nome);
-      if (!current || current.nome !== label) {
-        current = { id: `${g.id}-${label}-${out.length}`, nome: label, ordem: out.length, exercises: [] };
-        out.push(current);
-      }
-      current.exercises.push(ex);
+      if (!buckets.has(label)) buckets.set(label, []);
+      buckets.get(label)!.push(ex);
     }
   }
-  return out;
+  return Array.from(buckets.entries()).map(([nome, exercises], i) => ({
+    id: `grp-${nome}`,
+    nome,
+    ordem: i,
+    exercises,
+  }));
 }
 
 export function FichaDocument({ data }: { data: FichaFull }) {
