@@ -7,6 +7,54 @@ function formatDate(d: string | null | undefined): string {
   return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
+function formatDesc(s: number | null | undefined): string {
+  if (!s) return "";
+  if (s >= 60 && s % 60 === 0) return `${s / 60}min`;
+  return `${s}s`;
+}
+
+const PAIRS = 4;
+
+/** Descobre o grupo muscular pelo nome do exercício (igual ao padrão da ficha impressa). */
+const MUSCLE_RULES: Array<[string, RegExp]> = [
+  ["PEITO", /supino|crucifixo|peck|cross ?over|crossover|paralelas|peitoral|flex[aã]o de bra[çc]o/i],
+  ["COSTAS", /puxada|remada|pulldown|barra fixa|pullover|serrote|dorsal|costas/i],
+  ["OMBROS", /desenvolvimento|eleva[çc][ãa]o lateral|eleva[çc][ãa]o frontal|encolhimento|crucifixo inverso|ombro|deltoid/i],
+  ["BÍCEPS", /rosca|b[íi]ceps/i],
+  ["TRÍCEPS", /tr[íi]ceps|testa|franc[êe]s|corda|mergulho|coice/i],
+  ["ANTEBRAÇO", /antebra[çc]o|punho/i],
+  ["PERNAS", /agachamento|leg press|extensora|afundo|passada|avan[çc]o|hack|b[úu]lgaro|quadr[íi]ceps|ades?utora|adutora|abdutora/i],
+  ["POSTERIOR", /flexora|stiff|levantamento terra|terra|posterior|glute ham/i],
+  ["GLÚTEOS", /gl[úu]teo|eleva[çc][ãa]o p[ée]lvica|coice de gl[úu]teo/i],
+  ["PANTURRILHA", /panturrilha|gêmeos|g[êe]meos|s[óo]leo/i],
+  ["ABDÔMEN", /abdominal|abdomen|abd[ôo]men|prancha|obl[íi]quo|core/i],
+  ["CARDIO", /esteira|bicicleta|el[íi]ptico|corrida|remo erg|cardio|pular corda/i],
+];
+
+function muscleOf(nome: string, fallback: string): string {
+  for (const [label, re] of MUSCLE_RULES) if (re.test(nome)) return label;
+  return fallback;
+}
+
+/** Uma tabela por grupo muscular — todos aparecem, mesmo sem exercícios. */
+function splitByMuscle(groups: GroupWithExercises[]): GroupWithExercises[] {
+  const buckets = new Map<string, ExerciseRow[]>();
+  for (const [label] of MUSCLE_RULES) buckets.set(label, []);
+  for (const g of groups) {
+    for (const ex of g.exercises) {
+      const label = muscleOf(ex.nome, g.nome);
+      if (!buckets.has(label)) buckets.set(label, []);
+      buckets.get(label)!.push(ex);
+    }
+  }
+  return Array.from(buckets.entries()).map(([nome, exercises], i) => ({
+    id: `grp-${nome}`,
+    nome,
+    ordem: i,
+    exercises,
+  }));
+}
+
 export function FichaDocument({ data }: { data: FichaFull }) {
   const w = data.workout;
   const conjugado = w.tipo === "conjugado" || w.conjugado === true;
@@ -16,174 +64,205 @@ export function FichaDocument({ data }: { data: FichaFull }) {
   const hasContent = allExercises.length > 0;
 
   return (
-    <div className="bg-white text-black">
-      {/* Cabeçalho: logo + nome + letra */}
-      <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b-2 border-black">
-        <div className="flex items-center gap-3 min-w-0">
+    <div className="bg-white text-black p-3 sm:p-5 print:p-0 space-y-3">
+      {/* Cabeçalho */}
+      <div className="flex items-stretch gap-3">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           <img
             src="/imperial-fitness-logo.png"
             alt="Logo"
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-black p-1.5 object-contain shrink-0"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded bg-black p-1.5 object-contain shrink-0"
           />
-          <div className="min-w-0">
-            <div className="font-display font-black text-xl sm:text-2xl leading-tight truncate">
-              {data.profile.logo_texto || "SuaLogo"}
-            </div>
-            <div className="font-bold text-xs sm:text-sm truncate">
-              {data.profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}
-            </div>
-            <div className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest">
-              Ficha de Treino
-            </div>
+          <div className="font-display font-black text-2xl sm:text-3xl leading-none truncate">
+            <span>{data.profile.logo_texto || "SuaLogo"}</span>
           </div>
         </div>
-        <div className="bg-black text-[var(--yellow)] px-4 sm:px-5 py-2 sm:py-3 text-center min-w-[80px] shrink-0">
-          <div className="text-[9px] sm:text-[10px] font-bold text-white uppercase">Treino</div>
-          <div className="font-display font-black text-4xl sm:text-5xl leading-none">{w.letra}</div>
+        <div className="flex-1 border-2 border-black">
+          <div className="text-center font-black uppercase text-sm sm:text-base px-2 py-1.5 border-b border-black/20 truncate">
+            {data.profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}
+          </div>
+          <div className="text-center font-bold uppercase text-[11px] sm:text-xs px-2 py-1 tracking-wide">
+            Ficha de Treino
+          </div>
+        </div>
+      </div>
+
+      {/* Info + letra do treino */}
+      <div className="flex items-start gap-3">
+        <div className="flex-1 border border-black/30">
+          <InfoRow label="Aluno" value={w.assigned_nome || data.profile.nome || "—"} />
+          <InfoRow label="Data do Início" value={formatDate(w.data_inicio)} />
+          <InfoRow label="Objetivo" value={w.objetivo ?? data.profile.objetivo ?? "—"} />
+          <InfoRow label="Dias da Semana" value={w.dias_semana ?? data.profile.dias_semana ?? "—"} />
+          <InfoRow label="Observação" value={w.observacao ?? data.profile.observacao ?? "—"} last />
+        </div>
+        <div className="w-32 sm:w-40 border-2 border-black bg-black text-center shrink-0">
+          <div className="bg-black text-white font-black uppercase text-xs py-1.5 tracking-widest">Treino:</div>
+          <div className="bg-black font-display font-black text-5xl sm:text-6xl leading-none py-2 text-[var(--yellow)]">
+            {w.letra}
+          </div>
           {conjugado && (
-            <div className="text-[8px] font-black text-yellow-300 uppercase tracking-widest mt-0.5">Conjugado</div>
+            <div className="bg-[var(--yellow)] text-black text-[9px] font-black uppercase tracking-widest py-0.5">
+              Conjugado
+            </div>
           )}
         </div>
       </div>
 
-      {/* Informações: data, dias, objetivo, observação */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-black/10 text-sm">
-        <InfoField label="Data" value={formatDate(w.data_inicio)} />
-        <InfoField label="Dias" value={w.dias_semana ?? data.profile.dias_semana ?? ""} />
-        <InfoField label="Objetivo" value={w.objetivo ?? data.profile.objetivo ?? ""} />
-        <InfoField label="Observação" value={w.observacao ?? data.profile.observacao ?? ""} />
-      </div>
-
       {/* Exercícios */}
-      {!hasContent ? (
-        <div className="p-10 text-center text-sm text-gray-500">Nenhum exercício cadastrado.</div>
-      ) : conjugado ? (
-        <div className="p-4 sm:p-5">
-          <ConjugadoTable exercises={allExercises} voltas={voltas} />
-        </div>
+      {conjugado && hasContent ? (
+        <ConjugadoTable exercises={allExercises} voltas={voltas} />
       ) : (
-        <div className="p-4 sm:p-5 space-y-6">
-          {groups.map((g) => (
+        <div className="space-y-3">
+          {splitByMuscle(groups).map((g) => (
             <GroupTable key={g.id} group={g} />
           ))}
         </div>
       )}
+
+      {/* Regeneração */}
+      <SectionBox title="Regeneração:" lines={3} />
+
+      {/* Observações */}
+      <div>
+        <div className="bg-black text-[var(--yellow)] text-center font-black uppercase text-xs py-1">
+          Observações
+        </div>
+        <div className="border border-black/30 border-t-0 p-3 text-center text-[11px] font-bold text-[#c0392b] leading-snug">
+          Ajuste cargas e repetições conforme sua evolução. Em caso de dor ou desconforto, interrompa o exercício e
+          fale com seu personal trainer.
+        </div>
+      </div>
     </div>
   );
 }
 
-function InfoField({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
   return (
-    <div className="px-4 py-2.5">
-      <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">{label}</div>
-      <div className="font-bold text-sm truncate">{value || "—"}</div>
+    <div className={`flex text-[11px] sm:text-xs ${last ? "" : "border-b border-black/20"}`}>
+      <div className="w-32 sm:w-40 shrink-0 bg-gray-200 px-2 py-1 text-right font-black uppercase tracking-wide">
+        {label}:
+      </div>
+      <div className="flex-1 px-2 py-1 font-bold truncate">{value || "—"}</div>
     </div>
+  );
+}
+
+function SectionBox({ title, lines }: { title: string; lines: number }) {
+  return (
+    <div>
+      <div className="bg-gray-300 text-black text-center font-black uppercase text-xs py-1 border border-black/30">
+        {title}
+      </div>
+      {Array.from({ length: lines }, (_, i) => (
+        <div key={i} className="h-5 border border-t-0 border-black/30" />
+      ))}
+    </div>
+  );
+}
+
+function Th({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
+  return (
+    <th
+      className={`border border-black/40 px-1.5 py-1 text-[10px] font-black uppercase tracking-wide bg-gray-200 ${className}`}
+    >
+      {children}
+    </th>
   );
 }
 
 function GroupTable({ group }: { group: GroupWithExercises }) {
-  if (group.exercises.length === 0) return null;
   return (
-    <div>
-      <div className="bg-black text-[var(--yellow)] px-3 py-1.5 font-display font-black uppercase text-sm mb-0 print:mb-1">
-        {group.nome}
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm print:text-[11px] min-w-[440px] print:min-w-0">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="sticky left-0 z-10 bg-gray-100 border border-black/20 px-2 py-1.5 text-left text-[10px] font-black uppercase tracking-wider min-w-[150px]">
-                Exercício
-              </th>
-              <th className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-16">
-                Séries
-              </th>
-              <th className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-16">
-                Reps
-              </th>
-              <th className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-24">
-                Peso (kg)
-              </th>
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-[11px] print:text-[10px] min-w-[640px] print:min-w-0">
+        <thead>
+          <tr>
+            <Th className="w-10 bg-black text-[var(--yellow)]">Nº</Th>
+            <Th className="min-w-[150px] text-left bg-[var(--yellow)] text-black">{group.nome}</Th>
+            {Array.from({ length: PAIRS }, (_, i) => [
+              <Th key={`r${i}`} className="w-12">Repets</Th>,
+              <Th key={`k${i}`} className="w-12">Kg</Th>,
+            ])}
+            <Th className="w-14">Desc</Th>
+            <Th className="w-20">Obs</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {group.exercises.map((ex, i) => (
+            <tr key={ex.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+              <td className="border border-black/40 px-1.5 py-1 text-center font-black">{ex.series}x</td>
+              <td className="border border-black/40 px-1.5 py-1 font-bold capitalize break-words">{ex.nome}</td>
+              {Array.from({ length: PAIRS }, (_, s) => {
+                const set = ex.sets_config?.[s];
+                return [
+                  <td key={`r${s}`} className="border border-black/40 px-1 py-1 text-center">
+                    {set?.reps ?? ""}
+                  </td>,
+                  <td key={`k${s}`} className="border border-black/40 px-1 py-1 text-center">
+                    {set?.kg ?? ""}
+                  </td>,
+                ];
+              })}
+              <td className="border border-black/40 px-1 py-1 text-center font-bold">{formatDesc(ex.desc_segundos)}</td>
+              <td className="border border-black/40 px-1 py-1 text-center">{ex.obs ?? ""}</td>
             </tr>
-          </thead>
-          <tbody>
-            {group.exercises.map((ex, i) => (
-              <tr key={ex.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                <td
-                  className={`sticky left-0 z-10 border border-black/20 px-2 py-1.5 font-bold capitalize break-words ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
-                >
-                  {ex.nome}
-                </td>
-                <td className="border border-black/20 px-2 py-1.5 text-center font-bold">{ex.series}</td>
-                <td className="border border-black/20 px-2 py-1.5 text-center font-bold">
-                  {ex.sets_config?.[0]?.reps ?? "—"}
-                </td>
-                <td className="border border-black/20 px-2 py-1.5 text-center font-bold">
-                  {ex.sets_config?.[0]?.kg ?? "—"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+          {Array.from({ length: Math.max(1, 2 - group.exercises.length) }, (_, i) => (
+            <tr key={`empty${i}`}>
+              <td className="border border-black/40 h-5" colSpan={3 + PAIRS * 2 + 1} />
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
 function ConjugadoTable({ exercises, voltas }: { exercises: ExerciseRow[]; voltas: number }) {
   return (
-    <div>
-      <div className="bg-black text-[var(--yellow)] px-3 py-1.5 font-display font-black uppercase text-sm mb-0 print:mb-1">
-        Treino Conjugado
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm print:text-[11px]" style={{ minWidth: Math.max(320, 56 + exercises.length * 110) }}>
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="sticky left-0 z-10 bg-gray-100 border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-14 min-w-14">
-                {voltas}x
-              </th>
+    <div className="overflow-x-auto">
+      <table
+        className="w-full border-collapse text-[11px] print:text-[10px]"
+        style={{ minWidth: Math.max(320, 60 + exercises.length * 110) }}
+      >
+        <thead>
+          <tr>
+            <Th className="w-14 bg-black text-[var(--yellow)]">{voltas}x</Th>
+            {exercises.map((ex) => (
+              <Th key={ex.id} className="min-w-[110px] bg-[var(--yellow)] text-black">
+                {ex.nome}
+              </Th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: voltas }, (_, vi) => (
+            <tr key={`r${vi}`} className={vi % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+              <td className="border border-black/40 px-1.5 py-1 text-center font-black">{vi + 1}ª</td>
               {exercises.map((ex) => (
-                <th
-                  key={ex.id}
-                  className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider min-w-[110px]"
-                >
-                  {ex.nome}
-                </th>
+                <td key={ex.id} className="border border-black/40 px-1.5 py-1 text-center font-bold">
+                  {Math.round(ex.series / voltas)}x
+                </td>
               ))}
             </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: voltas }, (_, vi) => (
-              <tr key={`r${vi}`} className={vi % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                <td className={`sticky left-0 z-10 border border-black/20 px-2 py-1.5 text-center font-bold ${vi % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
-                  {vi + 1}ª
+          ))}
+          {[
+            { label: "Peso (kg)", key: "kg" as const },
+            { label: "Repetições", key: "reps" as const },
+          ].map((row) => (
+            <tr key={row.key} className="bg-gray-50">
+              <td className="border border-black/40 px-1 py-1 text-center text-[10px] font-black uppercase">
+                {row.label}
+              </td>
+              {exercises.map((ex) => (
+                <td key={ex.id} className="border border-black/40 px-1.5 py-1 text-center font-bold">
+                  {ex.sets_config?.[0]?.[row.key] ?? "—"}
                 </td>
-                {exercises.map((ex) => (
-                  <td key={ex.id} className="border border-black/20 px-2 py-1.5 text-center font-bold">
-                    {Math.round(ex.series / voltas)}x
-                  </td>
-                ))}
-              </tr>
-            ))}
-            {[
-              { label: "Peso (kg)", key: "kg" },
-              { label: "Repetições", key: "reps" },
-            ].map((row) => (
-              <tr key={row.key} className={row.key === "kg" ? "bg-white" : "bg-gray-50"}>
-                <td className={`sticky left-0 z-10 border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider ${row.key === "kg" ? "bg-white" : "bg-gray-50"}`}>
-                  {row.label}
-                </td>
-                {exercises.map((ex) => (
-                  <td key={ex.id} className="border border-black/20 px-2 py-1.5 text-center font-bold">
-                    {row.key === "kg" ? (ex.sets_config?.[0]?.kg ?? "—") : (ex.sets_config?.[0]?.reps ?? "—")}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
