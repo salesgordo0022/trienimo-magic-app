@@ -110,9 +110,7 @@ export function FichaDocument({ data }: { data: FichaFull }) {
       </div>
 
       {/* Exercícios */}
-      {!hasContent ? (
-        <div className="p-10 text-center text-sm text-gray-500">Nenhum exercício cadastrado.</div>
-      ) : conjugado ? (
+      {conjugado && hasContent ? (
         <ConjugadoTable exercises={allExercises} voltas={voltas} />
       ) : (
         <div className="space-y-3">
