@@ -447,30 +447,54 @@ function FichaTabela({
     return (
       <div className={`${glassCard} overflow-hidden`}>
         <div className="overflow-x-auto bg-[#0b0b0d]">
-          <table className="w-full text-sm" style={{ minWidth: Math.max(360, 70 + allExercises.length * 130) }}>
+          <table className="w-full text-sm" style={{ minWidth: Math.max(360, allExercises.length * 130) }}>
             <thead>
               <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
                 <th className="sticky left-0 z-10 px-2 sm:px-3 py-1.5 sm:py-2 text-left w-[52px] sm:w-[70px]" style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
                   <span className="text-base sm:text-lg font-black text-black/80">{voltas}x</span>
                 </th>
-                {allExercises.map((ex) => (
-                  <th key={ex.id} className="px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[100px] sm:min-w-[120px]">
-                    <div className="text-[10px] sm:text-[11px] font-black text-black/60 uppercase tracking-wider">{ex.series}x</div>
-                    <div className="text-[11px] sm:text-sm font-black text-black leading-tight break-words">{ex.nome}</div>
-                  </th>
+                {allExercises.map((ex, i) => (
+                  <React.Fragment key={ex.id}>
+                    {i > 0 && (
+                      <th className="w-8 sm:w-10 px-0 py-2 sm:py-2.5 text-center">
+                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-black/10 text-base sm:text-lg font-black text-black/60">+</span>
+                      </th>
+                    )}
+                    <th className="px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[100px] sm:min-w-[120px]">
+                      <div className="text-[11px] sm:text-sm font-black text-black leading-tight break-words">{ex.nome}</div>
+                    </th>
+                  </React.Fragment>
                 ))}
               </tr>
             </thead>
             <tbody>
+              {Array.from({ length: voltas }, (_, vi) => (
+                <tr key={`r${vi}`} className={vi % 2 === 0 ? "bg-white/[0.015]" : ""}>
+                  <td className="sticky left-0 z-10 bg-[#0b0b0d] px-2 sm:px-3 py-2 sm:py-3 text-[11px] font-bold uppercase tracking-wide text-white border-b border-white/5">
+                    {vi + 1}ª
+                  </td>
+                  {allExercises.map((ex, i) => (
+                    <React.Fragment key={ex.id}>
+                      {i > 0 && <td className="w-8 sm:w-10 px-0 py-2 sm:py-2.5 text-center border-b border-white/5" />}
+                      <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-sm font-black text-white border-b border-white/5">
+                        {Math.round(ex.series / voltas)}x
+                      </td>
+                    </React.Fragment>
+                  ))}
+                </tr>
+              ))}
               {["peso", "reps"].map((key, ri) => (
                 <tr key={key} className={ri % 2 === 0 ? "bg-white/[0.015]" : ""}>
                   <td className="sticky left-0 z-10 bg-[#0b0b0d] px-2 sm:px-3 py-2 sm:py-3 text-[11px] font-bold uppercase tracking-wide text-zinc-400 border-b border-white/5">
                     {key === "peso" ? "Peso (kg)" : "Repetições"}
                   </td>
-                  {allExercises.map((ex) => (
-                    <td key={ex.id} className="px-2 sm:px-3 py-2 sm:py-2.5 text-center border-b border-white/5">
-                      <FichaTd ex={ex} field={key} isTeacher={isTeacher} onSaved={onSaved} />
-                    </td>
+                  {allExercises.map((ex, i) => (
+                    <React.Fragment key={ex.id}>
+                      {i > 0 && <td className="w-8 sm:w-10 px-0 py-2 sm:py-2.5 text-center border-b border-white/5" />}
+                      <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center border-b border-white/5">
+                        <FichaTd ex={ex} field={key} isTeacher={isTeacher} onSaved={onSaved} />
+                      </td>
+                    </React.Fragment>
                   ))}
                 </tr>
               ))}
