@@ -58,7 +58,7 @@ export const listWorkouts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, objetivo, dias_semana, ordem, user_id, assigned_to, tipo")
+      .select("*")
       .eq("user_id", context.userId)
       .order("ordem", { ascending: true })
       .order("letra", { ascending: true });
@@ -92,7 +92,7 @@ export const listAssignedToMe = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, objetivo, dias_semana, ordem, user_id, assigned_to, tipo")
+      .select("*")
       .eq("assigned_to", context.userId)
       .order("ordem", { ascending: true });
     if (error) throw new Error(error.message);
@@ -117,7 +117,7 @@ export const listWorkoutsForStudent = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const { data: rows, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, objetivo, dias_semana, ordem, user_id, assigned_to, tipo")
+      .select("*")
       .eq("user_id", context.userId)
       .eq("assigned_to", data.student_id)
       .order("ordem", { ascending: true });
