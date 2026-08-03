@@ -15,6 +15,7 @@ import {
   type GroupWithExercises,
 } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents } from "@/lib/roles.functions";
+import { FichaDocument } from "@/components/ficha-document";
 import {
   History,
   ArrowLeft,
@@ -23,6 +24,7 @@ import {
   Check,
   Loader2,
   Printer,
+  X,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -63,6 +65,7 @@ function FichaEditor() {
   const qc = useQueryClient();
   const isTeacher = role?.role === "admin" || role?.role === "professor";
   const [tab, setTab] = useState<FichaTab>(initialTab ?? "ficha");
+  const [showPdf, setShowPdf] = useState(false);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["ficha", id] });
 
@@ -103,15 +106,14 @@ function FichaEditor() {
             </div>
           </div>
           <div className="ml-auto flex gap-1 shrink-0">
-            <Link
-              to="/ficha/$id/imprimir"
-              params={{ id }}
+            <button
+              onClick={() => setShowPdf(true)}
               aria-label="Salvar ficha em PDF"
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white"
             >
               <Printer className="w-3 h-3" />
               <span className="hidden sm:inline">PDF</span>
-            </Link>
+            </button>
             <Link
               to="/ficha/$id/historico"
               params={{ id }}
@@ -211,6 +213,49 @@ function FichaEditor() {
           </>
         )}
       </main>
+
+      {/* Visualizacao em PDF dentro do sistema */}
+      {showPdf && (
+        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-0 sm:p-6 print:static print:bg-white print:p-0 print:m-0 print:items-start print:block">
+          <div className="w-full max-w-4xl bg-white text-black shadow-2xl max-h-full overflow-y-auto print:max-h-none print:overflow-visible print:shadow-none print:max-w-none">
+            {/* Toolbar */}
+            <div className="print:hidden sticky top-0 z-10 bg-black text-white flex items-center justify-between gap-2 px-3 sm:px-4 py-2">
+              <div className="font-display font-black uppercase text-sm min-w-0 truncate">
+                Ficha {data.workout.letra} — PDF
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => window.print()}
+                  className="inline-flex items-center gap-1.5 bg-[var(--yellow)] text-black px-3 py-1.5 text-xs font-black uppercase rounded hover:brightness-110"
+                >
+                  <Printer className="w-3 h-3" />
+                  Imprimir / Salvar PDF
+                </button>
+                <button
+                  onClick={() => setShowPdf(false)}
+                  className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg"
+                  aria-label="Fechar"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div id="pdf-document">
+              <FichaDocument data={data} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @media print {
+          @page { size: A4 portrait; margin: 12mm; }
+          body { background: white !important; }
+          body * { visibility: hidden; }
+          #pdf-document, #pdf-document * { visibility: visible; }
+          #pdf-document { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+      `}</style>
     </div>
   );
 }
