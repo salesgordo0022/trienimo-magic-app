@@ -623,7 +623,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
       assigned_to: data.assigned_to,
       letra: data.letra.toUpperCase(),
       nome: data.nome ?? null,
-      tipo: data.tipo ?? "ficha",
+      tipo: data.tipo ?? (data.conjugado ? "conjugado" : "ficha"),
       conjugado: data.conjugado ?? false,
       voltas: data.voltas ?? 1,
       objetivo: data.objetivo ?? null,
