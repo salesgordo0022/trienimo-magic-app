@@ -16,6 +16,7 @@ import {
 } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents } from "@/lib/roles.functions";
 import { FichaDocument } from "@/components/ficha-document";
+import { splitByMuscle, formatDesc, PAIRS } from "@/lib/muscle-groups";
 import {
   History,
   ArrowLeft,
@@ -195,19 +196,19 @@ function FichaEditor() {
                 />
                 <HeaderField
                   label="Dias da Semana"
-                  value={data.workout.dias_semana ?? ""}
+                  value={data.workout.dias_semana ?? data.profile.dias_semana ?? ""}
                   onSave={(v) => updW.mutate({ data: { id, dias_semana: v } })}
                   readOnly={!isTeacher}
                 />
                 <HeaderField
                   label="Objetivo"
-                  value={data.workout.objetivo ?? ""}
+                  value={data.workout.objetivo ?? data.profile.objetivo ?? ""}
                   onSave={(v) => updW.mutate({ data: { id, objetivo: v } })}
                   readOnly={!isTeacher}
                 />
                 <HeaderField
                   label="Observacao"
-                  value={data.workout.observacao ?? ""}
+                  value={data.workout.observacao ?? data.profile.observacao ?? ""}
                   onSave={(v) => updW.mutate({ data: { id, observacao: v } })}
                   readOnly={!isTeacher}
                 />
@@ -433,16 +434,16 @@ function FichaTabela({
   isTeacher: boolean;
   onSaved: () => void;
 }) {
-  if (groups.length === 0 || groups.every((g) => g.exercises.length === 0)) {
-    return (
-      <div className="rounded-2xl border border-white/10 bg-[#111112] p-10 text-center text-sm text-zinc-500">
-        Nenhum exercicio cadastrado.
-      </div>
-    );
-  }
   const allExercises = groups.flatMap((g) => g.exercises);
 
   if (conjugado) {
+    if (allExercises.length === 0) {
+      return (
+        <div className="rounded-2xl border border-white/10 bg-[#111112] p-10 text-center text-sm text-zinc-500">
+          Nenhum exercicio cadastrado.
+        </div>
+      );
+    }
     return (
       <div className={`${glassCard} overflow-hidden`}>
         <div className="overflow-x-auto bg-[#0b0b0d]">
@@ -504,44 +505,71 @@ function FichaTabela({
     );
   }
 
-  // Normal: primeiro modelo - uma tabela vertical por grupo (exercicios como linhas)
+  // Normal: mesmas tabelas do PDF, um bloco por grupo muscular (todos aparecem, mesmo vazios)
+  const muscleGroups = splitByMuscle(groups);
   return (
     <div className="space-y-6">
-      {groups.map((group) => {
+      {muscleGroups.map((group) => {
         const exs = group.exercises;
-        if (exs.length === 0) return null;
         return (
           <div key={group.id} className={`${glassCard} overflow-hidden`}>
             <div className="px-5 py-2.5 bg-white/[0.04] border-b border-white/5">
               <span className="text-[10px] font-black text-[var(--lime)] uppercase tracking-widest">{group.nome}</span>
             </div>
             <div className="overflow-x-auto bg-[#0b0b0d]">
-              <table className="w-full text-sm min-w-[520px] sm:min-w-0">
+              <table className="w-full text-sm min-w-[720px]">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/[0.03]">
-                    <th className="sticky left-0 z-10 bg-white/[0.03] px-3 sm:px-4 py-2.5 sm:py-3 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider min-w-[160px]">
-                      Exercicio
+                    <th className="sticky left-0 z-10 bg-white/[0.03] px-3 py-2.5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider w-12">
+                      Nº
                     </th>
-                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16 sm:w-20">
-                      Series
+                    <th className="px-3 py-2.5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider min-w-[150px]">
+                      {group.nome}
                     </th>
-                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16 sm:w-20">
-                      Reps
+                    {Array.from({ length: PAIRS }, (_, i) => (
+                      <React.Fragment key={i}>
+                        <th className="px-2 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16">
+                          Repets
+                        </th>
+                        <th className="px-2 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16">
+                          Kg
+                        </th>
+                      </React.Fragment>
+                    ))}
+                    <th className="px-2 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16">
+                      Desc
                     </th>
-                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-20 sm:w-24">
-                      Peso (kg)
+                    <th className="px-2 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-20">
+                      Obs
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {exs.map((ex, i) => (
                     <tr key={ex.id} className={i % 2 === 0 ? "bg-white/[0.015]" : ""}>
-                      <td className="sticky left-0 z-10 bg-[#0b0b0d] px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-bold text-white capitalize border-b border-white/5 break-words">
+                      <td className="sticky left-0 z-10 bg-[#0b0b0d] px-3 py-2.5 text-sm font-black text-white capitalize border-b border-white/5 break-words">
+                        {ex.series}x
+                      </td>
+                      <td className="px-3 py-2.5 text-sm font-bold text-white capitalize border-b border-white/5 break-words">
                         {ex.nome}
                       </td>
-                      <FichaTd ex={ex} field="series" isTeacher={isTeacher} onSaved={onSaved} />
-                      <FichaTd ex={ex} field="reps" isTeacher={isTeacher} onSaved={onSaved} />
-                      <FichaTd ex={ex} field="peso" isTeacher={isTeacher} onSaved={onSaved} />
+                      {Array.from({ length: PAIRS }, (_, s) => (
+                        <React.Fragment key={s}>
+                          <FichaSetTd ex={ex} setIndex={s} field="reps" isTeacher={isTeacher} onSaved={onSaved} />
+                          <FichaSetTd ex={ex} setIndex={s} field="kg" isTeacher={isTeacher} onSaved={onSaved} />
+                        </React.Fragment>
+                      ))}
+                      <td className="px-2 py-2.5 text-center text-sm font-bold text-zinc-300 border-b border-white/5">
+                        {formatDesc(ex.desc_segundos)}
+                      </td>
+                      <td className="px-2 py-2.5 text-center text-xs text-zinc-400 border-b border-white/5 break-words">
+                        {ex.obs ?? ""}
+                      </td>
+                    </tr>
+                  ))}
+                  {Array.from({ length: Math.max(1, 2 - exs.length) }, (_, i) => (
+                    <tr key={`empty${i}`}>
+                      <td className="border-b border-white/5 h-8" colSpan={2 + PAIRS * 2 + 2} />
                     </tr>
                   ))}
                 </tbody>
@@ -600,6 +628,55 @@ function FichaTd({
           type="number"
           min="0"
           step={field === "peso" ? "0.5" : "1"}
+          className={inp}
+        />
+      )}
+    </td>
+  );
+}
+
+function FichaSetTd({
+  ex,
+  setIndex,
+  field,
+  isTeacher,
+  onSaved,
+}: {
+  ex: ExerciseRow;
+  setIndex: number;
+  field: "reps" | "kg";
+  isTeacher: boolean;
+  onSaved: () => void;
+}) {
+  const [status, setStatus] = useSaveStatus();
+  const upd = useMutation({
+    mutationFn: useServerFn(updateExercise),
+    onMutate: () => setStatus("saving"),
+    onSuccess: () => { onSaved(); setStatus("saved"); },
+    onError: (e) => { setStatus("idle"); toast.error(e.message); },
+  });
+  const [value, setValue] = useState(ex.sets_config?.[setIndex]?.[field] ?? "");
+  const ro = !isTeacher;
+  const save = () => {
+    const cfg = [...(ex.sets_config ?? [])];
+    while (cfg.length <= setIndex) cfg.push({});
+    cfg[setIndex] = { ...(cfg[setIndex] ?? {}), [field]: value };
+    upd.mutate({ data: { id: ex.id, sets_config: cfg } });
+  };
+  const inp = "w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-bold text-white text-center outline-none focus:border-[var(--lime)]/50 focus:bg-[var(--lime)]/10 focus:ring-2 focus:ring-[var(--lime)]/20 transition-all";
+  return (
+    <td className={`px-2 py-2.5 text-center border-b border-white/5 align-middle transition-colors ${status === "saved" ? "bg-[var(--lime)]/10" : ""}`}>
+      {ro ? (
+        <span className="text-sm font-bold text-white">{value || "—"}</span>
+      ) : (
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={save}
+          placeholder="0"
+          type="number"
+          min="0"
+          step={field === "kg" ? "0.5" : "1"}
           className={inp}
         />
       )}
