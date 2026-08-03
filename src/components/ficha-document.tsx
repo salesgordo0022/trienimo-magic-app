@@ -207,9 +207,11 @@ function GroupTable({ group }: { group: GroupWithExercises }) {
               <td className="border border-black/40 px-1 py-1 text-center">{ex.obs ?? ""}</td>
             </tr>
           ))}
-          <tr>
-            <td className="border border-black/40 h-5" colSpan={3 + PAIRS * 2 + 1} />
-          </tr>
+          {Array.from({ length: Math.max(1, 2 - group.exercises.length) }, (_, i) => (
+            <tr key={`empty${i}`}>
+              <td className="border border-black/40 h-5" colSpan={3 + PAIRS * 2 + 1} />
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
