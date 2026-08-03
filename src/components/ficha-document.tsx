@@ -87,38 +87,44 @@ function GroupTable({ group }: { group: GroupWithExercises }) {
       <div className="bg-black text-[var(--yellow)] px-3 py-1.5 font-display font-black uppercase text-sm mb-0 print:mb-1">
         {group.nome}
       </div>
-      <table className="w-full border-collapse text-sm print:text-[11px]">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-black/20 px-2 py-1.5 text-left text-[10px] font-black uppercase tracking-wider">
-              Exercício
-            </th>
-            <th className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-16">
-              Séries
-            </th>
-            <th className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-16">
-              Reps
-            </th>
-            <th className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-24">
-              Peso (kg)
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {group.exercises.map((ex, i) => (
-            <tr key={ex.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-              <td className="border border-black/20 px-2 py-1.5 font-bold capitalize">{ex.nome}</td>
-              <td className="border border-black/20 px-2 py-1.5 text-center font-bold">{ex.series}</td>
-              <td className="border border-black/20 px-2 py-1.5 text-center font-bold">
-                {ex.sets_config?.[0]?.reps ?? "—"}
-              </td>
-              <td className="border border-black/20 px-2 py-1.5 text-center font-bold">
-                {ex.sets_config?.[0]?.kg ?? "—"}
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm print:text-[11px] min-w-[440px] print:min-w-0">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="sticky left-0 z-10 bg-gray-100 border border-black/20 px-2 py-1.5 text-left text-[10px] font-black uppercase tracking-wider min-w-[150px]">
+                Exercício
+              </th>
+              <th className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-16">
+                Séries
+              </th>
+              <th className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-16">
+                Reps
+              </th>
+              <th className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-24">
+                Peso (kg)
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {group.exercises.map((ex, i) => (
+              <tr key={ex.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                <td
+                  className={`sticky left-0 z-10 border border-black/20 px-2 py-1.5 font-bold capitalize break-words ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
+                >
+                  {ex.nome}
+                </td>
+                <td className="border border-black/20 px-2 py-1.5 text-center font-bold">{ex.series}</td>
+                <td className="border border-black/20 px-2 py-1.5 text-center font-bold">
+                  {ex.sets_config?.[0]?.reps ?? "—"}
+                </td>
+                <td className="border border-black/20 px-2 py-1.5 text-center font-bold">
+                  {ex.sets_config?.[0]?.kg ?? "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -130,16 +136,16 @@ function ConjugadoTable({ exercises, voltas }: { exercises: ExerciseRow[]; volta
         Treino Conjugado
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm print:text-[11px]">
+        <table className="w-full border-collapse text-sm print:text-[11px]" style={{ minWidth: Math.max(320, 56 + exercises.length * 110) }}>
           <thead>
             <tr className="bg-gray-100">
-              <th className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-14">
+              <th className="sticky left-0 z-10 bg-gray-100 border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider w-14 min-w-14">
                 {voltas}x
               </th>
               {exercises.map((ex) => (
                 <th
                   key={ex.id}
-                  className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider min-w-[90px]"
+                  className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider min-w-[110px]"
                 >
                   {ex.nome}
                 </th>
@@ -149,7 +155,9 @@ function ConjugadoTable({ exercises, voltas }: { exercises: ExerciseRow[]; volta
           <tbody>
             {Array.from({ length: voltas }, (_, vi) => (
               <tr key={`r${vi}`} className={vi % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                <td className="border border-black/20 px-2 py-1.5 text-center font-bold">{vi + 1}ª</td>
+                <td className={`sticky left-0 z-10 border border-black/20 px-2 py-1.5 text-center font-bold ${vi % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+                  {vi + 1}ª
+                </td>
                 {exercises.map((ex) => (
                   <td key={ex.id} className="border border-black/20 px-2 py-1.5 text-center font-bold">
                     {Math.round(ex.series / voltas)}x
@@ -162,7 +170,7 @@ function ConjugadoTable({ exercises, voltas }: { exercises: ExerciseRow[]; volta
               { label: "Repetições", key: "reps" },
             ].map((row) => (
               <tr key={row.key} className={row.key === "kg" ? "bg-white" : "bg-gray-50"}>
-                <td className="border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider">
+                <td className={`sticky left-0 z-10 border border-black/20 px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-wider ${row.key === "kg" ? "bg-white" : "bg-gray-50"}`}>
                   {row.label}
                 </td>
                 {exercises.map((ex) => (

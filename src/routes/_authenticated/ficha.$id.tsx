@@ -434,7 +434,7 @@ function FichaTabela({
     return (
       <div className={`${glassCard} overflow-hidden`}>
         <div className="overflow-x-auto bg-[#0b0b0d]">
-          <table className="w-full text-sm" style={{ minWidth: allExercises.length * 140 }}>
+          <table className="w-full text-sm" style={{ minWidth: Math.max(360, allExercises.length * 130) }}>
             <thead>
               <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
                 <th className="sticky left-0 z-10 px-2 sm:px-3 py-1.5 sm:py-2 text-left w-[52px] sm:w-[70px]" style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
@@ -447,8 +447,8 @@ function FichaTabela({
                         <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-black/10 text-base sm:text-lg font-black text-black/60">+</span>
                       </th>
                     )}
-                    <th className="px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[120px]">
-                      <div className="text-xs sm:text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
+                    <th className="px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[100px] sm:min-w-[120px]">
+                      <div className="text-[11px] sm:text-sm font-black text-black leading-tight break-words">{ex.nome}</div>
                     </th>
                   </React.Fragment>
                 ))}
@@ -504,19 +504,19 @@ function FichaTabela({
               <span className="text-[10px] font-black text-[var(--lime)] uppercase tracking-widest">{group.nome}</span>
             </div>
             <div className="overflow-x-auto bg-[#0b0b0d]">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[520px] sm:min-w-0">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/[0.03]">
-                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider">
+                    <th className="sticky left-0 z-10 bg-white/[0.03] px-3 sm:px-4 py-2.5 sm:py-3 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider min-w-[160px]">
                       Exercicio
                     </th>
-                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-20 sm:w-24">
+                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16 sm:w-20">
                       Series
                     </th>
-                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-20 sm:w-24">
+                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16 sm:w-20">
                       Reps
                     </th>
-                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-24 sm:w-28">
+                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-20 sm:w-24">
                       Peso (kg)
                     </th>
                   </tr>
@@ -524,7 +524,7 @@ function FichaTabela({
                 <tbody>
                   {exs.map((ex, i) => (
                     <tr key={ex.id} className={i % 2 === 0 ? "bg-white/[0.015]" : ""}>
-                      <td className="px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-bold text-white capitalize border-b border-white/5">
+                      <td className="sticky left-0 z-10 bg-[#0b0b0d] px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-bold text-white capitalize border-b border-white/5 break-words">
                         {ex.nome}
                       </td>
                       <FichaTd ex={ex} field="series" isTeacher={isTeacher} onSaved={onSaved} />
