@@ -260,7 +260,7 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
     queryFn: () => listWorkoutsForStudent({ data: { student_id: studentId } }),
   });
   const [showAssign, setShowAssign] = useState(false);
-  const [assignStep, setAssignStep] = useState<"biblioteca" | "review" | "completed">("biblioteca");
+  const [assignStep, setAssignStep] = useState<"ficha" | "biblioteca" | "review" | "completed">("ficha");
   const [libQuery, setLibQuery] = useState("");
   const [libBodyPart, setLibBodyPart] = useState("");
   const [libEquipment, setLibEquipment] = useState("");
@@ -280,6 +280,18 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
       qc.invalidateQueries({ queryKey: ["workouts"] });
       const r = data as { id: string; letra: string };
       toast.success(`Treino ${r.letra} criado e atribuido a ${studentName}!`);
+      setAssignStep("completed");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const createFicha = useMutation({
+    mutationFn: useServerFn(createWorkoutWithExercises),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["studentWorkouts", studentId] });
+      qc.invalidateQueries({ queryKey: ["workouts"] });
+      const r = data as { id: string; letra: string };
+      toast.success(`Ficha ${r.letra} criada e atribuida a ${studentName}!`);
       setAssignStep("completed");
     },
     onError: (e) => toast.error(e.message),
@@ -433,22 +445,170 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
           {/* Header */}
           <div className="relative z-10 shrink-0 px-5 pt-5 pb-2 safe-top">
             <div className="flex items-center justify-between mb-1">
-              {assignStep === "review" ? (
+              {assignStep === "ficha" ? (
                 <button
                   onClick={() => setAssignStep("biblioteca")}
                   className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
+              ) : assignStep === "review" ? (
+                <button
+                  onClick={() => setAssignStep("ficha")}
+                  className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
               ) : <div />}
               <button
-                onClick={() => { setShowAssign(false); setAssignStep("biblioteca"); }}
+                onClick={() => { setShowAssign(false); setAssignStep("ficha"); }}
                 className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
           </div>
+
+          {/* Step: Ficha - configure treino */}
+          {assignStep === "ficha" && (
+            <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-8 pt-2">
+              <div className="space-y-5">
+                <div className="text-center space-y-1">
+                  <h2 className="text-xl font-black text-white">Nova Ficha</h2>
+                  <p className="text-xs text-zinc-500">
+                    Configure os dados do treino e adicione exercicios
+                  </p>
+                </div>
+
+                {/* Config do treino */}
+                <div className="space-y-3 rounded-2xl border border-white/[0.06] bg-[#111112] p-4">
+                  <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Config do Treino</div>
+                  <input
+                    value={fichaLetra}
+                    onChange={(e) => setFichaLetra(e.target.value.slice(0, 3))}
+                    placeholder="Letra do treino (A, B, C...)"
+                    maxLength={3}
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors uppercase"
+                  />
+                  <input
+                    value={fichaNome}
+                    onChange={(e) => setFichaNome(e.target.value.slice(0, 80))}
+                    placeholder="Nome (opcional)"
+                    maxLength={80}
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors"
+                  />
+                  <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3">
+                    <span className="text-sm font-bold text-zinc-400 shrink-0">Séries (voltas)</span>
+                    <div className="flex items-center gap-2 ml-auto">
+                      <button onClick={() => setFichaVoltas(Math.max(1, fichaVoltas - 1))} className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold text-sm hover:bg-white/20 transition-all">-</button>
+                      <span className="w-8 text-center text-white font-black text-base">{fichaVoltas}</span>
+                      <button onClick={() => setFichaVoltas(Math.min(20, fichaVoltas + 1))} className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold text-sm hover:bg-white/20 transition-all">+</button>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setFichaTipo("normal")}
+                      className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
+                        fichaTipo === "normal"
+                          ? "bg-[var(--lime)] text-black"
+                          : "bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10"
+                      }`}
+                    >
+                      Normal
+                    </button>
+                    <button
+                      onClick={() => setFichaTipo("conjugado")}
+                      className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
+                        fichaTipo === "conjugado"
+                          ? "bg-[var(--lime)] text-black"
+                          : "bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10"
+                      }`}
+                    >
+                      Conjugado
+                    </button>
+                  </div>
+
+                  {/* Dias da semana */}
+                  <div>
+                    <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Dias da Semana</div>
+                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                      {["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"].map((d) => {
+                        const active = fichaDias.includes(d);
+                        return (
+                          <button
+                            key={d}
+                            onClick={() => setFichaDias(prev => active ? prev.filter(x => x !== d) : [...prev, d])}
+                            className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                              active
+                                ? "bg-[var(--lime)] text-black"
+                                : "bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10"
+                            }`}
+                          >
+                            {d}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Objetivo */}
+                  <input
+                    value={fichaObjetivo}
+                    onChange={(e) => setFichaObjetivo(e.target.value.slice(0, 200))}
+                    placeholder="Objetivo (ex: Hipertrofia, Perda de peso)"
+                    maxLength={200}
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors"
+                  />
+
+                  {/* Observações */}
+                  <textarea
+                    value={fichaObservacao}
+                    onChange={(e) => setFichaObservacao(e.target.value.slice(0, 500))}
+                    placeholder="Observações (ex: aluno com joelho sensivel, evitar impacto)"
+                    maxLength={500}
+                    rows={3}
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors resize-none"
+                  />
+                </div>
+
+                <button
+                  onClick={() => setAssignStep("biblioteca")}
+                  disabled={!fichaLetra.trim()}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black px-4 py-3 font-bold text-sm hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <Plus className="w-4 h-4" /> Adicionar Exercicios
+                </button>
+
+                {fichaLetra.trim() && (
+                  <button
+                    onClick={() => createFicha.mutate({
+                      data: {
+                        letra: fichaLetra.trim(),
+                        nome: fichaNome.trim() || undefined,
+                        assigned_to: studentId,
+                        conjugado: fichaTipo === "conjugado" || undefined,
+                        voltas: fichaVoltas,
+                        objetivo: fichaObjetivo.trim() || undefined,
+                        dias_semana: fichaDias.length ? fichaDias.join(", ") : undefined,
+                        observacao: fichaObservacao.trim() || undefined,
+                        exercises: selectedExercises.map(ex => ({
+                          exercise_db_id: ex.exercise.id.toString(),
+                          nome: ex.exercise.name,
+                          sets: ex.sets,
+                          reps: ex.reps,
+                          kg: ex.kg,
+                        })),
+                      }
+                    })}
+                    disabled={selectedExercises.length === 0 || createFicha.isPending}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 text-white px-4 py-3 font-bold text-sm hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Criar e Atribuir
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Step: Biblioteca - full exercise library */}
           {assignStep === "biblioteca" && (
@@ -644,108 +804,35 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                   <Plus className="w-4 h-4" /> Adicionar mais
                 </button>
 
-                {/* Config do treino */}
-                <div className="space-y-3 rounded-2xl border border-white/[0.06] bg-[#111112] p-4">
-                  <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Config do Treino</div>
-                  <input
-                    value={fichaLetra}
-                    onChange={(e) => setFichaLetra(e.target.value.slice(0, 3))}
-                    placeholder="Letra do treino (A, B, C...)"
-                    maxLength={3}
-                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors uppercase"
-                  />
-                  <input
-                    value={fichaNome}
-                    onChange={(e) => setFichaNome(e.target.value.slice(0, 80))}
-                    placeholder="Nome (opcional)"
-                    maxLength={80}
-                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors"
-                  />
-                  <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3">
-                    <span className="text-sm font-bold text-zinc-400 shrink-0">Séries (voltas)</span>
-                    <div className="flex items-center gap-2 ml-auto">
-                      <button onClick={() => setFichaVoltas(Math.max(1, fichaVoltas - 1))} className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold text-sm hover:bg-white/20 transition-all">-</button>
-                      <span className="w-8 text-center text-white font-black text-base">{fichaVoltas}</span>
-                      <button onClick={() => setFichaVoltas(Math.min(20, fichaVoltas + 1))} className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold text-sm hover:bg-white/20 transition-all">+</button>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setFichaTipo("normal")}
-                      className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
-                        fichaTipo === "normal"
-                          ? "bg-[var(--lime)] text-black"
-                          : "bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10"
-                      }`}
-                    >
-                      Normal
-                    </button>
-                    <button
-                      onClick={() => setFichaTipo("conjugado")}
-                      className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
-                        fichaTipo === "conjugado"
-                          ? "bg-[var(--lime)] text-black"
-                          : "bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10"
-                      }`}
-                    >
-                      Conjugado
-                    </button>
-                  </div>
-
-                  {/* Dias da semana */}
-                  <div>
-                    <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Dias da Semana</div>
-                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-                      {["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"].map((d) => {
-                        const active = fichaDias.includes(d);
-                        return (
-                          <button
-                            key={d}
-                            onClick={() => setFichaDias(prev => active ? prev.filter(x => x !== d) : [...prev, d])}
-                            className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                              active
-                                ? "bg-[var(--lime)] text-black"
-                                : "bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10"
-                            }`}
-                          >
-                            {d}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Objetivo */}
-                  <input
-                    value={fichaObjetivo}
-                    onChange={(e) => setFichaObjetivo(e.target.value.slice(0, 200))}
-                    placeholder="Objetivo (ex: Hipertrofia, Perda de peso)"
-                    maxLength={200}
-                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors"
-                  />
-
-                  {/* Observações */}
-                  <textarea
-                    value={fichaObservacao}
-                    onChange={(e) => setFichaObservacao(e.target.value.slice(0, 500))}
-                    placeholder="Observações (ex: aluno com joelho sensivel, evitar impacto)"
-                    maxLength={500}
-                    rows={3}
-                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors resize-none"
-                  />
-                </div>
-
                 <button
-                  onClick={finishPasso}
-                  disabled={createPasso.isPending || selectedExercises.length === 0}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--lime)] text-black px-5 py-3.5 font-bold text-sm hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                  onClick={() => createFicha.mutate({
+                    data: {
+                      letra: fichaLetra.trim(),
+                      nome: fichaNome.trim() || undefined,
+                      assigned_to: studentId,
+                      conjugado: fichaTipo === "conjugado" || undefined,
+                      voltas: fichaVoltas,
+                      objetivo: fichaObjetivo.trim() || undefined,
+                      dias_semana: fichaDias.length ? fichaDias.join(", ") : undefined,
+                      observacao: fichaObservacao.trim() || undefined,
+                      exercises: selectedExercises.map(ex => ({
+                        exercise_db_id: ex.exercise.id.toString(),
+                        nome: ex.exercise.name,
+                        sets: ex.sets,
+                        reps: ex.reps,
+                        kg: ex.kg,
+                      })),
+                    }
+                  })}
+                  disabled={createFicha.isPending || selectedExercises.length === 0 || !fichaLetra.trim()}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 text-white px-5 py-3.5 font-bold text-sm hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                 >
-                  {createPasso.isPending ? (
+                  {createFicha.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <Check className="w-4 h-4" />
                   )}
-                  {createPasso.isPending ? "Criando..." : "Criar e Atribuir Treino"}
+                  {createFicha.isPending ? "Criando..." : "Criar e Atribuir Ficha"}
                 </button>
               </div>
             </div>
