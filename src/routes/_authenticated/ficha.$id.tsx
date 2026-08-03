@@ -437,7 +437,7 @@ function FichaTabela({
     );
   }
 
-  // Normal: one table per group
+  // Normal: primeiro modelo - uma tabela vertical por grupo (exercicios como linhas)
   return (
     <div className="space-y-6">
       {groups.map((group) => {
@@ -449,30 +449,32 @@ function FichaTabela({
               <span className="text-[10px] font-black text-[var(--lime)] uppercase tracking-widest">{group.nome}</span>
             </div>
             <div className="overflow-x-auto bg-[#0b0b0d]">
-              <table className="w-full text-sm" style={{ minWidth: exs.length * 110 }}>
+              <table className="w-full text-sm">
                 <thead>
-                  <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
-                    <th className="sticky left-0 z-10 px-2 sm:px-3 py-1.5 sm:py-2 text-left w-[52px] sm:w-[70px]" style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
-                      <span className="text-base sm:text-lg font-black text-black/80">{voltas}x</span>
+                  <tr className="border-b border-white/5 bg-white/[0.03]">
+                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider">
+                      Exercicio
                     </th>
-                    {exs.map((ex, i) => (
-                      <th key={ex.id} className="px-2 sm:px-3 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[120px] border-l border-black/15">
-                        <div className="text-xs sm:text-sm font-black text-black leading-tight truncate">{ex.nome}</div>
-                      </th>
-                    ))}
+                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-20 sm:w-24">
+                      Series
+                    </th>
+                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-20 sm:w-24">
+                      Reps
+                    </th>
+                    <th className="px-3 sm:px-4 py-2.5 sm:py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-24 sm:w-28">
+                      Peso (kg)
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {["peso", "reps"].map((key, ri) => (
-                    <tr key={key} className={ri % 2 === 0 ? "bg-white/[0.015]" : ""}>
-                      <td className="sticky left-0 z-10 bg-[#0b0b0d] px-2 sm:px-3 py-2 sm:py-3 text-[11px] font-bold uppercase tracking-wide text-zinc-400 border-b border-white/5">
-                        {key === "peso" ? "Peso (kg)" : "Repetições"}
+                  {exs.map((ex, i) => (
+                    <tr key={ex.id} className={i % 2 === 0 ? "bg-white/[0.015]" : ""}>
+                      <td className="px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-bold text-white capitalize border-b border-white/5">
+                        {ex.nome}
                       </td>
-                      {exs.map((ex) => (
-                        <td key={ex.id} className="px-2 sm:px-3 py-2 sm:py-2.5 text-center border-b border-white/5 border-l border-white/5">
-                          <FichaTd ex={ex} field={key} isTeacher={isTeacher} onSaved={onSaved} />
-                        </td>
-                      ))}
+                      <FichaTd ex={ex} field="series" isTeacher={isTeacher} onSaved={onSaved} />
+                      <FichaTd ex={ex} field="reps" isTeacher={isTeacher} onSaved={onSaved} />
+                      <FichaTd ex={ex} field="peso" isTeacher={isTeacher} onSaved={onSaved} />
                     </tr>
                   ))}
                 </tbody>
