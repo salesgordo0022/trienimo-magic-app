@@ -83,8 +83,8 @@ function Shell() {
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3">
           <Link to="/app" className="shrink-0">
             <img
-              src="/imperial-fitness-logo.png"
-              alt="Imperial Fitness"
+              src="/icon-512.png"
+              alt="Ficha de Treino"
               className="h-9 sm:h-10 w-auto object-contain drop-shadow-[0_0_16px_rgba(204,255,0,0.35)]"
             />
           </Link>

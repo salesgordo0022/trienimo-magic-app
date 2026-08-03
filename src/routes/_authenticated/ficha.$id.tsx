@@ -90,7 +90,7 @@ function FichaEditor() {
           </Link>
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <img
-              src="/imperial-fitness-logo.png"
+              src="/icon-512.png"
               alt="Logo"
               className="w-8 h-8 rounded-lg object-cover shrink-0"
             />
@@ -165,7 +165,7 @@ function FichaEditor() {
               <div className="flex items-stretch gap-2 sm:gap-3 p-4 sm:p-5">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   <img
-                    src="/imperial-fitness-logo.png"
+                    src="/icon-512.png"
                     alt="Logo"
                     className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover shrink-0"
                   />
