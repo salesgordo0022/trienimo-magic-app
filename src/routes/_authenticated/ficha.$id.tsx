@@ -446,7 +446,7 @@ function FichaTabela({
     }
     return (
       <div className={`${glassCard} overflow-hidden`}>
-        <div className="overflow-x-auto bg-[#0b0b0d]">
+        <div className="overflow-x-auto no-scrollbar bg-[#0b0b0d]">
           <table className="w-full text-sm" style={{ minWidth: Math.max(360, allExercises.length * 130) }}>
             <thead>
               <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
@@ -513,33 +513,36 @@ function FichaTabela({
         const exs = group.exercises;
         return (
           <div key={group.id} className={`${glassCard} overflow-hidden`}>
-            <div className="px-5 py-2.5 bg-white/[0.04] border-b border-white/5">
+            <div className="px-5 py-2.5 bg-white/[0.04] border-b border-white/5 flex items-center justify-between">
               <span className="text-[10px] font-black text-[var(--lime)] uppercase tracking-widest">{group.nome}</span>
+              {exs.length > 0 && (
+                <span className="text-[10px] font-bold text-zinc-500">{exs.length} {exs.length === 1 ? "exercicio" : "exercicios"}</span>
+              )}
             </div>
-            <div className="overflow-x-auto bg-[#0b0b0d]">
-              <table className="w-full text-sm min-w-[720px]">
+            <div className="overflow-x-auto no-scrollbar bg-[#0b0b0d]">
+              <table className="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/[0.03]">
-                    <th className="sticky left-0 z-10 bg-white/[0.03] px-3 py-2.5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider w-12">
+                    <th className="sticky left-0 z-10 bg-white/[0.03] px-2 sm:px-3 py-2.5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider w-10">
                       Nº
                     </th>
-                    <th className="px-3 py-2.5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider min-w-[150px]">
+                    <th className="px-2 sm:px-3 py-2.5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider min-w-[130px]">
                       {group.nome}
                     </th>
                     {Array.from({ length: PAIRS }, (_, i) => (
                       <React.Fragment key={i}>
-                        <th className="px-2 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16">
-                          Repets
+                        <th className="px-1.5 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-14">
+                          Rep
                         </th>
-                        <th className="px-2 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16">
+                        <th className="px-1.5 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-14">
                           Kg
                         </th>
                       </React.Fragment>
                     ))}
-                    <th className="px-2 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16">
+                    <th className="px-1.5 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-12">
                       Desc
                     </th>
-                    <th className="px-2 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-20">
+                    <th className="px-2 py-2.5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider w-16">
                       Obs
                     </th>
                   </tr>
@@ -547,10 +550,10 @@ function FichaTabela({
                 <tbody>
                   {exs.map((ex, i) => (
                     <tr key={ex.id} className={i % 2 === 0 ? "bg-white/[0.015]" : ""}>
-                      <td className="sticky left-0 z-10 bg-[#0b0b0d] px-3 py-2.5 text-sm font-black text-white capitalize border-b border-white/5 break-words">
+                      <td className="sticky left-0 z-10 bg-[#0b0b0d] px-2 sm:px-3 py-2.5 text-sm font-black text-white capitalize border-b border-white/5 break-words">
                         {ex.series}x
                       </td>
-                      <td className="px-3 py-2.5 text-sm font-bold text-white capitalize border-b border-white/5 break-words">
+                      <td className="px-2 sm:px-3 py-2.5 text-sm font-bold text-white capitalize border-b border-white/5 break-words">
                         {ex.nome}
                       </td>
                       {Array.from({ length: PAIRS }, (_, s) => (
@@ -559,7 +562,7 @@ function FichaTabela({
                           <FichaSetTd ex={ex} setIndex={s} field="kg" isTeacher={isTeacher} onSaved={onSaved} />
                         </React.Fragment>
                       ))}
-                      <td className="px-2 py-2.5 text-center text-sm font-bold text-zinc-300 border-b border-white/5">
+                      <td className="px-1.5 py-2.5 text-center text-xs font-bold text-zinc-300 border-b border-white/5">
                         {formatDesc(ex.desc_segundos)}
                       </td>
                       <td className="px-2 py-2.5 text-center text-xs text-zinc-400 border-b border-white/5 break-words">
