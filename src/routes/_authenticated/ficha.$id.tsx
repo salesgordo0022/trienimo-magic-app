@@ -194,6 +194,18 @@ function FichaEditor() {
                   readOnly={!isTeacher}
                 />
                 <HeaderField
+                  label="Dias da Semana"
+                  value={data.workout.dias_semana ?? ""}
+                  onSave={(v) => updW.mutate({ data: { id, dias_semana: v } })}
+                  readOnly={!isTeacher}
+                />
+                <HeaderField
+                  label="Objetivo"
+                  value={data.workout.objetivo ?? ""}
+                  onSave={(v) => updW.mutate({ data: { id, objetivo: v } })}
+                  readOnly={!isTeacher}
+                />
+                <HeaderField
                   label="Observacao"
                   value={data.workout.observacao ?? ""}
                   onSave={(v) => updW.mutate({ data: { id, observacao: v } })}

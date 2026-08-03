@@ -46,11 +46,12 @@ export function FichaDocument({ data }: { data: FichaFull }) {
         </div>
       </div>
 
-      {/* Informações: data, dias, observação */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-black/10 text-sm">
+      {/* Informações: data, dias, objetivo, observação */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-black/10 text-sm">
         <InfoField label="Data" value={formatDate(w.data_inicio)} />
-        <InfoField label="Dias" value={data.profile.dias_semana ?? ""} />
-        <InfoField label="Observação" value={w.observacao ?? ""} />
+        <InfoField label="Dias" value={w.dias_semana ?? data.profile.dias_semana ?? ""} />
+        <InfoField label="Objetivo" value={w.objetivo ?? data.profile.objetivo ?? ""} />
+        <InfoField label="Observação" value={w.observacao ?? data.profile.observacao ?? ""} />
       </div>
 
       {/* Exercícios */}

@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listWorkouts, listAssignedToMe, deleteWorkout, hasCompletedToday, listCompletedWorkoutIds } from "@/lib/workouts.functions";
 import { getMyRole, listMyStudents } from "@/lib/roles.functions";
 import { toast } from "sonner";
-import { Trash2, Pencil, History, Dumbbell, ChevronRight, Calendar, Flame, Users, BookOpen, Flag, Apple } from "lucide-react";
+import { Trash2, Pencil, History, Dumbbell, ChevronRight, Calendar, Flame, Users, BookOpen, Flag, Apple, CalendarDays, Target } from "lucide-react";
 
 const workoutsQO = () => queryOptions({ queryKey: ["workouts"], queryFn: () => listWorkouts() });
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
@@ -187,6 +187,20 @@ function Inicio() {
                     <div className="text-[11px] text-zinc-500 mt-0.5">Pessoal</div>
                   ) : null}
                   {w.nome && <div className="text-xs text-zinc-500 mt-0.5 truncate">{w.nome}</div>}
+                  {(w.dias_semana || w.objetivo) && (
+                    <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                      {w.dias_semana && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/15 text-[9px] font-black text-[var(--lime)] uppercase tracking-wider">
+                          <CalendarDays className="w-3 h-3" /> {w.dias_semana}
+                        </span>
+                      )}
+                      {w.objetivo && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-black text-zinc-300 uppercase tracking-wider">
+                          <Target className="w-3 h-3" /> {w.objetivo}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div className="flex gap-1.5 mt-3 flex-wrap items-center">
                     <Link to="/ficha/$id" params={{ id: w.id }} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--lime)] text-black px-3 py-1.5 text-xs font-bold">
                       <Pencil className="w-3 h-3"/>Abrir

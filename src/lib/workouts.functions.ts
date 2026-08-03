@@ -9,6 +9,8 @@ export type WorkoutRow = {
   nome: string | null;
   data_inicio: string | null;
   observacao: string | null;
+  objetivo: string | null;
+  dias_semana: string | null;
   ordem: number;
   user_id?: string;
   assigned_to?: string | null;
@@ -56,7 +58,7 @@ export const listWorkouts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to, tipo")
+      .select("id, letra, nome, data_inicio, observacao, objetivo, dias_semana, ordem, user_id, assigned_to, tipo")
       .eq("user_id", context.userId)
       .order("ordem", { ascending: true })
       .order("letra", { ascending: true });
@@ -90,7 +92,7 @@ export const listAssignedToMe = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to, tipo")
+      .select("id, letra, nome, data_inicio, observacao, objetivo, dias_semana, ordem, user_id, assigned_to, tipo")
       .eq("assigned_to", context.userId)
       .order("ordem", { ascending: true });
     if (error) throw new Error(error.message);
@@ -115,7 +117,7 @@ export const listWorkoutsForStudent = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const { data: rows, error } = await context.supabase
       .from("workouts")
-      .select("id, letra, nome, data_inicio, observacao, ordem, user_id, assigned_to, tipo")
+      .select("id, letra, nome, data_inicio, observacao, objetivo, dias_semana, ordem, user_id, assigned_to, tipo")
       .eq("user_id", context.userId)
       .eq("assigned_to", data.student_id)
       .order("ordem", { ascending: true });
@@ -331,6 +333,8 @@ export const updateWorkout = createServerFn({ method: "POST" })
       nome?: string;
       data_inicio?: string;
       observacao?: string;
+      objetivo?: string;
+      dias_semana?: string;
       assigned_to?: string | null;
     }) =>
       z
@@ -340,6 +344,8 @@ export const updateWorkout = createServerFn({ method: "POST" })
           nome: z.string().max(80).nullable().optional(),
           data_inicio: z.string().nullable().optional(),
           observacao: z.string().max(500).nullable().optional(),
+          objetivo: z.string().max(200).nullable().optional(),
+          dias_semana: z.string().max(200).nullable().optional(),
           assigned_to: z.string().uuid().nullable().optional(),
         })
         .parse(d),
@@ -353,7 +359,11 @@ export const updateWorkout = createServerFn({ method: "POST" })
     const isOwner = workout?.user_id === context.userId;
     if (!isAdmin && !isOwner) throw new Error("Acesso negado");
     const payload = { ...rest, ...(rest.letra ? { letra: rest.letra.toUpperCase() } : {}) };
-    const { error } = await context.supabase.from("workouts").update(payload).eq("id", id);
+    let { error } = await context.supabase.from("workouts").update(payload).eq("id", id);
+    if (error?.code === "42703" || error?.code === "PGRST204") {
+      const { objetivo, dias_semana, ...fallback } = payload;
+      ({ error } = await context.supabase.from("workouts").update(fallback).eq("id", id));
+    }
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -523,6 +533,9 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
       tipo?: string;
       conjugado?: boolean;
       voltas?: number;
+      objetivo?: string;
+      dias_semana?: string;
+      observacao?: string;
       exercises: Array<{ exercise_db_id: string; nome: string; sets: number; reps: number; kg?: number }>;
       body_part_label?: string;
     }) =>
@@ -533,6 +546,9 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         tipo: z.string().max(20).optional(),
         conjugado: z.boolean().optional(),
         voltas: z.number().int().min(1).max(20).optional(),
+        objetivo: z.string().max(200).optional(),
+        dias_semana: z.string().max(200).optional(),
+        observacao: z.string().max(500).optional(),
         exercises: z
           .array(
             z.object({
@@ -566,6 +582,9 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
       tipo: data.tipo ?? "ficha",
       conjugado: data.conjugado ?? false,
       voltas: data.voltas ?? 1,
+      objetivo: data.objetivo ?? null,
+      dias_semana: data.dias_semana ?? null,
+      observacao: data.observacao ?? null,
       ordem,
       data_inicio: new Date().toISOString().slice(0, 10),
     };
@@ -575,7 +594,7 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
       .select("id, letra")
       .single();
     if (error?.code === "42703" || error?.code === "PGRST204") {
-      const { conjugado, voltas, ...fallback } = insertPayload;
+      const { conjugado, voltas, objetivo, dias_semana, ...fallback } = insertPayload;
       ({ data: w, error } = await context.supabase
         .from("workouts")
         .insert(fallback as never)

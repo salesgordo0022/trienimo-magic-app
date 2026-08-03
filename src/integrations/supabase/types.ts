@@ -403,9 +403,11 @@ export type Database = {
           assigned_to: string | null
           created_at: string
           data_inicio: string | null
+          dias_semana: string | null
           id: string
           letra: string
           nome: string | null
+          objetivo: string | null
           observacao: string | null
           ordem: number
           tipo: string
@@ -416,9 +418,11 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           data_inicio?: string | null
+          dias_semana?: string | null
           id?: string
           letra?: string
           nome?: string | null
+          objetivo?: string | null
           observacao?: string | null
           ordem?: number
           tipo?: string
@@ -429,9 +433,11 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           data_inicio?: string | null
+          dias_semana?: string | null
           id?: string
           letra?: string
           nome?: string | null
+          objetivo?: string | null
           observacao?: string | null
           ordem?: number
           tipo?: string

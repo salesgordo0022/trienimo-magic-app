@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, queryOptions } from "@tanstack/react-query";
 import { listAssignedToMe, listCompletedWorkoutIds } from "@/lib/workouts.functions";
-import { ChevronRight, X, FileText, ListChecks, Loader2 } from "lucide-react";
+import { ChevronRight, X, FileText, ListChecks, Loader2, CalendarDays, Target, StickyNote } from "lucide-react";
 import { useState } from "react";
 
 const assignedQO = () => queryOptions({ queryKey: ["assigned"], queryFn: () => listAssignedToMe() });
@@ -113,6 +113,28 @@ function MeuTreino() {
                 <p className="text-xs text-zinc-500">
                   Prescrito por <span className="font-bold text-zinc-400">{selectedW.assigned_nome}</span>
                 </p>
+              )}
+              {(selectedW.dias_semana || selectedW.objetivo || selectedW.observacao) && (
+                <div className="flex flex-wrap justify-center gap-1.5 pt-1">
+                  {selectedW.dias_semana && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black text-zinc-300 uppercase tracking-wider">
+                      <CalendarDays className="w-3 h-3 text-[var(--lime)]" />
+                      {selectedW.dias_semana}
+                    </span>
+                  )}
+                  {selectedW.objetivo && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black text-zinc-300 uppercase tracking-wider">
+                      <Target className="w-3 h-3 text-[var(--lime)]" />
+                      {selectedW.objetivo}
+                    </span>
+                  )}
+                  {selectedW.observacao && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-zinc-400">
+                      <StickyNote className="w-3 h-3 text-[var(--lime)]" />
+                      {selectedW.observacao}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 

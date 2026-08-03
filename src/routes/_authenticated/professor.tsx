@@ -22,7 +22,7 @@ import {
   ArrowLeft, Plus, Trash2, Play, Users, Dumbbell, Search,
   UserPlus, ChevronRight, Pencil, BookOpen, CheckCircle2, X,
   Loader2, Flag, RotateCcw, TrendingUp, Eye,
-  Flame, Check,
+  Flame, Check, CalendarDays, Target,
 } from "lucide-react";
 
 const studentsQO = () =>
@@ -269,6 +269,9 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
   const [fichaNome, setFichaNome] = useState("");
   const [fichaTipo, setFichaTipo] = useState<"normal" | "conjugado">("normal");
   const [fichaVoltas, setFichaVoltas] = useState(1);
+  const [fichaDias, setFichaDias] = useState<string[]>([]);
+  const [fichaObjetivo, setFichaObjetivo] = useState("");
+  const [fichaObservacao, setFichaObservacao] = useState("");
 
   const createPasso = useMutation({
     mutationFn: useServerFn(createWorkoutWithExercises),
@@ -312,6 +315,9 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
         assigned_to: studentId,
         conjugado: fichaTipo === "conjugado" || undefined,
         voltas: fichaVoltas,
+        objetivo: fichaObjetivo.trim() || undefined,
+        dias_semana: fichaDias.length ? fichaDias.join(", ") : undefined,
+        observacao: fichaObservacao.trim() || undefined,
         exercises: selectedExercises.map(ex => ({
           exercise_db_id: ex.exercise.id.toString(),
           nome: ex.exercise.name,
@@ -334,6 +340,9 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
     setFichaNome("");
     setFichaTipo("normal");
     setFichaVoltas(1);
+    setFichaDias([]);
+    setFichaObjetivo("");
+    setFichaObservacao("");
   };
 
   const libIsSearching = !!(libQuery || libBodyPart || libEquipment);
@@ -682,6 +691,48 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                       Conjugado
                     </button>
                   </div>
+
+                  {/* Dias da semana */}
+                  <div>
+                    <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Dias da Semana</div>
+                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                      {["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"].map((d) => {
+                        const active = fichaDias.includes(d);
+                        return (
+                          <button
+                            key={d}
+                            onClick={() => setFichaDias(prev => active ? prev.filter(x => x !== d) : [...prev, d])}
+                            className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                              active
+                                ? "bg-[var(--lime)] text-black"
+                                : "bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10"
+                            }`}
+                          >
+                            {d}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Objetivo */}
+                  <input
+                    value={fichaObjetivo}
+                    onChange={(e) => setFichaObjetivo(e.target.value.slice(0, 200))}
+                    placeholder="Objetivo (ex: Hipertrofia, Perda de peso)"
+                    maxLength={200}
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors"
+                  />
+
+                  {/* Observações */}
+                  <textarea
+                    value={fichaObservacao}
+                    onChange={(e) => setFichaObservacao(e.target.value.slice(0, 500))}
+                    placeholder="Observações (ex: aluno com joelho sensivel, evitar impacto)"
+                    maxLength={500}
+                    rows={3}
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[var(--lime)]/30 transition-colors resize-none"
+                  />
                 </div>
 
                 <button
@@ -750,6 +801,22 @@ function StudentPanel({ studentId, studentName }: { studentId: string; studentNa
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-sm text-white">Treino {w.letra}</div>
                   {w.nome && <div className="text-xs text-zinc-500 truncate">{w.nome}</div>}
+                  {(w.dias_semana || w.objetivo) && (
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {w.dias_semana && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/15 text-[9px] font-black text-[var(--lime)] uppercase tracking-wider">
+                          <CalendarDays className="w-3 h-3" />
+                          {w.dias_semana}
+                        </span>
+                      )}
+                      {w.objetivo && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-black text-zinc-300 uppercase tracking-wider">
+                          <Target className="w-3 h-3" />
+                          {w.objetivo}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {w.data_inicio && (
                     <div className="text-[11px] text-zinc-600 mt-0.5">
                       Criado em {new Date(w.data_inicio).toLocaleDateString("pt-BR")}
