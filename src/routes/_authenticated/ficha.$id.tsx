@@ -446,7 +446,7 @@ function FichaTabela({
     }
     return (
       <div className={`${glassCard} overflow-hidden`}>
-        <div className="overflow-x-auto no-scrollbar bg-[#0b0b0d]">
+        <div className="overflow-x-auto bg-[#0b0b0d]">
           <table className="w-full text-sm" style={{ minWidth: Math.max(360, allExercises.length * 130) }}>
             <thead>
               <tr style={{ background: "linear-gradient(135deg, #A3E635, #84CC16)" }}>
@@ -617,11 +617,11 @@ function FichaTd({
         series: parseInt(series) || ex.series,
       },
     });
-  const inp = "w-full bg-transparent text-center text-sm sm:text-base font-black text-white placeholder:text-zinc-600 outline-none focus:text-[var(--lime)] transition-colors";
+  const inp = "w-full bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-2 py-1.5 sm:px-3 sm:py-2.5 text-sm font-bold text-white text-center outline-none focus:border-[var(--lime)]/50 focus:bg-[var(--lime)]/10 focus:ring-2 focus:ring-[var(--lime)]/20 transition-all";
   return (
     <td className={`px-3 py-2.5 text-center border-b border-white/5 align-middle transition-colors ${status === "saved" ? "bg-[var(--lime)]/10" : ""}`}>
       {ro ? (
-        <span className="text-sm sm:text-base font-black text-white">{value || "—"}</span>
+        <span className="text-sm font-bold text-white">{value || "—"}</span>
       ) : (
         <input
           value={value}
