@@ -25,6 +25,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedTreinarIdRouteImport } from './routes/_authenticated/treinar.$id'
 import { Route as AuthenticatedFichaIdRouteImport } from './routes/_authenticated/ficha.$id'
 import { Route as ApiPublicExerciseGifIdRouteImport } from './routes/api/public/exercise-gif.$id'
+import { Route as AuthenticatedFichaIdImprimirRouteImport } from './routes/_authenticated/ficha.$id.imprimir'
 import { Route as AuthenticatedFichaIdHistoricoRouteImport } from './routes/_authenticated/ficha.$id.historico'
 import { Route as AuthenticatedFichaIdExecutarRouteImport } from './routes/_authenticated/ficha.$id.executar'
 
@@ -109,6 +110,12 @@ const ApiPublicExerciseGifIdRoute = ApiPublicExerciseGifIdRouteImport.update({
   path: '/api/public/exercise-gif/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedFichaIdImprimirRoute =
+  AuthenticatedFichaIdImprimirRouteImport.update({
+    id: '/imprimir',
+    path: '/imprimir',
+    getParentRoute: () => AuthenticatedFichaIdRoute,
+  } as any)
 const AuthenticatedFichaIdHistoricoRoute =
   AuthenticatedFichaIdHistoricoRouteImport.update({
     id: '/historico',
@@ -139,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/treinar/$id': typeof AuthenticatedTreinarIdRoute
   '/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
   '/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
+  '/ficha/$id/imprimir': typeof AuthenticatedFichaIdImprimirRoute
   '/api/public/exercise-gif/$id': typeof ApiPublicExerciseGifIdRoute
 }
 export interface FileRoutesByTo {
@@ -158,6 +166,7 @@ export interface FileRoutesByTo {
   '/treinar/$id': typeof AuthenticatedTreinarIdRoute
   '/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
   '/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
+  '/ficha/$id/imprimir': typeof AuthenticatedFichaIdImprimirRoute
   '/api/public/exercise-gif/$id': typeof ApiPublicExerciseGifIdRoute
 }
 export interface FileRoutesById {
@@ -179,6 +188,7 @@ export interface FileRoutesById {
   '/_authenticated/treinar/$id': typeof AuthenticatedTreinarIdRoute
   '/_authenticated/ficha/$id/executar': typeof AuthenticatedFichaIdExecutarRoute
   '/_authenticated/ficha/$id/historico': typeof AuthenticatedFichaIdHistoricoRoute
+  '/_authenticated/ficha/$id/imprimir': typeof AuthenticatedFichaIdImprimirRoute
   '/api/public/exercise-gif/$id': typeof ApiPublicExerciseGifIdRoute
 }
 export interface FileRouteTypes {
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/treinar/$id'
     | '/ficha/$id/executar'
     | '/ficha/$id/historico'
+    | '/ficha/$id/imprimir'
     | '/api/public/exercise-gif/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/treinar/$id'
     | '/ficha/$id/executar'
     | '/ficha/$id/historico'
+    | '/ficha/$id/imprimir'
     | '/api/public/exercise-gif/$id'
   id:
     | '__root__'
@@ -239,6 +251,7 @@ export interface FileRouteTypes {
     | '/_authenticated/treinar/$id'
     | '/_authenticated/ficha/$id/executar'
     | '/_authenticated/ficha/$id/historico'
+    | '/_authenticated/ficha/$id/imprimir'
     | '/api/public/exercise-gif/$id'
   fileRoutesById: FileRoutesById
 }
@@ -363,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicExerciseGifIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/ficha/$id/imprimir': {
+      id: '/_authenticated/ficha/$id/imprimir'
+      path: '/imprimir'
+      fullPath: '/ficha/$id/imprimir'
+      preLoaderRoute: typeof AuthenticatedFichaIdImprimirRouteImport
+      parentRoute: typeof AuthenticatedFichaIdRoute
+    }
     '/_authenticated/ficha/$id/historico': {
       id: '/_authenticated/ficha/$id/historico'
       path: '/historico'
@@ -383,11 +403,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedFichaIdRouteChildren {
   AuthenticatedFichaIdExecutarRoute: typeof AuthenticatedFichaIdExecutarRoute
   AuthenticatedFichaIdHistoricoRoute: typeof AuthenticatedFichaIdHistoricoRoute
+  AuthenticatedFichaIdImprimirRoute: typeof AuthenticatedFichaIdImprimirRoute
 }
 
 const AuthenticatedFichaIdRouteChildren: AuthenticatedFichaIdRouteChildren = {
   AuthenticatedFichaIdExecutarRoute: AuthenticatedFichaIdExecutarRoute,
   AuthenticatedFichaIdHistoricoRoute: AuthenticatedFichaIdHistoricoRoute,
+  AuthenticatedFichaIdImprimirRoute: AuthenticatedFichaIdImprimirRoute,
 }
 
 const AuthenticatedFichaIdRouteWithChildren =

@@ -22,6 +22,7 @@ import {
   FileText,
   Check,
   Loader2,
+  Printer,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -102,6 +103,15 @@ function FichaEditor() {
             </div>
           </div>
           <div className="ml-auto flex gap-1 shrink-0">
+            <Link
+              to="/ficha/$id/imprimir"
+              params={{ id }}
+              aria-label="Salvar ficha em PDF"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+            >
+              <Printer className="w-3 h-3" />
+              <span className="hidden sm:inline">PDF</span>
+            </Link>
             <Link
               to="/ficha/$id/historico"
               params={{ id }}
