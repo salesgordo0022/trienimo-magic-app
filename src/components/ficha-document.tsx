@@ -15,6 +15,44 @@ function formatDesc(s: number | null | undefined): string {
 
 const PAIRS = 4;
 
+/** Descobre o grupo muscular pelo nome do exercício (igual ao padrão da ficha impressa). */
+const MUSCLE_RULES: Array<[string, RegExp]> = [
+  ["PEITO", /supino|crucifixo|peck|cross ?over|crossover|paralelas|peitoral|flex[aã]o de bra[çc]o/i],
+  ["COSTAS", /puxada|remada|pulldown|barra fixa|pullover|serrote|dorsal|costas/i],
+  ["OMBROS", /desenvolvimento|eleva[çc][ãa]o lateral|eleva[çc][ãa]o frontal|encolhimento|crucifixo inverso|ombro|deltoid/i],
+  ["BÍCEPS", /rosca|b[íi]ceps/i],
+  ["TRÍCEPS", /tr[íi]ceps|testa|franc[êe]s|corda|mergulho|coice/i],
+  ["ANTEBRAÇO", /antebra[çc]o|punho/i],
+  ["PERNAS", /agachamento|leg press|extensora|afundo|passada|avan[çc]o|hack|b[úu]lgaro|quadr[íi]ceps|ades?utora|adutora|abdutora/i],
+  ["POSTERIOR", /flexora|stiff|levantamento terra|terra|posterior|glute ham/i],
+  ["GLÚTEOS", /gl[úu]teo|eleva[çc][ãa]o p[ée]lvica|coice de gl[úu]teo/i],
+  ["PANTURRILHA", /panturrilha|gêmeos|g[êe]meos|s[óo]leo/i],
+  ["ABDÔMEN", /abdominal|abdomen|abd[ôo]men|prancha|obl[íi]quo|core/i],
+  ["CARDIO", /esteira|bicicleta|el[íi]ptico|corrida|remo erg|cardio|pular corda/i],
+];
+
+function muscleOf(nome: string, fallback: string): string {
+  for (const [label, re] of MUSCLE_RULES) if (re.test(nome)) return label;
+  return fallback;
+}
+
+/** Divide os exercícios em tabelas por grupo muscular, mantendo a ordem original. */
+function splitByMuscle(groups: GroupWithExercises[]): GroupWithExercises[] {
+  const out: GroupWithExercises[] = [];
+  for (const g of groups) {
+    let current: GroupWithExercises | null = null;
+    for (const ex of g.exercises) {
+      const label = muscleOf(ex.nome, g.nome);
+      if (!current || current.nome !== label) {
+        current = { id: `${g.id}-${label}-${out.length}`, nome: label, ordem: out.length, exercises: [] };
+        out.push(current);
+      }
+      current.exercises.push(ex);
+    }
+  }
+  return out;
+}
+
 export function FichaDocument({ data }: { data: FichaFull }) {
   const w = data.workout;
   const conjugado = w.tipo === "conjugado" || w.conjugado === true;
