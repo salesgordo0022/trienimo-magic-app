@@ -367,6 +367,7 @@ export const updateWorkout = createServerFn({ method: "POST" })
       observacao?: string;
       objetivo?: string;
       dias_semana?: string;
+      tipo?: string;
       assigned_to?: string | null;
     }) =>
       z
@@ -378,6 +379,7 @@ export const updateWorkout = createServerFn({ method: "POST" })
           observacao: z.string().max(500).nullable().optional(),
           objetivo: z.string().max(200).nullable().optional(),
           dias_semana: z.string().max(200).nullable().optional(),
+          tipo: z.string().max(20).optional(),
           assigned_to: z.string().uuid().nullable().optional(),
         })
         .parse(d),

@@ -212,6 +212,33 @@ function FichaEditor() {
                   onSave={(v) => updW.mutate({ data: { id, observacao: v } })}
                   readOnly={!isTeacher}
                 />
+                <div className="grid grid-cols-[80px_1fr] sm:grid-cols-[140px_1fr] items-center">
+                  <div className="px-2 sm:px-4 py-2 sm:py-2.5 text-[9px] sm:text-[11px] font-semibold uppercase tracking-wide text-zinc-400 bg-white/[0.02]">
+                    Tipo
+                  </div>
+                  <div className="px-2 sm:px-4 py-2 sm:py-2.5">
+                    {isTeacher ? (
+                      <div className="flex gap-1.5 w-fit">
+                        <button
+                          onClick={() => updW.mutate({ data: { id, tipo: "ficha" } })}
+                          className={`rounded-lg px-3 py-1 text-[11px] sm:text-xs font-bold transition-all ${(data.workout.tipo ?? "ficha") !== "conjugado" ? "bg-[var(--lime)] text-black" : "bg-white/10 text-zinc-400 hover:bg-white/20"}`}
+                        >
+                          Normal
+                        </button>
+                        <button
+                          onClick={() => updW.mutate({ data: { id, tipo: "conjugado" } })}
+                          className={`rounded-lg px-3 py-1 text-[11px] sm:text-xs font-bold transition-all ${data.workout.tipo === "conjugado" ? "bg-[var(--lime)] text-black" : "bg-white/10 text-zinc-400 hover:bg-white/20"}`}
+                        >
+                          Conjugado
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-xs sm:text-sm text-white">
+                        {data.workout.tipo === "conjugado" ? "Conjugado" : "Normal"}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
