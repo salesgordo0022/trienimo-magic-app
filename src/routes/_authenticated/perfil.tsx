@@ -39,6 +39,7 @@ function Perfil() {
     dias_semana: profile.dias_semana ?? "",
     observacao: profile.observacao ?? "",
     personal_nome: profile.personal_nome ?? "",
+    logo_texto: profile.logo_texto ?? "",
     altura: (profile as any).altura ?? "",
     peso: (profile as any).peso ?? "",
   });
@@ -160,6 +161,16 @@ function Perfil() {
                 value={form.dias_semana}
                 onChange={e => update("dias_semana", e.target.value)}
                 placeholder="Ex: Segunda, Quarta, Sexta"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-[var(--lime)]/60 focus:ring-2 focus:ring-[var(--lime)]/20 placeholder:text-zinc-600"
+              />
+            </div>
+
+            <div className="space-y-1.5 mt-4">
+              <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Nome da Academia</label>
+              <input
+                value={form.logo_texto}
+                onChange={e => update("logo_texto", e.target.value)}
+                placeholder="Ex: Imperial Fitness"
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-[var(--lime)]/60 focus:ring-2 focus:ring-[var(--lime)]/20 placeholder:text-zinc-600"
               />
             </div>

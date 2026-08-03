@@ -99,9 +99,9 @@ function FichaEditor() {
               <div className="text-sm font-semibold text-white tracking-tight truncate">
                 Treino {data.workout.letra}
               </div>
-              {data.profile.personal_nome && (
+              {data.teacher.personal_nome && (
                 <div className="text-[10px] text-zinc-500 truncate">
-                  {data.profile.personal_nome}
+                  {data.teacher.personal_nome}
                 </div>
               )}
             </div>
@@ -172,7 +172,7 @@ function FichaEditor() {
                   />
                   <div className="hidden sm:block border-l border-white/10 pl-3 sm:pl-4 min-w-0">
                     <div className="font-semibold text-xs sm:text-sm text-white truncate">
-                      {data.profile.personal_nome ?? "SEU NOME - TREINADOR PESSOAL"}
+                      {data.teacher.personal_nome ?? "SEU NOME - TREINADOR PESSOAL"}
                     </div>
                     <div className="text-[10px] sm:text-xs text-zinc-500 mt-0.5">FICHA DE TREINO</div>
                   </div>

@@ -28,12 +28,12 @@ export function FichaDocument({ data }: { data: FichaFull }) {
             className="w-14 h-14 sm:w-16 sm:h-16 rounded bg-black p-1.5 object-contain shrink-0"
           />
           <div className="font-display font-black text-2xl sm:text-3xl leading-none truncate">
-            <span>{data.profile.logo_texto || "SuaLogo"}</span>
+            <span>{data.teacher.logo_texto || data.teacher.nome || "SuaLogo"}</span>
           </div>
         </div>
         <div className="flex-1 border-2 border-black">
           <div className="text-center font-black uppercase text-sm sm:text-base px-2 py-1.5 border-b border-black/20 truncate">
-            {data.profile.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}
+            {data.teacher.personal_nome ?? "SEU NOME - PERSONAL TRAINER"}
           </div>
           <div className="text-center font-bold uppercase text-[11px] sm:text-xs px-2 py-1 tracking-wide">
             Ficha de Treino
@@ -44,7 +44,7 @@ export function FichaDocument({ data }: { data: FichaFull }) {
       {/* Info + letra do treino */}
       <div className="flex items-start gap-3">
         <div className="flex-1 border border-black/30">
-          <InfoRow label="Aluno" value={w.assigned_nome || data.profile.nome || "—"} />
+          <InfoRow label="Aluno" value={data.profile.nome || w.assigned_nome || "—"} />
           <InfoRow label="Data do Início" value={formatDate(w.data_inicio)} />
           <InfoRow label="Objetivo" value={w.objetivo ?? data.profile.objetivo ?? "—"} />
           <InfoRow label="Dias da Semana" value={w.dias_semana ?? data.profile.dias_semana ?? "—"} />

@@ -46,6 +46,9 @@ export type FichaFull = {
     objetivo: string | null;
     dias_semana: string | null;
     observacao: string | null;
+  };
+  teacher: {
+    nome: string | null;
     logo_texto: string | null;
     personal_nome: string | null;
   };
@@ -69,21 +72,25 @@ export const listWorkouts = createServerFn({ method: "GET" })
         rows.map((w) => w.assigned_to).filter((v): v is string => !!v && v !== context.userId),
       ),
     );
-    let nameById = new Map<string, string>();
+    let profById = new Map<string, { nome: string | null; objetivo: string | null; dias_semana: string | null }>();
     if (studentIds.length) {
       const { data: profs } = await context.supabase
         .from("profiles")
-        .select("id, nome")
+        .select("id, nome, objetivo, dias_semana")
         .in("id", studentIds);
-      nameById = new Map((profs ?? []).map((p) => [p.id, p.nome ?? ""]));
+      profById = new Map(
+        (profs ?? []).map((p) => [p.id, { nome: p.nome ?? null, objetivo: p.objetivo ?? null, dias_semana: p.dias_semana ?? null }]),
+      );
     }
-    return rows.map((w) => ({
-      ...w,
-      assigned_nome:
-        w.assigned_to && w.assigned_to !== context.userId
-          ? (nameById.get(w.assigned_to) ?? null)
-          : null,
-    })) as WorkoutRow[];
+    return rows.map((w) => {
+      const student = w.assigned_to && w.assigned_to !== context.userId ? profById.get(w.assigned_to) : null;
+      return {
+        ...w,
+        objetivo: w.objetivo ?? student?.objetivo ?? null,
+        dias_semana: w.dias_semana ?? student?.dias_semana ?? null,
+        assigned_nome: student?.nome ?? null,
+      };
+    }) as WorkoutRow[];
   });
 
 // --- Fichas prescritas para mim (aluno) ---
@@ -102,8 +109,15 @@ export const listAssignedToMe = createServerFn({ method: "GET" })
       .from("profiles")
       .select("id, nome")
       .in("id", teacherIds);
+    const { data: self } = await context.supabase
+      .from("profiles")
+      .select("objetivo, dias_semana")
+      .eq("id", context.userId)
+      .maybeSingle();
     return data.map((w) => ({
       ...w,
+      objetivo: w.objetivo ?? self?.objetivo ?? null,
+      dias_semana: w.dias_semana ?? self?.dias_semana ?? null,
       assigned_nome: profs?.find((p) => p.id === w.user_id)?.nome ?? null,
     })) as WorkoutRow[];
   });
@@ -122,7 +136,16 @@ export const listWorkoutsForStudent = createServerFn({ method: "GET" })
       .eq("assigned_to", data.student_id)
       .order("ordem", { ascending: true });
     if (error) throw new Error(error.message);
-    return (rows ?? []) as WorkoutRow[];
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("objetivo, dias_semana")
+      .eq("id", data.student_id)
+      .maybeSingle();
+    return (rows ?? []).map((w) => ({
+      ...w,
+      objetivo: w.objetivo ?? prof?.objetivo ?? null,
+      dias_semana: w.dias_semana ?? prof?.dias_semana ?? null,
+    })) as WorkoutRow[];
   });
 
 // --- Get profile ---
@@ -269,10 +292,16 @@ export const getFicha = createServerFn({ method: "GET" })
     const isAssigned = w.assigned_to === context.userId;
     if (!isAdmin && !isOwner && !isAssigned) throw new Error("Acesso negado");
 
-    const { data: profile } = await context.supabase
+    const { data: studentProfile } = await context.supabase
       .from("profiles")
-      .select("nome, objetivo, dias_semana, observacao, logo_texto, personal_nome")
-      .eq("id", context.userId)
+      .select("nome, objetivo, dias_semana, observacao")
+      .eq("id", w.assigned_to ?? w.user_id)
+      .maybeSingle();
+
+    const { data: teacherProfile } = await context.supabase
+      .from("profiles")
+      .select("nome, logo_texto, personal_nome")
+      .eq("id", w.user_id)
       .maybeSingle();
 
     const { data: groups, error: e2 } = await context.supabase
@@ -311,13 +340,16 @@ export const getFicha = createServerFn({ method: "GET" })
 
     return {
       workout: w,
-      profile: profile ?? {
+      profile: studentProfile ?? {
         nome: null,
         objetivo: null,
         dias_semana: null,
         observacao: null,
-        logo_texto: "SuaLogo",
-        personal_nome: "SEU NOME - PERSONAL TRAINER",
+      },
+      teacher: teacherProfile ?? {
+        nome: null,
+        logo_texto: null,
+        personal_nome: null,
       },
       groups: groupsWith,
     } as FichaFull;
@@ -353,7 +385,7 @@ export const updateWorkout = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { id, ...rest } = data;
     const { data: workout } = await context.supabase
-      .from("workouts").select("user_id").eq("id", id).single();
+      .from("workouts").select("user_id, assigned_to").eq("id", id).single();
     const { data: roleData } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     const isAdmin = !!roleData;
     const isOwner = workout?.user_id === context.userId;
@@ -363,6 +395,18 @@ export const updateWorkout = createServerFn({ method: "POST" })
     if (error?.code === "42703" || error?.code === "PGRST204") {
       const { objetivo, dias_semana, ...fallback } = payload;
       ({ error } = await context.supabase.from("workouts").update(fallback).eq("id", id));
+      // Colunas objetivo/dias_semana nao existem na tabela workouts ainda
+      // (migration pendente): espelha no perfil do aluno para nao perder o dado.
+      const targetId = rest.assigned_to ?? workout?.assigned_to ?? workout?.user_id;
+      if (targetId && (objetivo !== undefined || dias_semana !== undefined)) {
+        await context.supabase
+          .from("profiles")
+          .update({
+            ...(objetivo !== undefined ? { objetivo: objetivo ?? null } : {}),
+            ...(dias_semana !== undefined ? { dias_semana: dias_semana ?? null } : {}),
+          })
+          .eq("id", targetId);
+      }
     }
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -600,6 +644,17 @@ export const createWorkoutWithExercises = createServerFn({ method: "POST" })
         .insert(fallback as never)
         .select("id, letra")
         .single());
+      // Colunas objetivo/dias_semana nao existem na tabela workouts ainda
+      // (migration pendente): espelha no perfil do aluno para nao perder o dado.
+      if (objetivo !== undefined || dias_semana !== undefined) {
+        await context.supabase
+          .from("profiles")
+          .update({
+            ...(objetivo !== undefined ? { objetivo: objetivo ?? null } : {}),
+            ...(dias_semana !== undefined ? { dias_semana: dias_semana ?? null } : {}),
+          })
+          .eq("id", data.assigned_to);
+      }
     }
     if (error) throw new Error(error.message);
     if (!w) throw new Error("Falha ao criar treino");
